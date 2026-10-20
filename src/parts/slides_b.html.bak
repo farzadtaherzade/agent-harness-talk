@@ -1,0 +1,380 @@
+
+  <!-- ==========================================================
+       SLIDE 10 — SECTION 03
+       ========================================================== -->
+  <section class="slide s-div" id="div3Slide" data-label="بخش ۰۳ — در عمل">
+    <div class="ghost">10</div>
+    <div class="div-wrap">
+      <span class="div-tag rv" style="--d:.05s">section 03 — hands on</span>
+      <div class="div-num rv-b" style="--d:.12s">03</div>
+      <h2 class="div-title rv" style="--d:.2s">در عمل</h2>
+      <p class="div-sub rv" style="--d:.28s">
+        سه دمو: یک جلسهٔ واقعی را تماشا می‌کنیم، روی سکوی آزمایش گاردیل‌ها را خاموش و روشن می‌کنیم،
+        و کد هارنس را گام‌به‌گام می‌خوانیم.
+      </p>
+      <div class="div-chips rv" style="--d:.36s">
+        <span class="chip cy"><span class="dot"></span>پخش جلسهٔ واقعی</span>
+        <span class="chip em"><span class="dot"></span>سکوی آزمایش</span>
+        <span class="chip am"><span class="dot"></span>کد در حرکت</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 11 — ACTION B: SESSION REPLAY
+       ========================================================== -->
+  <section class="slide s-replay" id="replaySlide" data-label="تماشای یک جلسهٔ واقعی">
+    <div class="ghost">11</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">11</span> — action · replay</span>
+      <h2 class="s-title rv" style="--d:.12s">یک جلسهٔ واقعی: از «باگ گزارش» تا <em>تست سبز</em></h2>
+      <p class="s-sub rv" style="--d:.2s">
+        پخش گام‌به‌گام یک اجرای واقعی هارنس روی پروژهٔ نمونه. دقت کنید: خطا وسط کار می‌آید
+        و ایجنت <b>متوقف نمی‌شود</b> — خودش مسیر تازه را امتحان می‌کند.
+      </p>
+    </header>
+
+    <div class="rp-grid">
+      <div class="rp-left">
+        <div class="rp-transcript rv-r" style="--d:.26s" id="rpLog"></div>
+      </div>
+      <div class="rp-right">
+        <div class="card rp-file rv-r" style="--d:.3s">
+          <div class="rp-file-bar"><span>billing/report.py</span><span id="rpFileState">idle</span></div>
+          <pre class="rp-code" id="rpCode"></pre>
+        </div>
+        <div class="card rp-note rv-r" style="--d:.36s" id="rpNote">
+          <b>چرا این کار؟</b> — روی «پخش» بزنید تا گام‌ها یکی‌یکی اجرا شوند.
+        </div>
+      </div>
+    </div>
+
+    <div class="rp-transport rv" style="--d:.44s">
+      <button class="rp-btn" id="rpPrev" title="گام قبل">⏮</button>
+      <button class="rp-btn rp-play" id="rpPlay" title="پخش / توقف">▶</button>
+      <button class="rp-btn" id="rpNext" title="گام بعد">⏭</button>
+      <div class="rp-track"><i id="rpFill"></i></div>
+      <span class="rp-time" id="rpTime">00:00 / 01:40</span>
+      <button class="rp-speed" id="rpSpeed">1×</button>
+      <span class="chip cy"><span class="dot"></span>جلسهٔ ضبط‌شده</span>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 12 — ACTION C: PLAYGROUND
+       ========================================================== -->
+  <section class="slide s-play" id="playSlide" data-label="سکوی آزمایش هارنس">
+    <div class="ghost">12</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">12</span> — action · playground</span>
+      <h2 class="s-title rv" style="--d:.12s">سکوی آزمایش: <em>گاردیل را خاموش کنید</em> و ببینید چه می‌شود</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        هدف، ابزارها و گاردیل‌ها را انتخاب کنید و هارنس را اجرا کنید. گاردیل را بردارید و
+        حلقهٔ بی‌پایان و هزینهٔ سرسام‌آور را ببینید.
+      </p>
+    </header>
+
+    <div class="pg-grid">
+      <div class="pg-side">
+        <div>
+          <div class="pg-lbl">هدف</div>
+          <div class="pg-goals">
+            <button class="pg-goal on" data-goal="bug">رفع باگ گزارش فروش</button>
+            <button class="pg-goal" data-goal="test">افزودن تست برای قیمت‌گذاری</button>
+            <button class="pg-goal" data-goal="clean">پاک‌سازی تابع تکراری</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="pg-lbl">ابزارهای در دسترس</div>
+          <div class="pg-tools">
+            <button class="chip cy pg-tool on" data-tool="read"><span class="dot"></span>read</button>
+            <button class="chip cy pg-tool on" data-tool="grep"><span class="dot"></span>grep</button>
+            <button class="chip cy pg-tool on" data-tool="bash"><span class="dot"></span>bash</button>
+            <button class="chip cy pg-tool on" data-tool="edit"><span class="dot"></span>edit</button>
+            <button class="chip cy pg-tool on" data-tool="test"><span class="dot"></span>test</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="pg-lbl">گاردیل‌ها</div>
+          <div class="pg-guards">
+            <label class="pg-guard"><input type="checkbox" checked data-guard="allow"><span>فهرست مجاز ابزار</span></label>
+            <label class="pg-guard"><input type="checkbox" checked data-guard="budget"><span>سقف بودجه و گام</span></label>
+            <label class="pg-guard"><input type="checkbox" checked data-guard="human"><span>تأیید انسانی برای عمل مخرب</span></label>
+          </div>
+        </div>
+
+        <div class="pg-ctl">
+          <button class="btn" id="pgRun">▶ اجرای هارنس</button>
+          <button class="btn ghost-btn" id="pgReset">بازنشانی</button>
+        </div>
+      </div>
+
+      <div class="console rv-r" style="--d:.3s">
+        <div class="con-bar">
+          <span class="ttl"><span class="pulse"></span>harness · playground</span>
+          <span class="chip" id="pgState" style="margin-inline-start:auto"><span class="dot"></span>idle</span>
+        </div>
+        <div class="con-log" id="pgLog"></div>
+        <div class="sim-metrics">
+          <span class="m">step <b id="pgStep">0/8</b></span>
+          <span class="m">tokens <b id="pgTok">0/32,000</b></span>
+          <span class="m">tools <b id="pgTools">0</b></span>
+          <span class="m">cost <b id="pgCost">$0.00</b></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 13 — ACTION D: CODE IN MOTION
+       ========================================================== -->
+  <section class="slide s-code" id="codeSlide" data-label="کد هارنس در حرکت">
+    <div class="ghost">13</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">13</span> — action · code</span>
+      <h2 class="s-title rv" style="--d:.12s">کد هارنس <em>در حرکت</em></h2>
+      <p class="s-sub rv" style="--d:.2s">
+        همان معماری مرجع، این‌بار خط‌به‌خط. «اجرای گام‌به‌گام» را بزنید تا ببینید در هر لحظه کدام خط از کد زنده است.
+      </p>
+    </header>
+
+    <div class="s4-body">
+      <div class="code-wrap rv-r" style="--d:.26s">
+        <div class="code-bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="fname">harness.py</span>
+          <span class="chip" style="margin-inline-start:auto"><span class="dot"></span>python 3.11</span>
+        </div>
+        <pre class="code"><code id="harnessCode"></code></pre>
+      </div>
+
+      <div class="phases rv-r" style="--d:.32s">
+        <div class="phase-list" id="phaseList">
+          <div class="phase" data-p="0"><span class="pn">۰۱</span>تفکر</div>
+          <div class="phase" data-p="1"><span class="pn">۰۲</span>اعتبارسنجی خروجی</div>
+          <div class="phase" data-p="2"><span class="pn">۰۳</span>گاردیل</div>
+          <div class="phase" data-p="3"><span class="pn">۰۴</span>اجرای ایزوله</div>
+          <div class="phase" data-p="4"><span class="pn">۰۵</span>بازیابی خطا</div>
+          <div class="phase" data-p="5"><span class="pn">۰۶</span>ثبت در حافظه</div>
+          <div class="phase" data-p="6"><span class="pn">۰۷</span>جمع‌بندی</div>
+        </div>
+        <div class="card phase-desc" id="phaseDesc">
+          <div class="ph" id="phaseTitle">تفکر</div>
+          <p id="phaseText">مدل روی حافظه و فهرست ابزارها طرح‌وارهٔ عمل را می‌نویسد. هارنس هنوز هیچ چیزی اجرا نکرده است.</p>
+        </div>
+        <div class="phase-ctl" style="display:flex;gap:.5em;align-items:center;flex-wrap:wrap">
+          <button class="btn" id="phasePlay">▶ اجرای گام‌به‌گام</button>
+          <span class="mini-note" id="phaseState">گام ۱ / ۷</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 14 — TOOLS & MCP
+       ========================================================== -->
+  <section class="slide s-tools" id="toolsSlide" data-label="ابزار و MCP">
+    <div class="ghost">14</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">14</span> — tools</span>
+      <h2 class="s-title rv" style="--d:.12s">ابزارها و <em>MCP</em>: اتصال استاندارد به دنیا</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        مدل فقط «درخواست» می‌دهد؛ هارنس آن را به یک فراخوانی واقعی تبدیل می‌کند.
+        MCP همین کار را برای همهٔ ابزارها یکسان و قابل‌تعویض می‌کند.
+      </p>
+    </header>
+
+    <div class="tools-grid">
+      <div class="card rv-r" style="--d:.26s">
+        <h3>یک فراخوانی، سه پیام</h3>
+        <div class="tool-io">
+          <div class="io-card">
+            <div class="io-t">۱ ← درخواست به مدل</div>
+            <pre>{"tools":[{"name":"read_file",
+  "description":"خواندن فایل از مسیر مشخص",
+  "input_schema":{"path":"string"}}]}</pre>
+          </div>
+          <div class="io-card">
+            <div class="io-t">۲ ← پاسخ مدل</div>
+            <pre>{"tool_call":{"name":"read_file",
+  "arguments":{"path":"billing/report.py"}}}</pre>
+          </div>
+          <div class="io-card">
+            <div class="io-t">۳ ← نتیجهٔ ابزار</div>
+            <pre>{"ok":true,"content":"...","error":null}</pre>
+          </div>
+        </div>
+        <ul class="rules">
+          <li><i>◂</i><span>نام ابزار کوتاه و فعلی باشد: <code>read_file</code> بهتر از <code>do_something</code> است.</span></li>
+          <li><i>◂</i><span>شرح دقیق: «چه می‌کند» و «چه نمی‌کند» — شرح، بخشی از پرامپت است.</span></li>
+          <li><i>◂</i><span>پیام خطای قابل‌فهم برگردانید؛ پیام خطا ورودی مدل است، نه فقط لاگ سیستم.</span></li>
+        </ul>
+      </div>
+
+      <div class="card rv-r" style="--d:.32s">
+        <h3>MCP: یک سوکت استاندارد برای ابزارها</h3>
+        <svg class="mcp-svg" viewBox="0 0 440 250" role="img" aria-label="معماری MCP">
+          <line class="mcp-link" x1="310" y1="125" x2="272" y2="125"/>
+          <line class="mcp-link" x1="176" y1="110" x2="140" y2="80"/>
+          <line class="mcp-link" x1="176" y1="140" x2="140" y2="170"/>
+          <rect class="mcp-node" x="310" y="95" width="110" height="60" rx="10"/>
+          <text class="mcp-lbl" x="365" y="120">هارنس / ایجنت</text>
+          <text class="mcp-sub" x="365" y="138">HOST</text>
+          <rect class="mcp-node" x="176" y="95" width="96" height="60" rx="10"/>
+          <text class="mcp-lbl" x="224" y="120">کلاینت MCP</text>
+          <text class="mcp-sub" x="224" y="138">CLIENT</text>
+          <rect class="mcp-node" x="20" y="52" width="120" height="56" rx="10"/>
+          <text class="mcp-lbl" x="80" y="76">سرور فایل‌ها</text>
+          <text class="mcp-sub" x="80" y="94">FILES</text>
+          <rect class="mcp-node" x="20" y="142" width="120" height="56" rx="10"/>
+          <text class="mcp-lbl" x="80" y="166">سرور دیتابیس</text>
+          <text class="mcp-sub" x="80" y="184">DB</text>
+          <text class="mcp-sub" x="291" y="115">tools/list</text>
+          <text class="mcp-sub" x="158" y="100">call</text>
+        </svg>
+        <ul class="rules">
+          <li><i>◂</i><span><b>کشف</b>: هارنس می‌پرسد چه ابزارهایی موجود است — بدون کدنویسی.</span></li>
+          <li><i>◂</i><span><b>قرارداد مشترک</b>: نام، شرح و اسکیمای ورودی برای همهٔ سرورها یکسان.</span></li>
+          <li><i>◂</i><span><b>تعویض‌پذیری</b>: عوض کردن یک سرور، هارنس را تغییر نمی‌دهد.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 15 — MEMORY & CONTEXT
+       ========================================================== -->
+  <section class="slide s-mem" id="memSlide" data-label="حافظه و کانتکست">
+    <div class="ghost">15</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">15</span> — memory</span>
+      <h2 class="s-title rv" style="--d:.12s">حافظه و <em>اقتصاد کانتکست</em></h2>
+      <p class="s-sub rv" style="--d:.2s">
+        کانتکست یک منبع محدود است. هارنس خوب می‌داند چه چیزی را نگه دارد، چه چیزی را خلاصه کند و چه چیزی را دور بریزد.
+      </p>
+    </header>
+
+    <div class="mem-grid">
+      <div class="card ctx-card rv-r" style="--d:.26s">
+        <h3>پنجرهٔ کانتکست</h3>
+        <div class="ctx-bar" id="ctxBar"></div>
+        <div class="ctx-foot"><span id="ctxUsed">0 / 32,000 توکن</span><span id="ctxState">خالی</span></div>
+        <div style="display:flex;gap:.5em;flex-wrap:wrap">
+          <button class="btn" id="ctxPlay">▶ پر شدن و فشرده‌سازی</button>
+          <button class="btn ghost-btn" id="ctxReset">بازنشانی</button>
+        </div>
+      </div>
+
+      <div class="mem-side">
+        <div class="card mem-card rv-r" style="--d:.32s">
+          <h3>حافظهٔ کوتاه‌مدت</h3>
+          <p>رویدادهای همین اجرا: هر فکر، عمل و مشاهده. چیزی که مدل «همین حالا» می‌بیند.</p>
+        </div>
+        <div class="card mem-card rv-r" style="--d:.38s">
+          <h3>حافظهٔ بلندمدت</h3>
+          <p>دانش ماندگار پروژه: قوانین، تصمیم‌های گذشته، نتایج یادگیری. با بازیابی معنایی برگردانده می‌شود.</p>
+        </div>
+        <div class="card warn-card rv-r" style="--d:.44s">
+          <h3>پوسیدگی کانتکست (context rot)</h3>
+          <ul>
+            <li>دستور اولیه در انبوهِ پیام‌ها گم می‌شود.</li>
+            <li>مدل به قدیمی‌ترین پیام‌ها بیشتر اعتماد می‌کند.</li>
+            <li>هزینه و تأخیر هر گام بالا می‌رود.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 16 — REAL-WORLD HARNESSES
+       ========================================================== -->
+  <section class="slide s-real" id="realSlide" data-label="هارنس‌های واقعی">
+    <div class="ghost">16</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">16</span> — real world</span>
+      <h2 class="s-title rv" style="--d:.12s">هارنس‌های واقعی: از کد تا محصول</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        هر کدام از این‌ها همان هفت قطعه را دارد، فقط وزنشان فرق می‌کند. از اینجا می‌شود الگو گرفت.
+      </p>
+    </header>
+
+    <div class="real-grid">
+      <div class="card real-card rv-s" style="--d:.24s;--c:#38bdf8">
+        <div class="real-head"><span class="nm">Claude Code</span><span class="tagline">terminal coding agent</span></div>
+        <ul>
+          <li><b>ابزارها</b>: خواندن، ویرایش، اجرای فرمان، جست‌وجو</li>
+          <li><b>حافظه</b>: فایل راهنمای پروژه + تاریخچهٔ نشست</li>
+          <li><b>گاردیل</b>: فهرست مجاز فرمان‌ها + تأیید انسانی برای عمل مخرب</li>
+        </ul>
+        <div class="real-take">درس: مجوز را از مدل بگیر و به هارنس بسپار.</div>
+      </div>
+
+      <div class="card real-card rv-s" style="--d:.3s;--c:#10b981">
+        <div class="real-head"><span class="nm">Cursor / IDE-agent</span><span class="tagline">editor embedded agent</span></div>
+        <ul>
+          <li><b>ابزارها</b>: همان ابزارها، اما داخل ادیتور و با دید کامل‌تر</li>
+          <li><b>حافظه</b>: زمینهٔ فایل‌های باز + نمایهٔ کد پروژه</li>
+          <li><b>گاردیل</b>: پیش‌نمایش تغییر و تأیید تک‌تک ویرایش‌ها</li>
+        </ul>
+        <div class="real-take">درس: زمینهٔ کم‌هزینه، کیفیت پاسخ را بالا می‌برد.</div>
+      </div>
+
+      <div class="card real-card rv-s" style="--d:.36s;--c:#f59e0b">
+        <div class="real-head"><span class="nm">هارنس سفارشی شما</span><span class="tagline">your own runtime</span></div>
+        <ul>
+          <li><b>ابزارها</b>: دامنهٔ خودتان — دیتابیس، API داخلی، جست‌وجوی سازمانی</li>
+          <li><b>حافظه</b>: قوانین کسب‌وکار و تاریخچهٔ تصمیم‌ها</li>
+          <li><b>گاردیل</b>: سیاست‌های داخلی، سقف هزینه و مسیر تأیید</li>
+        </ul>
+        <div class="real-take">درس: هارنس خوب، محصول شما را می‌شناسد — نه فقط زبان را.</div>
+      </div>
+    </div>
+
+    <div class="cmp-note rv" style="--d:.44s">
+      <span class="chip cy"><span class="dot"></span>الگوی مشترک</span>
+      <span>ابزار کم و دقیق، حافظهٔ صریح، گاردیل پیش از اجرا، و لاگ ساختاریافته — همین چهار تا، تفاوت یک دموی خوب و یک محصول را می‌سازد.</span>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 17 — SECTION 04 / LIVE DEMO
+       ========================================================== -->
+  <section class="slide s-div s-live" id="liveSlide" data-label="دموی زنده">
+    <div class="ghost">17</div>
+    <div class="div-wrap">
+      <span class="div-tag rv" style="--d:.05s">section 04 — live demo</span>
+      <div class="div-num rv-b" style="--d:.12s">04</div>
+      <h2 class="div-title rv" style="--d:.2s">دموی زنده</h2>
+
+      <div class="live-grid">
+        <div class="card live-check rv-r" style="--d:.26s">
+          <h3>چک‌لیست ارائه‌دهنده</h3>
+          <ol>
+            <li><span class="no">۱</span><span>ترمینال را باز کنید و به پوشهٔ پروژهٔ نمونه بروید.</span></li>
+            <li><span class="no">۲</span><span>دستور: <code>claude</code> یا <code>python harness.py --task "fix report bug"</code></span></li>
+            <li><span class="no">۳</span><span>یک اجرای واقعی: خطا → اصلاح → تست سبز.</span></li>
+            <li><span class="no">۴</span><span>اگر اینترنت نبود: همین شبیه‌سازِ داخل فایل را اجرا کنید (اسلاید ۱۲).</span></li>
+          </ol>
+        </div>
+
+        <div class="card live-video rv-r" style="--d:.32s">
+          <video id="demoVideo" controls playsinline preload="metadata"></video>
+          <div class="vid-fallback" id="vidFallback">
+            <b>جای ویدئوی ضبط‌شده</b><br>
+            اگر ویدئویی از اجرای واقعی دارید، فایل <code>VIDEO_SRC</code> را در انتهای اسکریپت با
+            داده‌ی base64 پر کنید تا اینجا پخش شود.<br>
+            بدون ویدئو: از پنجرهٔ ترمینال، یک اجرای واقعی را جلوی جمع انجام دهید.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>

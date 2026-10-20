@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="معماری ایجنت‌های هوش مصنوعی و هارنس — ارائه‌ای تعاملی">
+<title>معماری ایجنت‌های هوش مصنوعی و هارنس</title>
+
+<!-- فونت فارسی (CDN) — در نبود اینترنت به فونت جایگزین سیستم برمی‌گردد -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- نقشهٔ ماژول برای Three.js (CDN) — در نبود اینترنت، نمای دوبعدی جایگزین می‌شود -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+/* ============================================================
+   THEME TOKENS
+   ============================================================ */
+:root{
+  --bg:        #090d16;
+  --bg-2:      #0c1220;
+  --panel:     rgba(17,26,43,.72);
+  --panel-2:   rgba(13,20,34,.86);
+  --line:      rgba(56,189,248,.18);
+  --line-soft: rgba(148,163,184,.14);
+
+  --cyan:      #38bdf8;
+  --emerald:   #10b981;
+  --amber:     #f59e0b;
+  --rose:      #f43f5e;
+  --violet:    #a78bfa;
+
+  --text:      #e9eff8;
+  --text-2:    #b8c6da;
+  --muted:     #8497b1;
+
+  --pad:       clamp(16px, 3.1vw, 60px);
+  --gap:       clamp(10px, 1.5vw, 24px);
+  --radius:    clamp(10px, 1.1vw, 18px);
+
+  --fs-hero:   clamp(30px, 5.1vw, 82px);
+  --fs-h2:     clamp(20px, 2.65vw, 44px);
+  --fs-h3:     clamp(14px, 1.25vw, 21px);
+  --fs-body:   clamp(12.5px, .95vw, 17px);
+  --fs-small:  clamp(11px, .78vw, 14px);
+  --fs-micro:  clamp(9.5px, .66vw, 12.5px);
+
+  --ease:      cubic-bezier(.16,1,.3,1);
+  --dur:       .6s;
+
+  --font: "Vazirmatn", "IRANSans", "Segoe UI", Tahoma, system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+
+html,body{ height:100%; }
+body{
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: 1.85;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body::selection{ background: rgba(56,189,248,.3); }
+
+/* ============================================================
+   BACKGROUND LAYER
+   ============================================================ */
+.bg{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+.bg::before{  /* structural grid */
+  content:"";
+  position:absolute; inset:-2px;
+  background-image:
+    linear-gradient(rgba(56,189,248,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,.045) 1px, transparent 1px);
+  background-size: clamp(38px, 4.4vw, 74px) clamp(38px, 4.4vw, 74px);
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, #000 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, #000 30%, transparent 100%);
+}
+.orb{ position:absolute; border-radius:50%; filter: blur(70px); opacity:.5; }
+.orb.a{ width:46vw; height:46vw; top:-12vw; right:-10vw; background: radial-gradient(circle, rgba(56,189,248,.34), transparent 66%); animation: drift1 26s ease-in-out infinite alternate; }
+.orb.b{ width:40vw; height:40vw; bottom:-14vw; left:-8vw;  background: radial-gradient(circle, rgba(16,185,129,.26), transparent 66%); animation: drift2 32s ease-in-out infinite alternate; }
+.orb.c{ width:30vw; height:30vw; top:38%; left:38%;      background: radial-gradient(circle, rgba(245,158,11,.14), transparent 68%); animation: drift3 38s ease-in-out infinite alternate; }
+@keyframes drift1{ to{ transform: translate3d(-6vw, 5vh, 0) scale(1.14); } }
+@keyframes drift2{ to{ transform: translate3d(7vw, -6vh, 0) scale(1.2);  } }
+@keyframes drift3{ to{ transform: translate3d(-5vw, -7vh, 0) scale(.85);  } }
+.scanline{
+  position:absolute; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,.45), transparent);
+  animation: scan 11s linear infinite;
+}
+@keyframes scan{ 0%{ top:-2%; opacity:0 } 12%{opacity:.9} 88%{opacity:.9} 100%{ top:102%; opacity:0 } }
+.vignette{ position:absolute; inset:0; background: radial-gradient(ellipse 80% 70% at 50% 45%, transparent 40%, rgba(3,6,12,.85) 100%); }
+
+/* ============================================================
+   DECK / SLIDES
+   ============================================================ */
+#deck{ position:relative; z-index:1; width:100%; height:100vh; height:100dvh; overflow:hidden; }
+.slide{
+  position:absolute; inset:0;
+  padding: calc(var(--pad) + 26px) var(--pad) calc(var(--pad) + 54px);
+  display:flex; flex-direction:column; gap: var(--gap);
+  opacity:0; visibility:hidden;
+  transform: translateX(var(--x, 0)) scale(.988);
+  transition: opacity .5s var(--ease), transform .62s var(--ease), visibility .62s;
+}
+/* در RTL: اسلاید با ایندکس بزرگ‌تر سمت چپ قرار می‌گیرد */
+.slide.out-left { --x: -7%; }
+.slide.out-right{ --x:  7%; }
+.slide.active{ opacity:1; visibility:visible; --x:0; transform:none; z-index:2; }
+
+/* ghost number (dribbble TOC style) */
+.ghost{
+  position:absolute; z-index:0; pointer-events:none;
+  font-size: clamp(90px, 19vw, 300px); font-weight:900; line-height:.78;
+  color: transparent; -webkit-text-stroke: 1.5px rgba(56,189,248,.16);
+  bottom: clamp(-30px, -1vw, 0px); left: clamp(-14px, 1vw, 26px);
+  letter-spacing:-.04em;
+}
+.ghost.fill{ color: rgba(56,189,248,.045); -webkit-text-stroke:0; }
+/* content wrappers sit above the ghost number */
+.s1 > *:not(.ghost), .s2-body, .s3-body, .s4-body, .s5-body, .closing{ position:relative; z-index:1; }
+
+/* اسلاید ۱ — مدار چرخان (تزئین) */
+.slide.s1 > .orbit{
+  position:absolute; z-index:0; pointer-events:none;
+  left: clamp(1%, 3vw, 6%); top:46%;
+  width: clamp(240px, 32vw, 520px);
+  margin-top: calc(clamp(240px, 32vw, 520px) / -2);
+  opacity:.85;
+}
+.orbit svg{ width:100%; height:auto; overflow:visible; }
+.orbit .ring{ fill:none; stroke:rgba(56,189,248,.22); stroke-width:1; stroke-dasharray:3 9; }
+.orbit .r2{ stroke:rgba(16,185,129,.28); stroke-dasharray:2 7; }
+.orbit .r3{ stroke:rgba(245,158,11,.22); stroke-dasharray:10 6; }
+.orbit .core{ fill:rgba(56,189,248,.05); stroke:rgba(56,189,248,.3); stroke-width:1; }
+.orbit .core-in{ fill:none; stroke:rgba(56,189,248,.45); stroke-width:1; stroke-dasharray:4 6; }
+.orbit .dot{ filter: drop-shadow(0 0 8px currentColor); }
+.orbit .cyan{ fill:#38bdf8; color:#38bdf8; }
+.orbit .emerald{ fill:#10b981; color:#10b981; }
+.orbit .amber{ fill:#f59e0b; color:#f59e0b; }
+.orbit .spin, .orbit .r3{ transform-box: view-box; transform-origin: 210px 210px; }
+.orbit .s-a{ animation: orbit 22s linear infinite; }
+.orbit .s-b{ animation: orbit 15s linear infinite reverse; }
+.orbit .s-c{ animation: orbit 31s linear infinite; }
+.orbit .r1{ animation: orbit 46s linear infinite; }
+.orbit .r2{ animation: orbit 33s linear infinite reverse; }
+.orbit .r3{ animation: orbit 60s linear infinite; }
+@keyframes orbit{ from{ transform: rotate(0deg); } to{ transform: rotate(360deg); } }
+@media (max-width:1000px){ .slide.s1 > .orbit{ display:none; } }
+
+/* ============================================================
+   REVEAL ANIMATIONS
+   ============================================================ */
+.rv{ opacity:0; transform: translateY(22px); transition: opacity .7s var(--ease), transform .7s var(--ease); transition-delay: var(--d, 0s); }
+.slide.active .rv{ opacity:1; transform:none; }
+.rv-r{ opacity:0; transform: translateX(-26px); transition: opacity .7s var(--ease), transform .7s var(--ease); transition-delay: var(--d, 0s); }
+.slide.active .rv-r{ opacity:1; transform:none; }
+.rv-s{ opacity:0; transform: scale(.9); transition: opacity .75s var(--ease), transform .75s var(--ease); transition-delay: var(--d, 0s); }
+.slide.active .rv-s{ opacity:1; transform:none; }
+.rv-b{ opacity:0; filter: blur(12px); transition: opacity .85s var(--ease), filter .85s var(--ease); transition-delay: var(--d, 0s); }
+.slide.active .rv-b{ opacity:1; filter:none; }
+
+/* ============================================================
+   SHARED PIECES
+   ============================================================ */
+.kicker{
+  display:inline-flex; align-items:center; gap:.6em;
+  font-family: var(--mono); font-size: var(--fs-micro);
+  letter-spacing:.22em; text-transform:uppercase;
+  color: var(--cyan); direction:ltr;
+}
+.kicker .n{ color: var(--muted); }
+.kicker::after{ content:""; width: clamp(28px, 4vw, 70px); height:1px; background: linear-gradient(90deg, var(--cyan), transparent); }
+
+.s-title{
+  font-size: var(--fs-h2); font-weight:800; line-height:1.35;
+  letter-spacing:-.01em; margin-top:.15em;
+}
+.s-title em{ font-style:normal; color: var(--cyan); }
+.s-sub{ color: var(--muted); font-size: var(--fs-body); max-width: 62ch; }
+
+.card{
+  background: var(--panel);
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  padding: clamp(12px, 1.3vw, 22px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position:relative; overflow:hidden;
+}
+.card::after{
+  content:""; position:absolute; top:0; right:0; width:2px; height:38%;
+  background: linear-gradient(180deg, var(--accent, var(--cyan)), transparent);
+}
+.card h3{ font-size: var(--fs-h3); font-weight:700; line-height:1.5; }
+.card p{ color: var(--text-2); font-size: var(--fs-small); line-height:1.95; }
+
+.rule{ height:1px; background: linear-gradient(90deg, var(--line), transparent); border:0; }
+
+.chip{
+  display:inline-flex; align-items:center; gap:.45em;
+  padding:.32em .75em; border-radius:999px;
+  border:1px solid var(--line); background: rgba(56,189,248,.06);
+  font-size: var(--fs-micro); color: var(--text-2);
+  font-family: var(--mono); direction:ltr; white-space:nowrap;
+}
+.chip .dot{ width:7px; height:7px; border-radius:50%; background: var(--accent, var(--cyan)); box-shadow: 0 0 10px var(--accent, var(--cyan)); }
+.chip.cy{ --accent: var(--cyan); }
+.chip.em{ --accent: var(--emerald); }
+.chip.am{ --accent: var(--amber); }
+.chip.ro{ --accent: var(--rose); }
+
+/* CTA / buttons */
+.btn{
+  font-family: var(--font); font-size: var(--fs-small); font-weight:600;
+  color: var(--bg); background: var(--cyan);
+  border:0; border-radius: 999px; padding: .62em 1.35em; cursor:pointer;
+  display:inline-flex; align-items:center; gap:.5em;
+  box-shadow: 0 8px 26px rgba(56,189,248,.28);
+  transition: transform .18s var(--ease), box-shadow .18s var(--ease), background .18s;
+}
+.btn:hover{ transform: translateY(-2px); box-shadow: 0 12px 32px rgba(56,189,248,.4); }
+.btn:active{ transform: translateY(0); }
+.btn.ghost-btn{
+  background: transparent; color: var(--text); border:1px solid var(--line);
+  box-shadow:none;
+}
+.btn.ghost-btn:hover{ border-color: var(--cyan); color: var(--cyan); }
+.btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
+
+/* ============================================================
+   SLIDE 1 — TITLE
+   ============================================================ */
+.s1{ justify-content:center; gap: clamp(14px, 1.8vw, 30px); }
+.s1 .eyebrow{
+  display:inline-flex; align-items:center; gap:.7em; align-self:flex-start;
+  font-family:var(--mono); font-size: var(--fs-micro); letter-spacing:.24em;
+  color: var(--cyan); direction:ltr; text-transform:uppercase;
+  border:1px solid var(--line); border-radius:999px; padding:.45em 1.1em;
+  background: rgba(56,189,248,.05);
+}
+.s1 h1{
+  font-size: var(--fs-hero); font-weight:900; line-height:1.22; letter-spacing:-.02em;
+  max-width: 20ch;
+}
+.s1 h1 .hl{
+  background: linear-gradient(100deg, var(--cyan), #7dd3fc 40%, var(--emerald));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.s1 .lede{
+  font-size: clamp(14px, 1.25vw, 22px); color: var(--text-2); max-width: 60ch; line-height:1.9;
+}
+.s1 .lede b{ color: var(--cyan); font-weight:700; }
+.s1 .lede .em{ color: var(--emerald); font-weight:700; }
+.s1-meta{ display:flex; flex-wrap:wrap; gap: clamp(10px, 1.2vw, 20px); align-items:stretch; }
+.meta-card{
+  display:flex; align-items:center; gap: clamp(9px, 1vw, 16px);
+  border:1px solid var(--line); background: var(--panel-2);
+  border-radius: var(--radius); padding: clamp(9px, 1vw, 15px) clamp(13px, 1.4vw, 22px);
+  min-width: clamp(150px, 16vw, 230px);
+  transition: border-color .25s, transform .25s var(--ease);
+}
+.meta-card:hover{ border-color: rgba(56,189,248,.45); transform: translateY(-3px); }
+.meta-card .ico{
+  width: clamp(28px, 2.6vw, 40px); height: clamp(28px, 2.6vw, 40px); flex:0 0 auto;
+  display:grid; place-items:center; border-radius: 10px;
+  background: rgba(56,189,248,.1); border:1px solid var(--line);
+  color: var(--cyan); font-size: clamp(12px, 1.1vw, 17px);
+}
+.meta-card .k{ font-size: var(--fs-micro); color: var(--muted); letter-spacing:.06em; }
+.meta-card .v{ font-size: var(--fs-small); font-weight:700; color: var(--text); line-height:1.6; }
+.s1-stats{ display:flex; flex-wrap:wrap; gap: clamp(12px, 1.6vw, 30px); margin-top:.4em; }
+.s1-stats .st{ display:flex; flex-direction:column; }
+.s1-stats .st b{ font-family:var(--mono); font-size: clamp(16px, 1.6vw, 26px); color: var(--cyan); font-weight:700; direction:ltr; }
+.s1-stats .st span{ font-size: var(--fs-micro); color: var(--muted); }
+
+/* ============================================================
+   SLIDE 2 — CAR / 3D
+   ============================================================ */
+.s2{ display:grid; grid-template-rows: auto 1fr; }
+.s2-body{ display:grid; grid-template-columns: 1.05fr .95fr; gap: var(--gap); min-height:0; }
+.car-stage{
+  position:relative; border:1px solid var(--line); border-radius: var(--radius);
+  overflow:hidden; background:
+    radial-gradient(ellipse 60% 60% at 50% 60%, rgba(56,189,248,.10), transparent 70%),
+    linear-gradient(180deg, #070b13, #0a1120);
+  min-height:0;
+}
+.car-stage canvas{ display:block; width:100%; height:100%; }
+.car-topbar{
+  position:absolute; top:0; right:0; left:0; z-index:3;
+  display:flex; justify-content:space-between; align-items:center;
+  padding: clamp(7px, .8vw, 13px) clamp(9px, 1.1vw, 18px);
+  font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr;
+  pointer-events:none;
+}
+.car-hint{
+  position:absolute; bottom: clamp(7px, .8vw, 14px); left: 50%; transform: translateX(-50%);
+  z-index:3; font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted);
+  border:1px solid var(--line-soft); border-radius:999px; padding:.35em .9em;
+  background: rgba(9,13,22,.72); backdrop-filter: blur(6px); white-space:nowrap;
+}
+.lbl{
+  position:absolute; z-index:2; pointer-events:none;
+  transform: translate(-50%,-50%);
+  font-size: var(--fs-micro); font-weight:600; white-space:nowrap;
+  padding:.28em .7em; border-radius:999px;
+  border:1px solid var(--c, var(--cyan)); color: var(--c, var(--cyan));
+  background: rgba(9,13,22,.82); backdrop-filter: blur(6px);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c, var(--cyan)) 35%, transparent);
+  opacity:0; transition: opacity .4s ease;
+}
+.lbl.on{ opacity:1; }
+.car-fallback{
+  position:absolute; inset:0; z-index:2; display:none;
+  place-items:center; padding: clamp(8px, 1.4vw, 22px);
+  background: linear-gradient(180deg, #070b13, #0a1120);
+}
+.car-fallback.on{ display:grid; }
+.car-fallback svg{ width:100%; max-width: 620px; height:auto; }
+.car-fallback .fb-note{ margin-top:.8em; font-size: var(--fs-micro); color: var(--amber); text-align:center; }
+
+.cmp{ display:grid; grid-template-rows: 1fr auto; gap: var(--gap); min-height:0; }
+.cmp-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+.cmp-card{ --accent: var(--rose); display:flex; flex-direction:column; gap:.55em; }
+.cmp-card.harness{ --accent: var(--cyan); }
+.cmp-head{ display:flex; align-items:center; gap:.6em; }
+.cmp-head .ic{
+  width: clamp(26px, 2.4vw, 38px); height: clamp(26px, 2.4vw, 38px);
+  display:grid; place-items:center; border-radius:9px; font-size: clamp(12px, 1.1vw, 17px);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+}
+.cmp-head .t{ font-weight:800; font-size: var(--fs-h3); line-height:1.4; }
+.cmp-head .s{ display:block; font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+.cmp-card ul{ list-style:none; display:flex; flex-direction:column; gap:.42em; margin-top:.2em; }
+.cmp-card li{ display:flex; gap:.55em; font-size: var(--fs-small); color: var(--text-2); line-height:1.85; }
+.cmp-card li i{ font-style:normal; color: var(--accent); flex:0 0 auto; font-family:var(--mono); }
+.cmp-spec{ margin-top:auto; padding-top:.6em; border-top:1px solid var(--line-soft); display:flex; flex-direction:column; gap:.3em; }
+.cmp-spec div{ display:flex; justify-content:space-between; gap:.6em; font-size: var(--fs-micro); }
+.cmp-spec span{ color: var(--muted); }
+.cmp-spec b{ font-family:var(--mono); font-weight:600; color: var(--accent); direction:ltr; }
+.cmp-note{
+  display:flex; align-items:center; gap:.7em; flex-wrap:wrap;
+  border:1px solid var(--line); border-left:3px solid var(--emerald);
+  border-radius: var(--radius); padding: clamp(9px, 1vw, 15px) clamp(12px, 1.3vw, 20px);
+  background: rgba(16,185,129,.06); font-size: var(--fs-small); color: var(--text-2);
+}
+.cmp-note b{ color: var(--emerald); }
+
+/* ============================================================
+   SLIDE 3 — ReAct LOOP
+   ============================================================ */
+.s3{ display:grid; grid-template-rows: auto 1fr; }
+.s3-body{ display:grid; grid-template-columns: 1.05fr .95fr; gap: var(--gap); min-height:0; }
+.loop-box{ display:grid; place-items:center; position:relative; }
+.loop-svg{ width:100%; max-width: 540px; height:auto; overflow:visible; }
+.loop-ring{ transform-origin: 50% 50%; animation: spin 22s linear infinite; }
+@keyframes spin{ to{ transform: rotate(360deg); } }
+.loop-node{ transition: opacity .35s ease; }
+.loop-node .nd{ transition: transform .45s var(--ease), fill .35s; transform-origin:center; transform-box: fill-box; }
+.loop-node.hot .nd{ transform: scale(1.12); }
+.loop-node .lb{ font-size: 11px; fill: var(--muted); font-family: var(--font); }
+.loop-node.hot .lb{ fill: var(--text); }
+.loop-arrow{ opacity:.25; transition: opacity .35s; }
+
+.steps{ display:grid; grid-template-rows: repeat(3, 1fr); gap: var(--gap); min-height:0; }
+.step{
+  display:grid; grid-template-columns: auto 1fr; gap: clamp(9px, 1.1vw, 18px);
+  align-items:center; border:1px solid var(--line); border-radius: var(--radius);
+  padding: clamp(10px, 1.2vw, 20px); background: var(--panel-2);
+  transition: border-color .35s, background .35s, transform .35s var(--ease);
+  cursor:pointer;
+}
+.step .num{
+  width: clamp(30px, 2.8vw, 46px); height: clamp(30px, 2.8vw, 46px);
+  display:grid; place-items:center; border-radius:12px;
+  font-family:var(--mono); font-weight:700; font-size: var(--fs-small);
+  border:1px solid var(--line); color: var(--muted); direction:ltr;
+  transition: all .35s var(--ease);
+}
+.step .t{ font-weight:700; font-size: var(--fs-h3); display:flex; align-items:center; gap:.5em; flex-wrap:wrap; }
+.step .t code{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--cyan); direction:ltr; }
+.step .d{ font-size: var(--fs-small); color: var(--muted); line-height:1.85; }
+.step .snip{ margin-top:.35em; font-family:var(--mono); font-size: var(--fs-micro); color: var(--c); direction:ltr; text-align:left; opacity:.8; }
+.step.hot{ border-color: color-mix(in srgb, var(--c) 55%, transparent); background: color-mix(in srgb, var(--c) 9%, var(--panel-2)); transform: translateX(-8px); }
+.step.hot .num{ background: var(--c); color: #06101c; border-color: var(--c); box-shadow: 0 0 22px color-mix(in srgb, var(--c) 55%, transparent); }
+.step.hot .d{ color: var(--text-2); }
+.react-ctl{ display:flex; align-items:center; gap:.6em; flex-wrap:wrap; }
+.mini-note{ font-size: var(--fs-micro); color: var(--muted); font-family:var(--mono); direction:ltr; }
+
+/* ============================================================
+   SLIDE 4 — CODE + SIMULATOR
+   ============================================================ */
+.s4{ display:grid; grid-template-rows: auto 1fr; }
+.s4-body{ display:grid; grid-template-columns: 1.08fr .92fr; gap: var(--gap); min-height:0; }
+.code-wrap{ display:flex; flex-direction:column; border:1px solid var(--line); border-radius: var(--radius); overflow:hidden; background: #070b12; min-height:0; }
+.code-bar{ display:flex; align-items:center; gap:.5em; padding:.55em .9em; background: rgba(56,189,248,.05); border-bottom:1px solid var(--line-soft); }
+.code-bar .dots{ display:flex; gap:.35em; }
+.code-bar .dots i{ width:9px; height:9px; border-radius:50%; background: rgba(148,163,184,.3); }
+.code-bar .dots i:nth-child(1){ background: var(--rose); }
+.code-bar .dots i:nth-child(2){ background: var(--amber); }
+.code-bar .dots i:nth-child(3){ background: var(--emerald); }
+.code-bar .fname{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+pre.code{
+  margin:0; padding: clamp(9px, 1.1vw, 20px); overflow:auto; direction:ltr; text-align:left;
+  font-family: var(--mono); font-size: clamp(8.5px, min(.6vw, 1.02vh), 12px); line-height:1.52;
+  color: var(--text-2); flex:1; min-height:0;
+  unicode-bidi: isolate;
+}
+pre.code::-webkit-scrollbar{ width:8px; height:8px; }
+pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radius:8px; }
+.c-k{ color: #c084fc; } .c-f{ color: #7dd3fc; } .c-s{ color: #86efac; } .c-c{ color: #5c6b82; font-style:italic; }
+.c-n{ color: #fbbf24; } .c-t{ color: #38bdf8; } .c-p{ color: #e9eff8; }
+
+.console{ display:flex; flex-direction:column; border:1px solid var(--line); border-radius: var(--radius); overflow:hidden; background:#060a11; min-height:0; }
+.con-bar{ display:flex; align-items:center; justify-content:space-between; gap:.6em; padding:.5em .9em; border-bottom:1px solid var(--line-soft); background: rgba(16,185,129,.05); }
+.con-bar .ttl{ display:flex; align-items:center; gap:.5em; font-family:var(--mono); font-size: var(--fs-micro); color: var(--emerald); direction:ltr; }
+.con-bar .ttl .pulse{ width:8px; height:8px; border-radius:50%; background: var(--emerald); box-shadow:0 0 10px var(--emerald); animation: blink 1.4s infinite; }
+@keyframes blink{ 50%{ opacity:.25 } }
+.con-log{
+  padding: clamp(8px, 1vw, 16px); overflow:auto; direction:ltr; text-align:left;
+  font-family:var(--mono); font-size: var(--fs-micro); line-height:1.9;
+  flex:1; min-height:0; unicode-bidi: isolate;
+}
+.con-log::-webkit-scrollbar{ width:8px; }
+.con-log::-webkit-scrollbar-thumb{ background: rgba(16,185,129,.25); border-radius:8px; }
+.log{ opacity:0; transform: translateY(6px); animation: logIn .32s var(--ease) forwards; white-space:pre-wrap; word-break: break-word; }
+@keyframes logIn{ to{ opacity:1; transform:none; } }
+.log .tag{ display:inline-block; min-width: 6.4em; color: var(--muted); }
+.log.SYSTEM .tag{ color:#7dd3fc } .log.THOUGHT .tag{ color:#c084fc }
+.log.TOOL .tag{ color:#34d399 } .log.GUARD .tag{ color:#fbbf24 }
+.log.ERROR .tag{ color:#fb7185 } .log.MEMORY .tag{ color:#7dd3fc }
+.log.DONE .tag{ color:#34d399; font-weight:700 }
+.log .msg{ color: var(--text-2); }
+.log.ERROR .msg{ color:#fda4af } .log.GUARD .msg{ color:#fcd34d } .log.DONE .msg{ color:#86efac }
+.caret{ display:inline-block; width:.55em; height:1em; background: var(--emerald); vertical-align:-2px; animation: blink 1s steps(2) infinite; }
+.sim-metrics{ display:flex; gap:.5em; flex-wrap:wrap; padding:.55em .9em; border-top:1px solid var(--line-soft); background: rgba(255,255,255,.015); }
+.sim-metrics .m{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+.sim-metrics .m b{ color: var(--cyan); font-weight:600; }
+
+/* ============================================================
+   SLIDE 5 — SUMMARY
+   ============================================================ */
+.s5{ display:grid; grid-template-rows: auto 1fr; }
+.s5-body{ display:grid; grid-template-columns: .95fr 1.05fr; gap: var(--gap); min-height:0; }
+.metrics{ display:grid; grid-template-columns: 1fr 1fr; gap: var(--gap); align-content:start; }
+.metric{ display:flex; flex-direction:column; gap:.1em; }
+.metric b{ font-family:var(--mono); font-size: clamp(26px, 3.4vw, 58px); font-weight:800; line-height:1.1; color: var(--c, var(--cyan)); direction:ltr; }
+.metric span{ font-size: var(--fs-small); color: var(--text-2); }
+.metric small{ font-size: var(--fs-micro); color: var(--muted); }
+.check{ list-style:none; display:flex; flex-direction:column; gap:.55em; }
+.check li{
+  display:grid; grid-template-columns: auto 1fr; gap:.75em; align-items:start;
+  border:1px solid var(--line-soft); border-radius: var(--radius);
+  padding: clamp(9px, 1vw, 15px) clamp(11px, 1.2vw, 18px);
+  background: var(--panel-2);
+  transition: border-color .3s, transform .3s var(--ease), background .3s;
+}
+.check li:hover{ border-color: rgba(16,185,129,.45); transform: translateX(-6px); background: rgba(16,185,129,.05); }
+.check .ck{
+  width: clamp(19px, 1.8vw, 26px); height: clamp(19px, 1.8vw, 26px); border-radius:7px;
+  display:grid; place-items:center; flex:0 0 auto;
+  background: rgba(16,185,129,.14); border:1px solid rgba(16,185,129,.5); color: var(--emerald);
+  font-size: var(--fs-micro);
+}
+.check .tx b{ display:block; font-size: var(--fs-small); font-weight:700; }
+.check .tx span{ font-size: var(--fs-micro); color: var(--muted); line-height:1.8; }
+.closing{
+  display:flex; align-items:center; justify-content:space-between; gap: var(--gap); flex-wrap:wrap;
+  border-top:1px solid var(--line); padding-top: clamp(10px, 1.2vw, 20px);
+}
+.closing .q{ font-size: var(--fs-body); color: var(--text-2); }
+.closing .q b{ color: var(--cyan); }
+
+/* ============================================================
+   HUD / NAVIGATION
+   ============================================================ */
+.hud{
+  position:fixed; z-index:20; bottom:0; right:0; left:0;
+  display:flex; align-items:center; justify-content:space-between; gap: var(--gap);
+  padding: clamp(7px, .8vw, 14px) var(--pad) calc(clamp(7px, .8vw, 14px) + env(safe-area-inset-bottom));
+  background: linear-gradient(0deg, rgba(6,10,18,.92), rgba(6,10,18,0));
+  font-size: var(--fs-micro);
+}
+.hud .brand{ display:flex; align-items:center; gap:.6em; color: var(--muted); font-family:var(--mono); direction:ltr; }
+.hud .brand .mk{ width:9px; height:9px; background: var(--cyan); border-radius:2px; transform: rotate(45deg); box-shadow:0 0 12px var(--cyan); }
+.hud-steps{ display:flex; align-items:center; gap:.4em; }
+.hud-steps button{
+  width: clamp(24px, 2.3vw, 34px); height: clamp(24px, 2.3vw, 34px);
+  border-radius:9px; border:1px solid var(--line-soft); background: rgba(255,255,255,.02);
+  color: var(--muted); font-family:var(--mono); font-size: var(--fs-micro); cursor:pointer;
+  transition: all .25s var(--ease);
+}
+.hud-steps button:hover{ color: var(--cyan); border-color: var(--cyan); }
+.hud-steps button.on{ background: var(--cyan); color:#06101c; border-color: var(--cyan); font-weight:700; box-shadow:0 0 18px rgba(56,189,248,.45); }
+.hud-right{ display:flex; align-items:center; gap: var(--gap); }
+.hud .count{ font-family:var(--mono); color: var(--text-2); direction:ltr; }
+.hud .count b{ color: var(--cyan); }
+.hud .keys{ color: var(--muted); display:flex; align-items:center; gap:.45em; }
+.hud kbd{
+  font-family:var(--mono); font-size: var(--fs-micro); border:1px solid var(--line-soft);
+  border-bottom-width:2px; border-radius:5px; padding:.1em .45em; color: var(--text-2);
+}
+.nav-arrows{ position:fixed; z-index:21; bottom: clamp(46px, 5vw, 78px); left: var(--pad); display:flex; gap:.4em; }
+.nav-arrows button{
+  width: clamp(34px, 3.2vw, 46px); height: clamp(34px, 3.2vw, 46px); border-radius:50%;
+  border:1px solid var(--line); background: rgba(9,13,22,.8); color: var(--text-2);
+  cursor:pointer; display:grid; place-items:center; backdrop-filter: blur(8px);
+  transition: all .22s var(--ease);
+}
+.nav-arrows button:hover{ border-color: var(--cyan); color: var(--cyan); transform: scale(1.07); }
+.nav-arrows button:disabled{ opacity:.3; cursor:not-allowed; transform:none; }
+.progress{ position:fixed; z-index:22; bottom:0; right:0; left:0; height:2px; background: rgba(148,163,184,.14); }
+.progress i{ display:block; height:100%; background: linear-gradient(90deg, var(--emerald), var(--cyan)); transform-origin: right center; transition: transform .55s var(--ease); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1000px){
+  .s2-body, .s3-body, .s4-body, .s5-body{ grid-template-columns: 1fr; }
+  .s3-body{ grid-template-rows: .9fr 1.1fr; }
+  .car-stage{ min-height: clamp(220px, 38vh, 360px); }
+  .loop-box{ min-height: 190px; }
+  .hud .keys{ display:none; }
+  /* اسلایدهای بلند روی موبایل اسکرول می‌خورند */
+  .slide{ overflow-y: auto; overscroll-behavior: contain; }
+}
+@media (max-width: 700px){
+  :root{ --pad: 16px; }
+  .slide{ padding: calc(var(--pad) + 34px) var(--pad) calc(var(--pad) + 62px); }
+  .s1 h1{ max-width:none; }
+  .s1-meta{ gap:8px; }
+  .meta-card{ min-width:0; flex:1 1 46%; }
+  .metrics{ grid-template-columns: 1fr 1fr; }
+  .cmp-grid{ grid-template-columns: 1fr; }
+  .steps{ gap:8px; }
+  .hud{ flex-wrap:wrap; justify-content:center; }
+  .hud .brand, .hud .count{ display:none; }
+  .nav-arrows{ bottom: auto; top: calc(var(--pad) + 6px); left: var(--pad); }
+  .ghost{ font-size: 32vw; }
+}
+@media (max-height: 560px){
+  .slide{ padding-top: calc(var(--pad) + 12px); }
+  .nav-arrows{ display:none; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.05ms !important; }
+  .rv,.rv-r,.rv-s,.rv-b{ opacity:1 !important; transform:none !important; filter:none !important; }
+}
+</style>
+</head>
+
+<body>
+<div class="bg" aria-hidden="true">
+  <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+  <div class="scanline"></div>
+  <div class="vignette"></div>
+</div>
+
+<noscript><div class="nojs">این ارائه با جاوااسکریپت اجرا می‌شود — لطفاً جاوااسکریپت مرورگر را روشن کنید.</div></noscript>
+<main id="deck" aria-live="polite">
+
+  <!-- ==========================================================
+       SLIDE 1 — TITLE
+       ========================================================== -->
+  <section class="slide s1 active" data-label="مقدمه">
+    <div class="ghost fill">01</div>
+
+    <div class="orbit rv-s" style="--d:.3s" aria-hidden="true">
+      <svg viewBox="0 0 420 420">
+        <g class="ring r1"><circle cx="210" cy="210" r="196"/></g>
+        <g class="ring r2"><circle cx="210" cy="210" r="146"/></g>
+        <g class="ring r3"><ellipse cx="210" cy="210" rx="196" ry="66"/></g>
+        <g class="spin s-a"><circle class="dot cyan" cx="210" cy="14" r="5"/></g>
+        <g class="spin s-b"><circle class="dot emerald" cx="210" cy="64" r="4"/></g>
+        <g class="spin s-c"><circle class="dot amber" cx="210" cy="144" r="4"/></g>
+        <circle class="core" cx="210" cy="210" r="44"/>
+        <circle class="core-in" cx="210" cy="210" r="30"/>
+      </svg>
+    </div>
+
+    <span class="eyebrow rv" style="--d:.05s">AI · AGENTS · ARCHITECTURE</span>
+
+    <h1 class="rv" style="--d:.14s">معماری <span class="hl">ایجنت‌های</span> هوش مصنوعی و هارنس</h1>
+
+    <p class="lede rv" style="--d:.24s">
+      مدل زبانی فقط <b>موتور</b> است؛ آنچه یک ایجنت را قابل‌استفاده می‌کند،
+      <span class="em">هارنس</span> است: لایه‌ای که قدرت خام LLM را به
+      <b>ابزار</b>، <b>حافظه</b> و <b>گاردیل</b> تبدیل می‌کند.
+    </p>
+
+    <div class="s1-meta">
+      <!-- EDIT: نام / نقش / تاریخ ارائه‌دهنده -->
+      <div class="meta-card rv-r" style="--d:.34s">
+        <div class="ico">👤</div>
+        <div><div class="k">ارائه‌دهنده</div><div class="v">فرزاد — مهندس هوش مصنوعی</div></div>
+      </div>
+      <div class="meta-card rv-r" style="--d:.42s">
+        <div class="ico">🗓</div>
+        <div><div class="k">جلسه</div><div class="v">مهندسی ایجنت‌ها، نشست ۰۳</div></div>
+      </div>
+      <div class="meta-card rv-r" style="--d:.50s">
+        <div class="ico">⏱</div>
+        <div><div class="k">مدت</div><div class="v">۲۵ دقیقه + پرسش و پاسخ</div></div>
+      </div>
+    </div>
+
+    <div class="s1-stats">
+      <div class="st rv" style="--d:.6s"><b>05</b><span>اسلاید</span></div>
+      <div class="st rv" style="--d:.66s"><b>3D</b><span>مدل تعاملی خودرو</span></div>
+      <div class="st rv" style="--d:.72s"><b>LIVE</b><span>شبیه‌ساز اجرای هارنس</span></div>
+      <div class="st rv" style="--d:.78s"><b>ReAct</b><span>حلقهٔ استدلال</span></div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 2 — CAR ANALOGY (3D)
+       ========================================================== -->
+  <section class="slide s2" data-label="استعارهٔ خودرو">
+    <div class="ghost">02</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">02</span> — analogy</span>
+      <h2 class="s-title rv" style="--d:.12s">تشبیه خودرو: <em>موتور</em>، <em>ECU</em> و <em>دستهٔ سیم</em></h2>
+      <p class="s-sub rv" style="--d:.2s">
+        LLM توان تولید نیرو دارد، اما بدون هارنس، خودرو حرکت نمی‌کند. مدل تعاملی را بکشید تا چرخش دهید و با اسکرول زوم کنید.
+      </p>
+    </header>
+
+    <div class="s2-body">
+      <!-- ---------- 3D canvas ---------- -->
+      <div class="car-stage rv-s" style="--d:.28s" id="carStage">
+        <div class="car-topbar">
+          <span>هارنس زنده — مدل سه‌بعدی</span>
+          <span id="carFps">—</span>
+        </div>
+        <canvas id="carCanvas"></canvas>
+
+        <span class="lbl" id="lblEngine" style="--c:#f43f5e">موتور — هستهٔ LLM</span>
+        <span class="lbl" id="lblEcu" style="--c:#38bdf8">ECU — هارنس</span>
+        <span class="lbl" id="lblLidar" style="--c:#f59e0b">LiDAR — ابزارها</span>
+        <span class="lbl" id="lblWiring" style="--c:#10b981">دستهٔ سیم — مسیر فراخوانی</span>
+        <span class="lbl" id="lblMemory" style="--c:#a78bfa">حافظه و وضعیت</span>
+
+        <!-- fallback if Three.js CDN is unavailable -->
+        <div class="car-fallback" id="carFallback">
+          <div>
+            <svg viewBox="0 0 640 300" role="img" aria-label="نمودار دوبعدی خودرو با اجزای هارنس">
+              <defs>
+                <linearGradient id="fg" x1="0" x2="1"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#10b981"/></linearGradient>
+              </defs>
+              <g fill="none" stroke="url(#fg)" stroke-width="2" opacity=".85">
+                <path d="M64 196 L64 166 Q64 150 86 147 L176 136 L236 92 Q247 83 266 83 L362 83 Q384 83 397 98 L446 142 L524 152 Q556 157 556 182 L556 200 L528 200"/>
+                <path d="M254 131 L288 96 L352 96 L388 133 Z" opacity=".6"/>
+                <path d="M140 200 A36 36 0 1 0 140 199" stroke-width="3"/>
+                <path d="M446 200 A36 36 0 1 0 446 199" stroke-width="3"/>
+                <path d="M176 196 L470 196" stroke-dasharray="4 6" opacity=".5"/>
+              </g>
+              <circle cx="140" cy="196" r="14" fill="none" stroke="#38bdf8" stroke-width="2"/>
+              <circle cx="446" cy="196" r="14" fill="none" stroke="#38bdf8" stroke-width="2"/>
+              <rect x="452" y="140" width="72" height="44" rx="6" fill="#f43f5e" opacity=".22" stroke="#f43f5e" stroke-width="2"/>
+              <rect x="292" y="128" width="44" height="34" rx="5" fill="#38bdf8" opacity=".22" stroke="#38bdf8" stroke-width="2"/>
+              <circle cx="314" cy="76" r="12" fill="#f59e0b" opacity=".22" stroke="#f59e0b" stroke-width="2"/>
+              <path d="M470 158 C 420 180, 380 150, 336 150" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="5 5"/>
+              <g font-family="Vazirmatn, sans-serif" font-size="13" fill="#b8c6da">
+                <text x="530" y="128" text-anchor="end">موتور (LLM)</text>
+                <text x="292" y="118" text-anchor="middle">ECU</text>
+                <text x="314" y="52" text-anchor="middle">LiDAR</text>
+                <text x="196" y="150" text-anchor="middle">دستهٔ سیم</text>
+              </g>
+            </svg>
+            <p class="fb-note">Three.js در دسترس نبود — نمای دوبعدی جایگزین شد.</p>
+          </div>
+        </div>
+
+        <div class="car-hint">برای چرخش بکشید · برای زوم اسکرول کنید</div>
+      </div>
+
+      <!-- ---------- comparison ---------- -->
+      <div class="cmp">
+        <div class="cmp-grid">
+          <div class="card cmp-card rv-r" style="--d:.36s">
+            <div class="cmp-head">
+              <div class="ic">🔥</div>
+              <div><div class="t">موتور</div><span class="s">ENGINE / LLM</span></div>
+            </div>
+            <hr class="rule">
+            <ul>
+              <li><i>◂</i><span>تولید «گشتاور» زبانی و استدلال</span></li>
+              <li><i>◂</i><span>توانایی برنامه‌ریزی و تولید طرح‌وارهٔ ابزار</span></li>
+              <li><i>◂</i><span>اما: بدون سوخت، بدون مسیر، بدون ترمز</span></li>
+              <li><i>◂</i><span>هیچ دسترسی‌ای به دنیای واقعی ندارد</span></li>
+            </ul>
+            <div class="cmp-spec">
+              <div><span>خروجی</span><b>text / json</b></div>
+              <div><span>دسترسی به ابزار</span><b>none</b></div>
+              <div><span>ایمنی</span><b>none</b></div>
+              <div><span>حافظه</span><b>none</b></div>
+            </div>
+          </div>
+
+          <div class="card cmp-card harness rv-r" style="--d:.44s">
+            <div class="cmp-head">
+              <div class="ic">⚡</div>
+              <div><div class="t">ECU و دستهٔ سیم</div><span class="s">HARNESS / RUNTIME</span></div>
+            </div>
+            <hr class="rule">
+            <ul>
+              <li><i>◂</i><span>تبدیل خروجی مدل به فراخوانی ابزار امن</span></li>
+              <li><i>◂</i><span>گاردیل: سیاست، مجوز، بودجه و سقف مرحله</span></li>
+              <li><i>◂</i><span>حافظهٔ کوتاه‌مدت و بلندمدت + بازیابی</span></li>
+              <li><i>◂</i><span>رهگیری خطا، تلاش مجدد و ثبت کامل لاگ</span></li>
+            </ul>
+            <div class="cmp-spec">
+              <div><span>خروجی</span><b>tool_call</b></div>
+              <div><span>دسترسی به ابزار</span><b>allow-list</b></div>
+              <div><span>ایمنی</span><b>guard + sandbox</b></div>
+              <div><span>حافظه</span><b>short + long</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cmp-note rv" style="--d:.56s">
+          <span class="chip em"><span class="dot"></span>نتیجه</span>
+          <span>قدرت خام LLM با <b>هارنس</b> ضرب می‌شود: ابزار + حافظه + گاردیل = ایجنت قابل‌اتکا.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 3 — ReAct LOOP
+       ========================================================== -->
+  <section class="slide s3" data-label="حلقهٔ ReAct">
+    <div class="ghost">03</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">03</span> — theory</span>
+      <h2 class="s-title rv" style="--d:.12s">حلقهٔ <em>ReAct</em>: فکر ← عمل ← مشاهده</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        هارنس این حلقه را اجرا می‌کند: هر «عمل» پیش از اجرا از فیلتر گاردیل عبور می‌کند و نتیجهٔ آن به حافظه بازمی‌گردد.
+      </p>
+    </header>
+
+    <div class="s3-body">
+      <!-- loop diagram -->
+      <div class="loop-box rv-s" style="--d:.28s">
+        <svg class="loop-svg" viewBox="0 0 400 340" role="img" aria-label="نمودار حلقهٔ ReAct">
+          <defs>
+            <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+              <path d="M0 0 L9 4.5 L0 9 z" fill="#38bdf8"/>
+            </marker>
+          </defs>
+          <g class="loop-ring">
+            <circle cx="200" cy="170" r="118" fill="none" stroke="#38bdf8" stroke-width="1.4"
+                    stroke-dasharray="7 11" opacity=".45"/>
+            <circle cx="200" cy="170" r="96" fill="none" stroke="#10b981" stroke-width="1"
+                    stroke-dasharray="3 14" opacity=".35"/>
+          </g>
+          <path class="loop-arrow" id="arrow1" d="M200 52 A118 118 0 0 1 318 170" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+          <path class="loop-arrow" id="arrow2" d="M318 170 A118 118 0 0 1 200 288" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+          <path class="loop-arrow" id="arrow3" d="M200 288 A118 118 0 0 1 82 170" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+          <path class="loop-arrow" id="arrow4" d="M82 170 A118 118 0 0 1 200 52" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+
+          <g class="loop-node" id="node-thought">
+            <circle class="nd" cx="200" cy="52" r="40" fill="#0c1220" stroke="#a78bfa" stroke-width="2"/>
+            <text class="lb" x="200" y="57" text-anchor="middle">فکر</text>
+            <text class="lb" x="200" y="72" text-anchor="middle" style="font-size:9px;opacity:.75">THOUGHT</text>
+          </g>
+          <g class="loop-node" id="node-action">
+            <circle class="nd" cx="318" cy="170" r="40" fill="#0c1220" stroke="#38bdf8" stroke-width="2"/>
+            <text class="lb" x="318" y="175" text-anchor="middle">عمل</text>
+            <text class="lb" x="318" y="190" text-anchor="middle" style="font-size:9px;opacity:.75">ACTION</text>
+          </g>
+          <g class="loop-node" id="node-observation">
+            <circle class="nd" cx="200" cy="288" r="40" fill="#0c1220" stroke="#10b981" stroke-width="2"/>
+            <text class="lb" x="200" y="293" text-anchor="middle">مشاهده</text>
+            <text class="lb" x="200" y="308" text-anchor="middle" style="font-size:9px;opacity:.75">OBSERVATION</text>
+          </g>
+          <g class="loop-node" id="node-memory">
+            <circle class="nd" cx="82" cy="170" r="34" fill="#0c1220" stroke="#f59e0b" stroke-width="2"/>
+            <text class="lb" x="82" y="175" text-anchor="middle">حافظه</text>
+            <text class="lb" x="82" y="189" text-anchor="middle" style="font-size:9px;opacity:.75">MEMORY</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- steps -->
+      <div class="steps">
+        <div class="step rv-r" style="--d:.34s;--c:#a78bfa" data-step="0">
+          <div class="num">01</div>
+          <div>
+            <div class="t">فکر <code>Thought</code></div>
+            <div class="d">مدل هدف را می‌شکند و طرح‌وارهٔ عمل را می‌نویسد. هارنس این متن را به ساختار JSON معتبر تبدیل می‌کند.</div>
+            <div class="snip">{"thought": "ابتدا لاگ را جست‌وجو کن"}</div>
+          </div>
+        </div>
+        <div class="step rv-r" style="--d:.42s;--c:#38bdf8" data-step="1">
+          <div class="num">02</div>
+          <div>
+            <div class="t">عمل <code>Action</code></div>
+            <div class="d">هارنس عمل را در sandbox و از طریق ابزار مجاز اجرا می‌کند؛ سیاست‌ها پیش از اجرا بررسی می‌شوند.</div>
+            <div class="snip">{"tool": "shell", "args": {"cmd": "pytest -q"}}</div>
+          </div>
+        </div>
+        <div class="step rv-r" style="--d:.5s;--c:#10b981" data-step="2">
+          <div class="num">03</div>
+          <div>
+            <div class="t">مشاهده <code>Observation</code></div>
+            <div class="d">خروجی ابزار به حافظه بازگردانده می‌شود و حلقه تا رسیدن به پاسخ یا سقف بودجه تکرار می‌شود.</div>
+            <div class="snip">{"observation": "exit_code=1, 1 failed"}</div>
+          </div>
+        </div>
+
+        <div class="react-ctl rv" style="--d:.6s">
+          <button class="btn ghost-btn" id="reactPlay">▶ پخش دوبارهٔ حلقه</button>
+          <span class="mini-note" id="reactState">step: 1 / 3</span>
+          <span class="chip cy" style="margin-inline-start:auto"><span class="dot"></span>ReAct loop</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 4 — CODE + LIVE SIMULATOR
+       ========================================================== -->
+  <section class="slide s4" data-label="پیاده‌سازی">
+    <div class="ghost">04</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">04</span> — practice</span>
+      <h2 class="s-title rv" style="--d:.12s">معماری هارنس در کد و <em>اجرای زنده</em></h2>
+      <p class="s-sub rv" style="--d:.2s">
+        روی «اجرای هارنس» بزنید: خطاها رهگیری می‌شوند، ابزارها فراخوانی می‌شوند و محدودیت‌های ایمنی اعمال می‌شوند.
+      </p>
+    </header>
+
+    <div class="s4-body">
+      <!-- code -->
+      <div class="code-wrap rv-r" style="--d:.28s">
+        <div class="code-bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="fname">harness.py</span>
+          <span class="chip" style="margin-inline-start:auto"><span class="dot"></span>python 3.11</span>
+        </div>
+<pre class="code"><code><span class="c-c">"""Reference architecture of an agent harness."""</span>
+<span class="c-k">from</span> dataclasses <span class="c-k">import</span> dataclass, field
+
+<span class="c-k">@dataclass</span>
+<span class="c-k">class</span> <span class="c-t">Guard</span>:
+    allow: <span class="c-p">set</span> = field(default_factory=set)
+    <span class="c-k">def</span> <span class="c-f">check</span>(self, action: dict) <span class="c-k">-&gt;</span> <span class="c-k">None</span>:
+        <span class="c-k">if</span> action[<span class="c-s">"tool"</span>] <span class="c-k">not in</span> self.allow:
+            <span class="c-k">raise</span> <span class="c-t">PermissionError</span>(action[<span class="c-s">"tool"</span>])
+        <span class="c-k">if</span> action.get(<span class="c-s">"destructive"</span>):
+            <span class="c-k">raise</span> <span class="c-t">PermissionError</span>(<span class="c-s">"human approval"</span>)
+
+<span class="c-k">@dataclass</span>
+<span class="c-k">class</span> <span class="c-t">Harness</span>:
+    llm: <span class="c-p">Any</span>
+    tools: <span class="c-p">dict</span>
+    memory: <span class="c-p">list</span> = field(default_factory=list)
+    limits: <span class="c-p">dict</span> = field(default_factory=<span class="c-k">lambda</span>: {<span class="c-s">"steps"</span>: <span class="c-n">8</span>, <span class="c-s">"tokens"</span>: <span class="c-n">32_000</span>})
+    guard: <span class="c-t">Guard</span> = field(default_factory=<span class="c-t">Guard</span>)
+    <span class="c-k">def</span> <span class="c-f">run</span>(self, task: <span class="c-p">str</span>) <span class="c-p">str</span>:
+        <span class="c-k">for</span> step <span class="c-k">in</span> <span class="c-p">range</span>(self.limits[<span class="c-s">"steps"</span>]):
+            thought = self.llm.<span class="c-f">think</span>(task, self.memory)
+            action  = self.<span class="c-f">parse</span>(thought)      <span class="c-c"># JSON -&gt; tool call</span>
+            self.guard.<span class="c-f">check</span>(action)         <span class="c-c"># policy + permission</span>
+            <span class="c-k">try</span>:
+                obs = self.<span class="c-f">dispatch</span>(action)   <span class="c-c"># sandboxed execution</span>
+            <span class="c-k">except</span> <span class="c-t">ToolError</span> <span class="c-k">as</span> exc:
+                obs = {<span class="c-s">"error"</span>: <span class="c-p">str</span>(exc)}  <span class="c-c"># recover, don't crash</span>
+            self.memory.<span class="c-f">append</span>({<span class="c-s">"step"</span>: step, <span class="c-s">"obs"</span>: obs})
+        <span class="c-k">return</span> self.llm.<span class="c-f">summarize</span>(self.memory)</code></pre>
+      </div>
+
+      <!-- simulator -->
+      <div class="console rv-r" style="--d:.36s">
+        <div class="con-bar">
+          <span class="ttl"><span class="pulse"></span>harness · live run</span>
+          <span style="display:flex;gap:.4em">
+            <button class="btn" id="runHarness" style="padding:.4em 1.1em">▶ اجرای هارنس</button>
+            <button class="btn ghost-btn" id="resetHarness" style="padding:.4em .9em">بازنشانی</button>
+          </span>
+        </div>
+        <div class="con-log" id="conLog"></div>
+        <div class="sim-metrics">
+          <span class="m">step <b id="mStep">0/8</b></span>
+          <span class="m">tokens <b id="mTok">0/32,000</b></span>
+          <span class="m">tools <b id="mTools">0</b></span>
+          <span class="m">status <b id="mStatus">idle</b></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 5 — SUMMARY
+       ========================================================== -->
+  <section class="slide s5" data-label="جمع‌بندی">
+    <div class="ghost">05</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">05</span> — takeaways</span>
+      <h2 class="s-title rv" style="--d:.12s">جمع‌بندی: چه چیزی یک هارنس را <em>تولیدی</em> می‌کند</h2>
+    </header>
+
+    <div class="s5-body">
+      <div class="metrics">
+        <div class="card metric rv-s" style="--d:.24s;--c:#38bdf8">
+          <b data-count="8">0</b>
+          <span>ابزار متصل و قابل فراخوانی</span>
+          <small>search · code · shell · db · api · browser · fs · test</small>
+        </div>
+        <div class="card metric rv-s" style="--d:.3s;--c:#f59e0b">
+          <b data-count="3">0</b>
+          <span>لایهٔ گاردیل</span>
+          <small>سیاست · مجوز و تأیید انسانی · بودجه</small>
+        </div>
+        <div class="card metric rv-s" style="--d:.36s;--c:#10b981">
+          <b data-count="6">0</b>
+          <span>گام در یک چرخهٔ ReAct</span>
+          <small>فکر · عمل · مشاهده · بازخور</small>
+        </div>
+        <div class="card metric rv-s" style="--d:.42s;--c:#a78bfa">
+          <b data-count="100" data-suffix="٪">0</b>
+          <span>قابلیت ردیابی هر فراخوانی</span>
+          <small>لاگ ساختاریافته + replay</small>
+        </div>
+      </div>
+
+      <ul class="check">
+        <li class="rv-r" style="--d:.3s"><span class="ck">✓</span><span class="tx"><b>گاردیل چندلایه</b><span>هر عمل پیش از اجرا از فیلتر سیاست، مجوز و بودجه عبور می‌کند.</span></span></li>
+        <li class="rv-r" style="--d:.36s"><span class="ck">✓</span><span class="tx"><b>محدودیت‌های سخت</b><span>سقف مرحله، سقف توکن و timeout تا ایجنت نتواند در حلقه گیر کند.</span></span></li>
+        <li class="rv-r" style="--d:.42s"><span class="ck">✓</span><span class="tx"><b>ایزوله‌سازی اجرا</b><span>اجرای کد ابزار در sandbox، بدون دسترسی مستقیم به سیستم.</span></span></li>
+        <li class="rv-r" style="--d:.48s"><span class="ck">✓</span><span class="tx"><b>حافظهٔ دو لایه</b><span>حافظهٔ کوتاه‌مدت برای حلقه، حافظهٔ بلندمدت با بازیابی معنایی.</span></span></li>
+        <li class="rv-r" style="--d:.54s"><span class="ck">✓</span><span class="tx"><b>مدیریت خطا</b><span>خطا داده است نه استثنا: رهگیری، بازآزمایی و مسیر جایگزین.</span></span></li>
+        <li class="rv-r" style="--d:.6s"><span class="ck">✓</span><span class="tx"><b>ارزیابی و بازپخش</b><span>هر اجرا قابل بازپخش است تا تغییرات کیفیت سنجیده شود.</span></span></li>
+      </ul>
+    </div>
+
+    <div class="closing rv" style="--d:.7s">
+      <div class="q">مدل، <b>موتور</b> است. هارنس، <b>خودرو</b> است. بدون هارنس، شما فقط یک قطعهٔ گران‌قیمت دارید.</div>
+      <span class="chip cy"><span class="dot"></span>پایان · پرسش و پاسخ</span>
+    </div>
+  </section>
+</main>
+
+<!-- ============================================================
+     HUD / NAVIGATION
+     ========================================================== -->
+<div class="nav-arrows">
+  <button id="btnPrev" title="قبلی (→)" aria-label="اسلاید قبلی">→</button>
+  <button id="btnNext" title="بعدی (←)" aria-label="اسلاید بعدی">←</button>
+</div>
+
+<nav class="hud" aria-label="ناوبری اسلایدها">
+  <div class="brand"><span class="mk"></span><span>agent-harness · fa</span></div>
+  <div class="hud-steps" id="hudSteps"></div>
+  <div class="hud-right">
+    <span class="keys"><kbd>←</kbd><kbd>→</kbd><kbd>Space</kbd> حرکت · <kbd>F</kbd> تمام‌صفحه</span>
+    <span class="count"><b id="curNum">01</b> / <span id="totNum">05</span></span>
+  </div>
+</nav>
+<div class="progress"><i id="progressBar" style="transform:scaleX(.2)"></i></div>
+
+<script>
+/* ============================================================
+   THREE.JS — INTERACTIVE 3D CAR (CDN, graceful fallback)
+   ============================================================ */
+(function(){
+  const stage = document.getElementById('carStage');
+  const canvas = document.getElementById('carCanvas');
+  const fallback = document.getElementById('carFallback');
+  const fpsEl = document.getElementById('carFps');
+  const labels = {
+    engine:  document.getElementById('lblEngine'),
+    ecu:     document.getElementById('lblEcu'),
+    lidar:   document.getElementById('lblLidar'),
+    wiring:  document.getElementById('lblWiring'),
+    memory:  document.getElementById('lblMemory')
+  };
+
+  window.__carReady = false;
+  window.__carTick  = null;   // called by the deck controller when slide 2 is active
+
+  function showFallback(){
+    fallback.classList.add('on');
+    stage.querySelector('.car-hint').textContent = '2D FALLBACK · THREE.JS UNAVAILABLE';
+  }
+
+  async function init(){
+    if (!canvas) return;
+    let THREE, OrbitControls;
+    try {
+      THREE = await import('three');
+      ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+    } catch (e) {
+      console.warn('Three.js could not be loaded:', e);
+      showFallback();
+      return;
+    }
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x090d16, 0.035);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 120);
+    camera.position.set(5.4, 2.9, 6.4);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.75;
+    controls.minDistance = 4.4;
+    controls.maxDistance = 15;
+    controls.maxPolarAngle = Math.PI * 0.52;
+    controls.target.set(0, 0.95, 0);
+
+    /* ---------- lights ---------- */
+    scene.add(new THREE.AmbientLight(0x2b3b55, 0.9));
+    const hemi = new THREE.HemisphereLight(0x7dd3fc, 0x0a1120, 0.55);
+    scene.add(hemi);
+    const key = new THREE.DirectionalLight(0xbfd9ff, 0.8);
+    key.position.set(6, 9, 4); scene.add(key);
+
+    const car = new THREE.Group();
+    car.position.y = 0.02;
+    scene.add(car);
+
+    const CYAN = 0x38bdf8, RED = 0xf43f5e, EM = 0x10b981, AM = 0xf59e0b;
+
+    /* ---------- helper: holographic box ---------- */
+    function holoBox(w, h, d, x, y, z, color, fillAlpha){
+      const g = new THREE.Group();
+      const geo = new THREE.BoxGeometry(w, h, d);
+      const fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+        color, transparent:true, opacity: fillAlpha, side: THREE.DoubleSide, depthWrite:false
+      }));
+      const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(geo),
+        new THREE.LineBasicMaterial({ color, transparent:true, opacity:.85 })
+      );
+      g.add(fill, edges);
+      g.position.set(x, y, z);
+      return g;
+    }
+
+    /* ---------- chassis ---------- */
+    const bodyMat = new THREE.MeshBasicMaterial({ color:0x1a2c45, transparent:true, opacity:.55 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.62, 2.0), bodyMat);
+    body.position.set(0, 0.72, 0);
+    const bodyEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(4.5, 0.62, 2.0)),
+      new THREE.LineBasicMaterial({ color:CYAN, transparent:true, opacity:.9 })
+    );
+    bodyEdges.position.copy(body.position);
+    car.add(body, bodyEdges);
+
+    const cabin = holoBox(2.35, 0.62, 1.72, -0.28, 1.32, 0, CYAN, 0.10);
+    car.add(cabin);
+
+    // front + rear bumpers
+    car.add(holoBox(0.3, 0.34, 1.8, 2.32, 0.62, 0, CYAN, 0.12));
+    car.add(holoBox(0.3, 0.34, 1.8, -2.32, 0.62, 0, CYAN, 0.12));
+
+    // windshield plane
+    const wind = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.2, 0.62),
+      new THREE.MeshBasicMaterial({ color:0x7dd3fc, transparent:true, opacity:.14, side:THREE.DoubleSide })
+    );
+    wind.position.set(0.85, 1.32, 0); wind.rotation.y = Math.PI/2; wind.rotation.z = -0.5;
+    car.add(wind);
+
+    /* ---------- wheels ---------- */
+    const wheelMat = new THREE.MeshBasicMaterial({ color:0x0d1626, transparent:true, opacity:.85 });
+    const wheelGeo = new THREE.CylinderGeometry(0.56, 0.56, 0.36, 24, 1, true);
+    const wheelEdges = new THREE.EdgesGeometry(wheelGeo);
+    [[1.55, 1.02], [1.55, -1.02], [-1.55, 1.02], [-1.55, -1.02]].forEach(p => {
+      const w = new THREE.Mesh(wheelGeo, wheelMat);
+      w.rotation.x = Math.PI/2; w.position.set(p[0], 0.56, p[1]);
+      const we = new THREE.LineSegments(wheelEdges, new THREE.LineBasicMaterial({ color:0x7dd3fc, transparent:true, opacity:.7 }));
+      we.rotation.x = Math.PI/2; we.position.copy(w.position);
+      car.add(w, we);
+    });
+
+    /* ---------- engine (LLM core) ---------- */
+    const engine = new THREE.Group();
+    const engMat = new THREE.MeshStandardMaterial({
+      color:0x3b0d16, emissive:RED, emissiveIntensity:1.6, roughness:.35, metalness:.5
+    });
+    const engMesh = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.85, 1.25), engMat);
+    const engEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(1.15, 0.85, 1.25)),
+      new THREE.LineBasicMaterial({ color:RED })
+    );
+    engine.add(engMesh, engEdges);
+    engine.position.set(1.62, 0.98, 0);
+    car.add(engine);
+    const engLight = new THREE.PointLight(RED, 2.2, 7);
+    engLight.position.set(1.62, 1.1, 0); car.add(engLight);
+
+    /* ---------- ECU hub (the harness) ---------- */
+    const ecu = new THREE.Group();
+    const ecuMat = new THREE.MeshStandardMaterial({
+      color:0x072033, emissive:CYAN, emissiveIntensity:1.9, roughness:.25, metalness:.6
+    });
+    const ecuCore = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.52, 32), ecuMat);
+    ecuCore.rotation.x = Math.PI/2;
+    ecu.add(ecuCore);
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.72, 0.035, 12, 64),
+      new THREE.MeshBasicMaterial({ color:CYAN, transparent:true, opacity:.9 })
+    );
+    ecu.add(ring);
+    const ring2 = new THREE.Mesh(
+      new THREE.TorusGeometry(0.92, 0.018, 10, 64),
+      new THREE.MeshBasicMaterial({ color:EM, transparent:true, opacity:.65 })
+    );
+    ring2.rotation.x = 0.5; ecu.add(ring2);
+    ecu.position.set(0, 1.02, 0);
+    car.add(ecu);
+    const ecuLight = new THREE.PointLight(CYAN, 2.6, 9);
+    ecuLight.position.set(0, 1.15, 0); car.add(ecuLight);
+
+    /* ---------- memory module (violet) ---------- */
+    const mem = new THREE.Group();
+    const memMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.85, 0.3, 0.95),
+      new THREE.MeshStandardMaterial({ color:0x1b1233, emissive:0xa78bfa, emissiveIntensity:1.1, roughness:.4 })
+    );
+    const memEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(0.85, 0.3, 0.95)),
+      new THREE.LineBasicMaterial({ color:0xa78bfa })
+    );
+    mem.add(memMesh, memEdges);
+    mem.position.set(-1.55, 1.12, 0);
+    car.add(mem);
+
+    /* ---------- LiDAR sensor ---------- */
+    const lidar = new THREE.Group();
+    const lidarBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.2, 0.24, 0.18, 20),
+      new THREE.MeshStandardMaterial({ color:0x2a1f05, emissive:AM, emissiveIntensity:1.2, roughness:.5 })
+    );
+    lidar.add(lidarBase);
+    const beam = new THREE.Mesh(
+      new THREE.ConeGeometry(1.35, 1.7, 28, 1, true),
+      new THREE.MeshBasicMaterial({ color:AM, transparent:true, opacity:.10, side:THREE.DoubleSide, depthWrite:false })
+    );
+    beam.position.y = -0.85; // نوک مخروط روی LiDAR، قاعده رو به پایین
+    lidar.add(beam);
+    const spin = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.26, 0.26, 0.08, 24),
+      new THREE.MeshBasicMaterial({ color:AM, transparent:true, opacity:.85 })
+    );
+    spin.position.y = 0.13; lidar.add(spin);
+    lidar.position.set(0.05, 1.7, 0);
+    car.add(lidar);
+    const lidarLight = new THREE.PointLight(AM, 1.6, 6);
+    lidarLight.position.set(0.05, 1.8, 0); car.add(lidarLight);
+
+    /* ---------- wiring harness conduits + signal packets ---------- */
+    const conduits = [
+      { color: EM, pts:[[1.62,1.05,0.45],[0.9,1.5,0.62],[0.2,1.35,0.5],[0,1.05,0]] },
+      { color: EM, pts:[[1.62,1.05,-0.45],[0.9,1.5,-0.62],[0.2,1.35,-0.5],[0,1.05,0]] },
+      { color: CYAN, pts:[[0,1.25,0],[0.05,1.6,0.28],[0.05,1.72,0]] },
+      { color: CYAN, pts:[[0,1.2,0],[-0.8,1.3,0.4],[-1.5,1.25,0.3],[-1.55,1.2,0]] },
+      { color: AM, pts:[[1.62,0.85,0.2],[1.5,0.7,1.0],[1.55,0.6,1.02]] }
+    ];
+    const packets = [];
+    conduits.forEach(c => {
+      const curve = new THREE.CatmullRomCurve3(c.pts.map(p => new THREE.Vector3(p[0], p[1], p[2])));
+      const tube = new THREE.Mesh(
+        new THREE.TubeGeometry(curve, 48, 0.035, 8, false),
+        new THREE.MeshBasicMaterial({ color:c.color, transparent:true, opacity:.55 })
+      );
+      car.add(tube);
+      for (let i = 0; i < 3; i++){
+        const pk = new THREE.Mesh(
+          new THREE.SphereGeometry(0.075, 10, 10),
+          new THREE.MeshBasicMaterial({ color:0xffffff })
+        );
+        car.add(pk);
+        packets.push({ mesh: pk, curve, t: i/3, speed: 0.16 + Math.random()*0.14 });
+      }
+    });
+
+    /* ---------- floor grid + platform ---------- */
+    const grid = new THREE.GridHelper(30, 30, 0x1d3a52, 0x0d1a2b);
+    grid.position.y = 0.0; grid.material.transparent = true; grid.material.opacity = .5;
+    scene.add(grid);
+    const platform = new THREE.Mesh(
+      new THREE.CircleGeometry(3.0, 64),
+      new THREE.MeshBasicMaterial({ color:0x0a1524, transparent:true, opacity:.7 })
+    );
+    platform.rotation.x = -Math.PI/2; platform.position.y = 0.01; scene.add(platform);
+    const rim = new THREE.Mesh(
+      new THREE.RingGeometry(2.95, 3.08, 96),
+      new THREE.MeshBasicMaterial({ color:CYAN, transparent:true, opacity:.5, side:THREE.DoubleSide })
+    );
+    rim.rotation.x = -Math.PI/2; rim.position.y = 0.02; scene.add(rim);
+
+    /* ---------- ambient dust ---------- */
+    const dustCount = 220;
+    const dustPos = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++){
+      dustPos[i*3]   = (Math.random()-0.5) * 22;
+      dustPos[i*3+1] = Math.random() * 8;
+      dustPos[i*3+2] = (Math.random()-0.5) * 22;
+    }
+    const dustGeo = new THREE.BufferGeometry();
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+    const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+      color:0x7dd3fc, size:0.055, transparent:true, opacity:.55
+    }));
+    scene.add(dust);
+
+    /* ---------- label anchors ---------- */
+    const anchors = {
+      engine:  new THREE.Vector3( 1.62, 1.75, 0),
+      ecu:     new THREE.Vector3( 0.00, 1.62, 0),
+      lidar:   new THREE.Vector3( 0.05, 2.55, 0),
+      wiring:  new THREE.Vector3( 0.75, 0.85, 0.75),
+      memory:  new THREE.Vector3(-1.55, 1.55, 0)
+    };
+
+    /* ---------- resize ---------- */
+    function resize(){
+      const w = stage.clientWidth || 1, h = stage.clientHeight || 1;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    resize();
+    new ResizeObserver(resize).observe(stage);
+    window.addEventListener('resize', resize);
+
+    /* ---------- render loop ---------- */
+    const clock = new THREE.Clock();
+    let frames = 0, fpsTimer = 0;
+
+    function frame(){
+      const t = clock.getElapsedTime();
+
+      engMat.emissiveIntensity = 1.3 + Math.sin(t * 3.2) * 0.55;
+      engLight.intensity      = 1.6 + Math.sin(t * 3.2) * 1.0;
+      ecuMat.emissiveIntensity = 1.5 + Math.sin(t * 2.1 + 1) * 0.5;
+      ecuLight.intensity      = 2.0 + Math.sin(t * 2.1 + 1) * 0.9;
+      ecu.rotation.z          = t * 0.9;
+      ring.rotation.x         = t * 1.2;
+      ring2.rotation.y        = t * 0.7;
+      memMesh.material.emissiveIntensity = 0.8 + Math.sin(t * 1.6) * 0.35;
+      spin.rotation.y         = t * 2.6;
+      beam.rotation.y         = t * 1.1;
+
+      packets.forEach(p => {
+        p.t += p.speed * 0.016;
+        if (p.t > 1) p.t -= 1;
+        p.mesh.position.copy(p.curve.getPointAt(p.t));
+      });
+
+      dust.rotation.y = t * 0.02;
+      rim.material.opacity = 0.35 + Math.sin(t * 1.4) * 0.18;
+
+      controls.update();
+      renderer.render(scene, camera);
+
+      // project labels to screen (callout: pushed radially off the body, no overlap)
+      const rect = canvas.getBoundingClientRect();
+      const cc = new THREE.Vector3(0, 1.0, 0).project(camera);
+      const ccx = (cc.x * 0.5 + 0.5) * rect.width, ccy = (-cc.y * 0.5 + 0.5) * rect.height;
+      const placed = [];
+      Object.keys(anchors).forEach(k => {
+        const el = labels[k];
+        if (!el) return;
+        const v = anchors[k].clone().project(camera);
+        if (v.z > 1){ el.classList.remove('on'); return; }
+        let x = (v.x * 0.5 + 0.5) * rect.width;
+        let y = (-v.y * 0.5 + 0.5) * rect.height;
+        const dx = x - ccx, dy = y - ccy, dl = Math.hypot(dx, dy) || 1;
+        x += dx / dl * 52; y += dy / dl * 46;              // callout offset
+        const w = el.offsetWidth || 130, h = el.offsetHeight || 24;
+        for (let t = 0; t < 5; t++){
+          const hit = placed.find(p => Math.abs(p.x - x) < (p.w + w) / 2 && Math.abs(p.y - y) < (p.h + h) / 2);
+          if (!hit) break;
+          y = hit.y - (hit.h + h) / 2 - 5;
+        }
+        placed.push({ x, y, w, h });
+        el.style.left = x + 'px';
+        el.style.top  = y + 'px';
+        el.classList.add('on');
+      });
+
+      frames++; fpsTimer += 0.016;
+      if (fpsTimer >= 1){ fpsEl.textContent = frames + ' FPS'; frames = 0; fpsTimer = 0; }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    let rafId = null;
+    window.__carReady = true;
+
+    /* فقط وقتی اسلاید ۲ فعال است رندر می‌شود (صرفه‌جویی در CPU/GPU) */
+    function setActive(on){
+      if (on && rafId == null){ clock.getDelta(); rafId = requestAnimationFrame(frame); }
+      if (!on && rafId != null){ cancelAnimationFrame(rafId); rafId = null; }
+    }
+    window.__carTick = setActive;
+    let deckIndex = 0;
+    document.addEventListener('deck:slide', e => { deckIndex = e.detail.index; setActive(deckIndex === 1); });
+    setActive(deckIndex === 1);
+  }
+
+  init();
+})();
+
+/* ============================================================
+   DECK CONTROLLER
+   ============================================================ */
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const hudSteps = document.getElementById('hudSteps');
+  const curNum = document.getElementById('curNum');
+  const totNum = document.getElementById('totNum');
+  const bar = document.getElementById('progressBar');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  let index = 0;
+
+  totNum.textContent = String(slides.length).padStart(2, '0');
+
+  slides.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.textContent = String(i + 1).padStart(2, '0');
+    b.setAttribute('aria-label', 'اسلاید ' + (i + 1) + ': ' + (s.dataset.label || ''));
+    b.addEventListener('click', () => show(i));
+    hudSteps.appendChild(b);
+  });
+  const dots = Array.from(hudSteps.children);
+
+  function show(i){
+    index = Math.max(0, Math.min(i, slides.length - 1));
+    slides.forEach((s, k) => {
+      s.classList.toggle('active', k === index);
+      s.classList.toggle('out-left',  k >  index);
+      s.classList.toggle('out-right', k <  index);
+    });
+    dots.forEach((d, k) => d.classList.toggle('on', k === index));
+    curNum.textContent = String(index + 1).padStart(2, '0');
+    bar.style.transform = 'scaleX(' + ((index + 1) / slides.length) + ')';
+    btnPrev.disabled = index === 0;
+    btnNext.disabled = index === slides.length - 1;
+    if (window.__carTick) window.__carTick(index === 1);
+    document.dispatchEvent(new CustomEvent('deck:slide', { detail:{ index } }));
+    onEnter(slides[index], index);
+  }
+  const next = () => show(index + 1);
+  const prev = () => show(index - 1);
+
+  btnNext.addEventListener('click', next);
+  btnPrev.addEventListener('click', prev);
+
+  /* keyboard */
+  document.addEventListener('keydown', e => {
+    const k = e.key;
+    const t = e.target;
+    // never hijack typing in a field, and let a focused control keep Space/Enter
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    if (k === ' ' || k === 'Enter'){
+      const ctl = t && t.closest ? t.closest('button, [role="button"]') : null;
+      if (ctl) return;
+    }
+    if (k === 'ArrowLeft' || k === 'ArrowDown' || k === ' ' || k === 'PageDown'){ e.preventDefault(); next(); }
+    else if (k === 'ArrowRight' || k === 'ArrowUp' || k === 'PageUp'){ e.preventDefault(); prev(); }
+    else if (k === 'Home'){ e.preventDefault(); show(0); }
+    else if (k === 'End'){ e.preventDefault(); show(slides.length - 1); }
+    else if (k === 'f' || k === 'F'){
+      e.preventDefault();
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+  });
+
+  /* touch swipe (روی بوم سه‌بعدی لغزش = چرخش خودرو، نه تغییر اسلاید) */
+  let sx = 0, sy = 0, swiping = false, onCanvas = false;
+  document.addEventListener('touchstart', e => {
+    sx = e.changedTouches[0].clientX; sy = e.changedTouches[0].clientY; swiping = true;
+    onCanvas = !!e.target.closest && !!e.target.closest('#carStage');
+  }, { passive:true });
+  document.addEventListener('touchend', e => {
+    if (!swiping) return;
+    swiping = false;
+    if (onCanvas) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? next() : prev(); }
+  }, { passive:true });
+
+  /* wheel (desktop, throttled) */
+  let wheelLock = false;
+  document.addEventListener('wheel', e => {
+    if (Math.abs(e.deltaY) < 24 || wheelLock) return;
+    wheelLock = true;
+    setTimeout(() => wheelLock = false, 700);
+    e.deltaY > 0 ? next() : prev();
+  }, { passive:true });
+
+  /* ============================================================
+     SLIDE 3 — ReAct auto highlight
+     ============================================================ */
+  const steps = Array.from(document.querySelectorAll('.step'));
+  const nodeMap = ['node-thought', 'node-action', 'node-observation'];
+  const arrowMap = ['arrow1', 'arrow2', 'arrow3'];
+  const reactState = document.getElementById('reactState');
+  const reactPlay = document.getElementById('reactPlay');
+  let reactIdx = 0, reactTimer = null;
+
+  function paintReact(i){
+    steps.forEach((s, k) => s.classList.toggle('hot', k === i));
+    nodeMap.forEach((id, k) => {
+      const n = document.getElementById(id);
+      if (n) n.classList.toggle('hot', k === i);
+    });
+    arrowMap.forEach((id, k) => {
+      const a = document.getElementById(id);
+      if (a) a.style.opacity = (k === i) ? '1' : '.25';
+    });
+    reactState.textContent = 'step: ' + (i + 1) + ' / ' + steps.length;
+  }
+  function startReact(){
+    clearInterval(reactTimer);
+    reactIdx = 0; paintReact(0);
+    reactTimer = setInterval(() => { reactIdx = (reactIdx + 1) % steps.length; paintReact(reactIdx); }, 2400);
+  }
+  reactPlay.addEventListener('click', startReact);
+  steps.forEach((s, k) => s.addEventListener('click', () => {
+    clearInterval(reactTimer);
+    reactIdx = k; paintReact(k);
+    reactTimer = setInterval(() => { reactIdx = (reactIdx + 1) % steps.length; paintReact(reactIdx); }, 2400);
+  }));
+
+  /* ============================================================
+     SLIDE 4 — live harness simulator
+     ============================================================ */
+  const logEl = document.getElementById('conLog');
+  const runBtn = document.getElementById('runHarness');
+  const resetBtn = document.getElementById('resetHarness');
+  const mStep = document.getElementById('mStep'), mTok = document.getElementById('mTok'),
+        mTools = document.getElementById('mTools'), mStatus = document.getElementById('mStatus');
+
+  const SCRIPT = [
+    { tag:'SYSTEM',  msg:'harness v1.4 booted · tools: search, code, shell, db, api, test · limits: 8 steps / 32k tokens' },
+    { tag:'THOUGHT', msg:'هدف: ریشه‌یابی خطای timeout در سرویس پرداخت' },
+    { tag:'GUARD',   msg:'action=search("payment timeout trace") → مجاز' },
+    { tag:'TOOL',    msg:'search → 3 نتیجه · 2 فایل مرتبط · 1 issue باز' },
+    { tag:'THOUGHT', msg:'نیاز به بازتولید خطا با تست هدفمند' },
+    { tag:'GUARD',   msg:'action=shell("rm -rf ./cache") → مسدود شد (policy: destructive)' },
+    { tag:'TOOL',    msg:'shell("pytest -q") → exit code 1 · 1 failed' },
+    { tag:'ERROR',   msg:'تست شکست خورد → ثبت رویداد و بازگشت به حلقه (تلاش مجدد: 1/3)' },
+    { tag:'TOOL',    msg:'shell("pytest -q -k timeout") → exit code 0 ✓' },
+    { tag:'MEMORY',  msg:'۴ رویداد ذخیره شد · حافظهٔ کوتاه‌مدت به‌روزرسانی شد' },
+    { tag:'DONE',    msg:'پاسخ نهایی آماده شد — ۴ گام · ۱ خطا · ۱ عمل مسدودشده' }
+  ];
+
+  let running = false;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  function addLine(tag, msg, instant){
+    const d = document.createElement('div');
+    d.className = 'log ' + tag;
+    const t = document.createElement('span'); t.className = 'tag'; t.textContent = '[' + tag + ']';
+    const m = document.createElement('span'); m.className = 'msg';
+    d.appendChild(t); d.appendChild(m);
+    logEl.appendChild(d);
+    logEl.scrollTop = logEl.scrollHeight;
+
+    if (instant){
+      m.textContent = msg;
+      return Promise.resolve();
+    }
+    // typewriter effect
+    return (async () => {
+      const chars = Array.from(msg);
+      for (let i = 0; i < chars.length; i++){
+        m.textContent += chars[i];
+        if (i % 3 === 0){ logEl.scrollTop = logEl.scrollHeight; await sleep(6); }
+      }
+    })();
+  }
+
+  async function run(){
+    if (running) return;
+    running = true;
+    runBtn.disabled = true;
+    mStatus.textContent = 'running';
+    mStep.textContent = '0/8'; mTok.textContent = '0/32,000'; mTools.textContent = '0';
+    logEl.innerHTML = '';
+
+    let step = 0, tokens = 0, tools = 0;
+    for (const line of SCRIPT){
+      const typed = (line.tag === 'THOUGHT' || line.tag === 'ERROR');
+      await addLine(line.tag, line.msg, !typed);
+      await sleep(typed ? 120 : 260);
+      if (line.tag === 'THOUGHT'){ step++; mStep.textContent = step + '/8'; tokens += 1100; }
+      if (line.tag === 'TOOL'){ tools++; tokens += 620; mTools.textContent = String(tools); }
+      if (line.tag === 'ERROR'){ tokens += 400; }
+      mTok.textContent = tokens.toLocaleString('en-US') + '/32,000';
+    }
+    mStatus.textContent = 'done';
+    runBtn.disabled = false;
+    running = false;
+  }
+
+  runBtn.addEventListener('click', run);
+  resetBtn.addEventListener('click', () => {
+    logEl.innerHTML = '';
+    mStep.textContent = '0/8'; mTok.textContent = '0/32,000'; mTools.textContent = '0'; mStatus.textContent = 'idle';
+  });
+
+  /* ============================================================
+     SLIDE 5 — metric count-up
+     ============================================================ */
+  function countUp(el){
+    const target = parseFloat(el.dataset.count) || 0;
+    const suffix = el.dataset.suffix || '';
+    const dur = 1100, t0 = performance.now();
+    (function step(now){
+      const p = Math.min(1, (now - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased).toLocaleString('en-US') + suffix;
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+
+  /* ============================================================
+     SLIDE HOOKS
+     ============================================================ */
+  function onEnter(slide, i){
+    if (i === 2) startReact();
+    if (i === 4) slide.querySelectorAll('[data-count]').forEach(countUp);
+  }
+
+  show(0);
+})();
+</script>
+</body>
+</html>

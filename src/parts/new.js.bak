@@ -1,0 +1,624 @@
+/* ============================================================
+   NEW DECK LOGIC — 18 slides, action demos, presenter aids
+   ============================================================ */
+(function(){
+  const $  = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  /* ==========================================================
+     SPEAKER NOTES + TIMER + CLEAN MODE
+     ========================================================== */
+  const NOTES = [
+    { t:'مقدمه', m:'۱ دقیقه', b:[
+      'خودتان را کوتاه معرفی کنید و بگویید امروز «مهندسی» را صحبت می‌کنیم، نه «جادو».',
+      'جملهٔ کلیدی: مدل = موتور. هارنس = خودرو. بدون هارنس فقط یک قطعهٔ گران دارید.',
+      'بگویید در ۳۰ دقیقه سه چیز می‌بینید: تئوری، دموی زنده، و چک‌لیست تولید.'
+    ]},
+    { t:'نقشهٔ راه', m:'۳۰ ثانیه', b:[
+      'سریع از روی پنج بخش رد شوید؛ این اسلاید «قرارداد زمان» با جمع است.',
+      'بگویید بخش ۳ (در عمل) قلب جلسه است.'
+    ]},
+    { t:'بخش ۰۱ — مبانی', m:'۲۰ ثانیه', b:[
+      'فقط یک جمله: از اینجا وارد تعریف ایجنت می‌شویم.'
+    ]},
+    { t:'از مدل تا ایجنت', m:'۳ دقیقه', b:[
+      'لایه‌ها را به‌ترتیب توضیح دهید: تنها → ابزار → حلقه → هارنس.',
+      'مثال بزنید: «قیمت بگیر» با مدل تنها یعنی حدس زدن از دانش مدل.',
+      'تفاوت ورک‌فلو و ایجنت را با یک مثال بگویید: فاکتور vs. تحقیق بازار.',
+      'جملهٔ کلیدی: هر جا مسیر معلوم است، ورک‌فلو؛ جایی که مسیر را نمی‌دانید، ایجنت.'
+    ]},
+    { t:'آناتومی فراخوانی ابزار', m:'۲ دقیقه', b:[
+      'این اسلاید را گام‌به‌گام بزنید؛ هر گام یک پیام واقعی است.',
+      'تأکید: مدل «نقشهٔ» عمل را می‌نویسد، اجرا با هارنس است.',
+      'اگر وقت کم آوردید، فقط گام ۲ و ۳ را نشان دهید.'
+    ]},
+    { t:'بخش ۰۲ — هارنس', m:'۲۰ ثانیه', b:[
+      'پل بزنید به خودرو: «حالا هارنس را از نزدیک ببینیم».'
+    ]},
+    { t:'تشبیه خودرو', m:'۲.۵ دقیقه', b:[
+      'مدل را بچرخانید (ماوس/انگشت) — تعامل را نشان دهید.',
+      'موتور = LLM: گشتاور زبانی. ECU = هارنس: تصمیم و کنترل. دستهٔ سیم = مسیر فراخوانی.',
+      'جمله: بدون دستهٔ سیم، گشتاور هدر می‌رود.'
+    ]},
+    { t:'نقشهٔ هارنس', m:'۲ دقیقه', b:[
+      'هفت قطعه را نام ببرید و روی چیپ‌ها کلیک کنید.',
+      'تأکید روی گاردیل و سقف بودجه: تفاوت دمو و محصول.',
+      'اگر دانشجویی پرسید «کدام را خودکار بسازیم؟» → گاردیل و لاگ را اول بگویید.'
+    ]},
+    { t:'حلقهٔ ReAct', m:'۲ دقیقه', b:[
+      'دکمهٔ «پخش دوبارهٔ حلقه» را بزنید و هر سه گام را توضیح دهید.',
+      'بگویید حافظه بیرون از حلقه است و نتیجه را برمی‌گرداند.',
+      'اشتباه رایج: فکر می‌کنند حلقه خودش هوشمند است؛ حلقه فقط ساختار است، کیفیت از مدل و ابزار می‌آید.'
+    ]},
+    { t:'بخش ۰۳ — در عمل', m:'۲۰ ثانیه', b:[
+      'بگویید تا اینجا نظریه بود، حالا یک اجرای واقعی را تماشا می‌کنیم.'
+    ]},
+    { t:'تماشای جلسهٔ واقعی', m:'۴ دقیقه', b:[
+      'پخش را شروع کنید و حین پخش توضیح دهید (نه قبلش).',
+      'روی گام خطا (تست قرمز) مکث کنید: این نقطهٔ اصلی است.',
+      'شمارش نهایی: ۷ فراخوانی ابزار، ۱ خطا، ۲ اصلاح.',
+      'پیام نهایی: ایجنت روی خطا متوقف نشد، چون خطا داده است نه استثنا.'
+    ]},
+    { t:'سکوی آزمایش', m:'۳ دقیقه', b:[
+      'اول با تنظیم پیش‌فرض اجرا کنید (اجرای سالم).',
+      'بعد گاردیل بودجه را بردارید و اجرا کنید: حلقهٔ بی‌پایان و هزینهٔ سرسام‌آور.',
+      'نتیجهٔ اخلاقی: هر قابلیت خام یک ریسک است؛ گاردیل هزینهٔ اشتباه را محدود می‌کند.'
+    ]},
+    { t:'کد در حرکت', m:'۲ دقیقه', b:[
+      '«اجرای گام‌به‌گام» را بزنید؛ کد خودش زنده می‌شود.',
+      'خط گاردیل را نشان دهید: تنها جایی که «نه» گفته می‌شود.',
+      'خط بازیابی خطا: obs به‌جای استثنا.'
+    ]},
+    { t:'ابزار و MCP', m:'۲.۵ دقیقه', b:[
+      'سه پیام را نشان دهید: تعریف ابزار، درخواست، نتیجه.',
+      'قانون شرح ابزار: شرح = بخشی از پرامپت.',
+      'MCP: یک سوکت استاندارد؛ روی «کشف» ابزارها تأکید کنید.'
+    ]},
+    { t:'حافظه و کانتکست', m:'۲ دقیقه', b:[
+      'دکمهٔ «پر شدن و فشرده‌سازی» را بزنید و ببینید چطور خلاصه جای تاریخچه را می‌گیرد.',
+      'پوسیدگی کانتکست را مثال بزنید: دستور اولیه زیر ۲۰ هزار پیام گم می‌شود.',
+      'بگویید مدل‌های بزرگ‌تر مشکل را کم می‌کنند، ولی هزینه را حل نمی‌کنند.'
+    ]},
+    { t:'هارنس‌های واقعی', m:'۱.۵ دقیقه', b:[
+      'هر کارت را در ۳۰ ثانیه بگویید: ابزار، حافظه، گاردیل.',
+      'جملهٔ جمع‌بندی: همه از همان هفت قطعه ساخته شده‌اند.'
+    ]},
+    { t:'دموی زنده', m:'۵–۸ دقیقه', b:[
+      'قبل از شروع: ترمینال آماده، فولدر پروژه، اینترنت چک شود.',
+      'یک اجرای واقعی و کوتاه: خطا → اصلاح → تست سبز.',
+      'اگر اینترنت نبود: به اسلاید ۱۲ برگردید و شبیه‌ساز را اجرا کنید.'
+    ]},
+    { t:'جمع‌بندی', m:'۲ دقیقه', b:[
+      'چهار متریک را نشان دهید و چک‌لیست را سریع مرور کنید.',
+      'جملهٔ پایانی: مدل موتور است، هارنس خودرو. شما محصول می‌سازید، نه پرامپت.',
+      'پرسش و پاسخ.'
+    ]}
+  ];
+
+  const notesEl = document.createElement('div');
+  notesEl.className = 'notes';
+  document.body.appendChild(notesEl);
+
+  function renderNotes(i){
+    const n = NOTES[i];
+    if (!n) return;
+    notesEl.innerHTML =
+      '<div class="nt">SPEAKER NOTES · ' + (i + 1) + '/' + NOTES.length + '</div>' +
+      '<h4>' + n.t + '</h4><ul>' + n.b.map(x => '<li>' + x + '</li>').join('') + '</ul>' +
+      '<div class="nm">زمان پیشنهادی این اسلاید: ' + n.m + '</div>';
+  }
+
+  /* --- timer --- */
+  const SECTIONS = [
+    { name:'مقدمه',                from:0,  to:1,  min:1.5 },
+    { name:'۰۱ · مبانی',            from:2,  to:4,  min:5   },
+    { name:'۰۲ · هارنس',            from:5,  to:8,  min:7   },
+    { name:'۰۳ · در عمل',           from:9,  to:12, min:10  },
+    { name:'۰۴ · ابزار و حافظه',    from:13, to:15, min:5   },
+    { name:'۰۵ · دمو و جمع‌بندی',   from:16, to:17, min:1.5 }
+  ];
+  const TOTAL = 30 * 60;
+  let tSec = 0, tRunning = false, tTimer = null, currentIndex = 0;
+  const hudTimer = $('#hudTimer'), tClock = $('#tClock'), tSecEl = $('#tSec');
+
+  function fmt(s){
+    const m = Math.floor(s / 60), r = Math.floor(s % 60);
+    return String(m).padStart(2,'0') + ':' + String(r).padStart(2,'0');
+  }
+  function sectionOf(i){
+    return SECTIONS.find(s => i >= s.from && i <= s.to) || SECTIONS[SECTIONS.length - 1];
+  }
+  function paintTimer(){
+    if (!hudTimer) return;
+    hudTimer.classList.toggle('over', tSec > TOTAL);
+    tClock.textContent = fmt(tSec) + ' / ' + fmt(TOTAL);
+    const s = sectionOf(currentIndex);
+    tSecEl.textContent = s.name + ' · ' + s.min + '′';
+  }
+  function toggleTimer(){
+    if (!hudTimer) return;
+    if (!tTimer){
+      hudTimer.classList.add('on');
+      tRunning = true;
+      tTimer = setInterval(() => { tSec++; paintTimer(); }, 1000);
+      paintTimer();
+    } else if (tRunning){
+      clearInterval(tTimer); tTimer = null; tRunning = false;
+    } else {
+      tRunning = true;
+      tTimer = setInterval(() => { tSec++; paintTimer(); }, 1000);
+    }
+  }
+  function resetTimer(){
+    if (tTimer){ clearInterval(tTimer); tTimer = null; }
+    tRunning = false; tSec = 0; paintTimer();
+  }
+
+  /* --- keys: S notes · T timer · C clean --- */
+  document.addEventListener('keydown', e => {
+    const k = e.key;
+    if (k === 's' || k === 'S' || k === '؟'){ e.preventDefault(); notesEl.classList.toggle('on'); }
+    else if (k === 't' || k === 'T'){ e.preventDefault(); e.shiftKey ? resetTimer() : toggleTimer(); }
+    else if (k === 'c' || k === 'C'){ e.preventDefault(); document.body.classList.toggle('clean'); }
+  });
+
+  /* ==========================================================
+     AGENDA — jump to section
+     ========================================================== */
+  $$('.ag-row').forEach(row => on(row, 'click', () => {
+    const target = parseInt(row.dataset.goto, 10);
+    if (!isNaN(target)) document.dispatchEvent(new CustomEvent('deck:goto', { detail:{ index:target } }));
+  }));
+
+  /* ==========================================================
+     SLIDE 4 — build-up animation
+     ========================================================== */
+  const fundRows = $$('.fund-row');
+  function paintFund(i){ fundRows.forEach((r, k) => r.classList.toggle('on', k === i)); }
+  function playFund(){
+    let i = 0; paintFund(i);
+    const t = setInterval(() => { i = (i + 1) % fundRows.length; paintFund(i); if (i === 0) clearInterval(t); }, 1600);
+  }
+  fundRows.forEach((r, k) => on(r, 'click', () => paintFund(k)));
+
+  /* ==========================================================
+     SLIDE 5 — anatomy of a tool call
+     ========================================================== */
+  const TC = [
+    { c:'#38bdf8', j:'{"task": "قیمت سهام و روند ۳۰ روزه را خلاصه کن"}',
+      t:'درخواست کاربر به هارنس می‌رسد — نه مستقیم به مدل. هارنس آن را ثبت می‌کند و یک اجرای جدید می‌سازد.' },
+    { c:'#a78bfa', j:'{\n  "system": "تو یک دستیار تحلیل بازار هستی...",\n  "tools": [get_price, get_history, chart],\n  "budget": { "steps": 8, "tokens": 32000 }\n}',
+      t:'هارنس سیستم‌پرامپت، فهرست ابزارها و بودجه را اضافه می‌کند. این بستهٔ آماده همان چیزی است که مدل می‌بیند.' },
+    { c:'#f43f5e', j:'{\n  "tool_call": {\n    "name": "get_price",\n    "arguments": { "symbol": "AAPL" }\n  }\n}',
+      t:'مدل فقط «نقشهٔ» عمل را می‌نویسد. اجرا کردنش با مدل نیست — و این مرز، امنیت را ممکن می‌کند.' },
+    { c:'#f59e0b', j:'{\n  "ok": true,\n  "price": 231.4,\n  "currency": "USD",\n  "ts": "2026-03-11T09:41:00Z"\n}',
+      t:'هارنس عمل را در sandbox اجرا و خروجی را اعتبارسنجی می‌کند. خطا هم داده است، نه استثنا.' },
+    { c:'#10b981', j:'{\n  "observation": "AAPL = 231.4 USD",\n  "next": "get_history",\n  "step": 1\n}',
+      t:'مشاهده به حافظه برمی‌گردد و حلقه تکرار می‌شود تا پاسخ نهایی آماده شود.' }
+  ];
+  const tcNodes = $$('.tc-node'), tcJson = $('#tcJson'), tcCap = $('#tcCap'), tcState = $('#tcState');
+  let tcIdx = 0, tcTimer = null;
+  function paintTC(i){
+    tcIdx = (i + TC.length) % TC.length;
+    const s = TC[tcIdx];
+    tcNodes.forEach((n, k) => {
+      n.classList.toggle('on', k === tcIdx);
+      n.style.setProperty('--c', TC[k].c);
+    });
+    tcJson.textContent = s.j;
+    tcCap.textContent = s.t;
+    tcState.textContent = 'گام ' + (tcIdx + 1) + ' / ' + TC.length;
+  }
+  on($('#tcNext'), 'click', () => { clearInterval(tcTimer); tcTimer = null; paintTC(tcIdx + 1); });
+  on($('#tcReset'), 'click', () => { clearInterval(tcTimer); tcTimer = null; paintTC(0); });
+  on($('#tcAuto'), 'click', () => {
+    if (tcTimer){ clearInterval(tcTimer); tcTimer = null; return; }
+    tcTimer = setInterval(() => paintTC(tcIdx + 1), 3000);
+  });
+  tcNodes.forEach((n, k) => on(n, 'click', () => { clearInterval(tcTimer); tcTimer = null; paintTC(k); }));
+
+  /* ==========================================================
+     SLIDE 8 — harness anatomy
+     ========================================================== */
+  const ANAT = {
+    loop:    { k:'CONTROL LOOP',   t:'حلقهٔ کنترل', d:'قلب هارنس. تصمیم می‌گیرد گام بعدی چیست، چند گام مجاز است و کِی باید متوقف شود. بدون این حلقه، مدل فقط یک‌بار حرف می‌زند.' },
+    tools:   { k:'TOOL REGISTRY',  t:'رجیستری ابزار', d:'نام، شرح و اسکیمای ورودی هر ابزار. مدل فقط همین فهرست را می‌بیند؛ هر ابزاری که اینجا نباشد، قابل اجرا نیست.' },
+    memory:  { k:'MEMORY',         t:'موتور حافظه', d:'حافظهٔ کوتاه‌مدت (رویدادهای همین اجرا) و حافظهٔ بلندمدت (دانش پروژه). بدون آن، ایجنت هر بار از صفر شروع می‌کند.' },
+    guard:   { k:'GUARDRAILS',     t:'گاردیل', d:'پیش از اجرا تصمیم می‌گیرد: این ابزار مجاز است؟ این عمل مخرب است؟ آیا انسان باید تأیید کند؟ تنها جایی که هارنس می‌تواند «نه» بگوید.' },
+    budget:  { k:'LIMITS',         t:'بودجه و سقف‌ها', d:'حداکثر گام، توکن، زمان و هزینه. سقف‌ها تضمین می‌کنند یک ایجنتِ خراب، جیب و زمان شما را بی‌نهایت نخورد.' },
+    context: { k:'CONTEXT ENGINE', t:'مهندس کانتکست', d:'تعیین می‌کند چه چیزی در پنجرهٔ کانتکست بماند، چه چیزی خلاصه شود و چه چیزی دور ریخته شود. قلب اقتصاد کانتکست.', q:'«چه چیزی را نگه دارم و چه چیزی را دور بریزم؟»' },
+    log:     { k:'TRACE / REPLAY', t:'دنبالهٔ لاگ', d:'هر فراخوانی با ورودی، خروجی و زمان ثبت می‌شود. همین لاگ است که بعداً ارزیابی، بازپخش و اشکال‌زدایی را ممکن می‌کند.' }
+  };
+  const ANAT_Q = {
+    loop:'«الان گام بعدی چیست و کِی باید متوقف شوم؟»',
+    tools:'«مدل دقیقاً چه چیزهایی می‌تواند صدا بزند؟»',
+    memory:'«چه چیزی را باید به خاطر بسپارم و چه چیزی را دور بریزم؟»',
+    guard:'«آیا اجازهٔ این کار را دارم؟»',
+    budget:'«تا کِی و با چه هزینه‌ای ادامه بدهم؟»',
+    context:'«چه چیزی در پنجرهٔ کانتکست بماند؟»',
+    log:'«چه اتفاقی افتاد و چرا؟»'
+  };
+  const anatParts = $$('.anat-part'), anatChips = $$('.anat-chip');
+  function paintAnat(part){
+    anatParts.forEach(p => p.classList.toggle('hot', p.dataset.part === part));
+    anatChips.forEach(c => c.classList.toggle('on', c.dataset.part === part));
+    const d = ANAT[part];
+    if (!d) return;
+    $('#anatTitle').textContent = d.t;
+    $('#anatKey').textContent = d.k;
+    $('#anatText').textContent = d.d;
+    const q = $('#anatQ'); if (q) q.innerHTML = '<b>سؤال این قطعه:</b> ' + (ANAT_Q[part] || '');
+  }
+  anatParts.forEach(p => on(p, 'click', () => paintAnat(p.dataset.part)));
+  anatChips.forEach(c => on(c, 'click', () => paintAnat(c.dataset.part)));
+  paintAnat('loop');
+
+  /* ==========================================================
+     SLIDE 11 — session replay
+     ========================================================== */
+  const RP_FILE = [
+    'from .pricing import format_price',
+    '',
+    'def monthly_report(rows, discount=0):',
+    '    total = sum(r["amount"] for r in rows)',
+    '    if discount:',
+    '        total = total * (1 - discount)',
+    '    return f"گزارش {format_price(total)}"',
+    '',
+    'def format_price(v):',
+    '    if v is None:',
+    '        return "—"',
+    '    return f"{v:,.0f} تومان"'
+  ];
+  const RP_EVENTS = [
+    { k:'user', who:'USER', txt:'گزارش فروش ماهانه خطا می‌دهد. پیدا و رفعش کن.', dur:1500,
+      note:'درخواست مبهم است. هارنس آن را به دو کارِ قابل‌بررسی تبدیل می‌کند: پیدا کردن ریشه، اصلاح، تست.' },
+    { k:'asst', who:'THOUGHT', txt:'اول ساختار پروژه را می‌بینم تا فایل درست را پیدا کنم.', tool:'Read', dur:1700 },
+    { k:'tool', who:'Read', txt:'README.md\nbilling/\n  report.py\n  pricing.py\ntests/\n  test_report.py', dur:1800, focus:3,
+      note:'ابزار اول همیشه ارزان‌ترین و پرکاربردترین است: نقشهٔ پروژه. بدون آن، مدل حدس می‌زند.' },
+    { k:'asst', who:'THOUGHT', txt:'گزارش در billing/report.py است؛ دنبال قالب‌بندی قیمت می‌گردم.', tool:'Grep', dur:1700 },
+    { k:'tool', who:'Grep', txt:'billing/report.py:12:    return f"{v:,.0f} تومان"\nbilling/pricing.py:11:def format_price(v):', dur:1800, focus:12,
+      note:'جست‌وجو نقطهٔ ورود را کوتاه کرد. ابزار خوب، مدل را از خواندن کل پروژه نجات می‌دهد.' },
+    { k:'asst', who:'THOUGHT', txt:'format_price روی مقدار نامعتبر خطا می‌دهد؛ بخش مربوطه را می‌خوانم.', tool:'Read', dur:1700 },
+    { k:'tool', who:'Read', txt:' 9  def format_price(v):\n10      if v is None:\n11          return "—"\n12      return f"{v:,.0f} تومان"', dur:1900, focus:12,
+      note:'ریشه: وقتی تخفیف ۱۰۰٪ می‌شود، مقدار صفر/None می‌شود و قالب‌بندی عددی می‌شکند.' },
+    { k:'asst', who:'THOUGHT', txt:'ریشه پیدا شد: قیمتِ صفر باید جدا حساب شود.', dur:1600 },
+    { k:'asst', who:'ACTION', txt:'اصلاح: اگر مقدار صفر یا کمتر بود، قیمت صفر برگردانده شود.', tool:'Edit', dur:1800,
+      patch:[ { op:'del', line:12, txt:'    return f"{v:,.0f} تومان"' },
+              { op:'add', line:12, txt:'    if v <= 0: return "۰ تومان"' } ] },
+    { k:'tool', who:'Edit', txt:'billing/report.py به‌روزرسانی شد · ۱ خط جایگزین شد', dur:1700, focus:12 },
+    { k:'asst', who:'THOUGHT', txt:'حالا تست مربوط به همین تابع را اجرا می‌کنم.', tool:'Bash', dur:1600 },
+    { k:'tool', who:'Bash', txt:'$ pytest -q tests/test_report.py\nF  test_full_discount\nE   TypeError: unsupported format string passed to NoneType.__format__\n1 failed', dur:2200, err:true, focus:12,
+      note:'نقطهٔ اصلی: تست قرمز شد و هارنس متوقف نشد. خطا به‌عنوان «مشاهده» به مدل برگشت.' },
+    { k:'asst', who:'THOUGHT', txt:'تست قدیمی انتظار قیمت پایه را دارد؛ شرط تست را با رفتار جدید هماهنگ می‌کنم.', dur:1800 },
+    { k:'asst', who:'ACTION', txt:'ویرایش تست: انتظار «۰ تومان» برای تخفیف کامل.', tool:'Edit', dur:1700 },
+    { k:'tool', who:'Bash', txt:'$ pytest -q tests/test_report.py\n1 passed in 0.42s', dur:2200, focus:12 },
+    { k:'asst', who:'DONE', txt:'باگ رفع شد. خلاصه: ۱ فایل تغییر کرد، ۱ تست به‌روزرسانی شد، تست‌ها سبزند.', dur:2000,
+      note:'جمع‌بندی اجرا: ۷ فراخوانی ابزار، ۱ خطا، ۲ اصلاح. همین «بعد از خطا ادامه دادن» تفاوت ایجنت و یک پرامپت است.' }
+  ];
+  const rpLog = $('#rpLog'), rpCode = $('#rpCode'), rpNote = $('#rpNote'),
+        rpFill = $('#rpFill'), rpTime = $('#rpTime'), rpFileState = $('#rpFileState'),
+        rpPlay = $('#rpPlay'), rpSpeed = $('#rpSpeed');
+  let rpIdx = -1, rpTimer = null, rpSpeedVal = 1, rpLines = [];
+
+  function rpReset(){
+    rpIdx = -1;
+    rpLines = RP_FILE.map(t => ({ t:t, c:'' }));
+    rpLog.innerHTML = '<div class="rp-msg" style="background:rgba(56,189,248,.05);border-color:var(--line-soft);color:var(--muted)">'
+      + '▶ برای دیدن اجرای کامل، دکمهٔ پخش را بزنید. ۷ فراخوانی ابزار، ۱ خطا و ۲ اصلاح در انتظار شماست.</div>';
+    renderRPCode();
+    rpNote.innerHTML = '<b>چرا این کار؟</b> — روی «پخش» بزنید تا گام‌ها یکی‌یکی اجرا شوند.';
+    rpFileState.textContent = 'idle';
+    rpFill.style.width = '0%';
+    rpTime.textContent = '00:00 / 01:40';
+    rpPlay.textContent = '▶';
+  }
+  function renderRPCode(){
+    rpCode.innerHTML = rpLines.map((l, i) =>
+      '<span class="ln ' + l.c + '" data-n="' + (i + 1) + '">' + (l.t || ' ') + '</span>').join('');
+  }
+  function rpStep(){
+    if (rpIdx >= RP_EVENTS.length - 1){ rpStop(); return; }
+    rpIdx++;
+    const e = RP_EVENTS[rpIdx];
+
+    const d = document.createElement('div');
+    d.className = 'rp-msg ' + e.k + (e.err ? ' err' : '');
+    d.innerHTML = '<span class="who">' + e.who + (e.tool ? ' · ' + e.tool : '') + '</span>' +
+                  (e.k === 'tool' ? '<span class="code">' + e.txt + '</span>' : e.txt);
+    rpLog.appendChild(d);
+    rpLog.scrollTop = rpLog.scrollHeight;
+
+    if (e.patch) e.patch.forEach(p => {
+      if (p.op === 'del'){ if (rpLines[p.line - 1]){ rpLines[p.line - 1].c = 'del'; } }
+      else { rpLines.splice(p.line, 0, { t:p.txt, c:'add' }); }
+    });
+    rpLines.forEach((l, i) => { if (l.c !== 'del' && l.c !== 'add') l.c = ''; });
+    renderRPCode();
+    if (e.focus){
+      const idx = rpLines.findIndex(l => l.c === '' || l.c === 'add');
+      $$('.rp-code .ln').forEach(el => el.classList.remove('hot'));
+      const target = $$('.rp-code .ln')[e.focus - 1];
+      if (target) target.classList.add('hot');
+    }
+    rpNote.innerHTML = '<b>چرا این کار؟</b> — ' + (e.note || 'این گام بخشی از مسیر عادی اجراست.');
+    rpFileState.textContent = e.k === 'tool' ? (e.who + ' ✓') : e.who.toLowerCase();
+    rpFill.style.width = ((rpIdx + 1) / RP_EVENTS.length * 100) + '%';
+    rpTime.textContent = fmt(rpIdx * 6) + ' / 01:40';
+  }
+  function rpStop(){ if (rpTimer){ clearTimeout(rpTimer); rpTimer = null; } rpPlay.textContent = '▶'; }
+  function rpPlayNext(){
+    rpStop();
+    let i = rpIdx + 1;
+    const tick = () => {
+      if (i > RP_EVENTS.length - 1){ rpStop(); return; }
+      rpStep();
+      i++;
+      rpTimer = setTimeout(tick, RP_EVENTS[rpIdx].dur / rpSpeedVal);
+    };
+    rpTimer = setTimeout(tick, 200);
+  }
+  on(rpPlay, 'click', () => { if (rpTimer) rpStop(); else rpPlayNext(); });
+  on($('#rpNext'), 'click', () => { rpStop(); rpStep(); });
+  on($('#rpPrev'), 'click', () => { rpStop(); if (rpIdx > 0){ rpIdx -= 2; rpStep(); } });
+  on(rpSpeed, 'click', () => {
+    rpSpeedVal = rpSpeedVal === 1 ? 2 : rpSpeedVal === 2 ? 4 : 1;
+    rpSpeed.textContent = rpSpeedVal + '×';
+  });
+
+  /* ==========================================================
+     SLIDE 12 — playground
+     ========================================================== */
+  const PG_GOALS = {
+    bug:   { t:'رفع خطای گزارش فروش',       f:'billing/report.py',   l:'۴۸ خط' },
+    test:  { t:'افزودن تست برای قیمت‌گذاری', f:'tests/test_pricing.py', l:'۱۲ خط' },
+    clean: { t:'پاک‌سازی تابع تکراری',       f:'billing/utils.py',     l:'۹۰ خط' }
+  };
+  const pg = { goal:'bug', tools:['read','grep','bash','edit','test'], guards:{ allow:true, budget:true, human:true } };
+  const pgLog = $('#pgLog'), pgRunBtn = $('#pgRun'), pgReset = $('#pgReset'),
+        pgStep = $('#pgStep'), pgTok = $('#pgTok'), pgTools = $('#pgTools'),
+        pgCost = $('#pgCost'), pgState = $('#pgState');
+  let pgBusy = false;
+
+  $$('.pg-goal').forEach(b => on(b, 'click', () => {
+    $$('.pg-goal').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); pg.goal = b.dataset.goal;
+  }));
+  $$('.pg-tool').forEach(b => on(b, 'click', () => {
+    const t = b.dataset.tool;
+    if (pg.tools.includes(t)){ if (pg.tools.length > 1){ pg.tools = pg.tools.filter(x => x !== t); b.classList.remove('on'); } }
+    else { pg.tools.push(t); b.classList.add('on'); }
+  }));
+  $$('.pg-guards input').forEach(i => on(i, 'change', () => { pg.guards[i.dataset.guard] = i.checked; }));
+
+  function pgLine(tag, msg){
+    const d = document.createElement('div');
+    d.className = 'log ' + tag;
+    d.innerHTML = '<span class="tag">[' + tag + ']</span><span class="msg"></span>';
+    pgLog.appendChild(d);
+    pgLog.scrollTop = pgLog.scrollHeight;
+    const m = d.querySelector('.msg');
+    return new Promise(async res => {
+      if (tag === 'THOUGHT' || tag === 'ERROR'){
+        for (const ch of Array.from(msg)){ m.textContent += ch; if (pgLog.scrollHeight) pgLog.scrollTop = pgLog.scrollHeight; await sleep(7); }
+      } else m.textContent = msg;
+      res();
+    });
+  }
+  function pgScript(){
+    const g = PG_GOALS[pg.goal], T = pg.tools, G = pg.guards, L = [];
+    L.push(['SYSTEM', 'harness booted · tools: ' + (T.join(' ') || 'none') + ' · limits: ' + (G.budget ? '8 steps / 32k tokens' : 'NO LIMIT')]);
+    L.push(['THOUGHT', 'هدف: ' + g.t]);
+    if (T.includes('read')) L.push(['TOOL', 'read(' + g.f + ') → ' + g.l + ' خوانده شد']);
+    if (T.includes('grep')) L.push(['TOOL', 'grep("price") → ۳ تطابق']);
+    L.push([G.allow ? 'GUARD' : 'SYSTEM',
+      G.allow ? 'policy: allow-list → read/grep/bash/edit/test مجاز' : 'policy: OFF → هر ابزاری بدون بررسی اجرا می‌شود']);
+    if (T.includes('bash')){
+      L.push(['THOUGHT', 'برای اطمینان، تست‌ها را اجرا می‌کنم.']);
+      L.push(['TOOL', 'bash("pytest -q") → ۱ failed']);
+      L.push(['ERROR', 'تست شکست خورد → رویداد ثبت شد، بازگشت به حلقه (تلاش مجدد ۱/۳)']);
+    }
+    if (T.includes('edit')){
+      L.push(['THOUGHT', 'یک خط را اصلاح می‌کنم.']);
+      if (G.human) L.push(['GUARD', 'action=edit(..., destructive=true) → منتظر تأیید انسان']);
+      L.push(['TOOL', 'edit(' + g.f + ') → ۱ خط جایگزین شد']);
+    }
+    if (!G.budget){
+      L.push(['GUARD', 'budget: OFF → سقف گام و توکن فعال نیست']);
+      for (let i = 1; i <= 3; i++) L.push(['ERROR', 'حلقه تکرار شد (' + i + '/۳) — هزینه و زمان بالا می‌رود']);
+      L.push(['ERROR', 'هزینه از سقف هشدار گذشت → هارنس مجبور به توقف شد']);
+    } else {
+      L.push(['GUARD', 'budget: ۸ گام / ۳۲k توکن → در محدوده']);
+      L.push(['MEMORY', 'رویدادها در حافظهٔ کوتاه‌مدت ذخیره شد']);
+      L.push(['TOOL', T.includes('test') ? 'test → ۱ passed ✓' : 'test در دسترس نیست → کیفیت نامعلوم']);
+      L.push(['DONE', 'پاسخ نهایی آماده شد']);
+    }
+    return L;
+  }
+  async function pgExecute(){
+    if (pgBusy) return;
+    pgBusy = true; pgRunBtn.disabled = true; pgLog.innerHTML = '';
+    pgStep.textContent = '0/8'; pgTok.textContent = '0/32,000'; pgTools.textContent = '0'; pgCost.textContent = '$0.00';
+    pgState.textContent = 'running';
+    let steps = 0, tokens = 0, tools = 0, cost = 0;
+    for (const [tag, msg] of pgScript()){
+      await pgLine(tag, msg);
+      if (tag === 'THOUGHT'){ steps++; pgStep.textContent = steps + '/8'; tokens += 1100; }
+      if (tag === 'TOOL'){ tools++; pgTools.textContent = String(tools); tokens += 620; }
+      if (tag === 'ERROR'){ tokens += 900; steps++; }
+      if (!pg.guards.budget) tokens += 24000;      // هزینهٔ runaway
+      cost = tokens * 0.00008 + steps * 0.012;
+      pgTok.textContent = Math.round(tokens).toLocaleString('en-US') + (pg.guards.budget ? '/32,000' : ' (بدون سقف)');
+      pgCost.textContent = '$' + cost.toFixed(2);
+      if (!pg.guards.budget) pgCost.style.color = 'var(--rose)'; else pgCost.style.color = '';
+      await sleep(tag === 'THOUGHT' || tag === 'ERROR' ? 320 : 220);
+    }
+    pgState.textContent = pg.guards.budget ? 'done' : 'killed';
+    pgRunBtn.disabled = false; pgBusy = false;
+  }
+  on(pgRunBtn, 'click', pgExecute);
+  pgLog.innerHTML = '<div class="log SYSTEM"><span class="tag">[idle]</span><span class="msg">'
+    + '▶ «اجرای هارنس» را بزنید. برای دیدن خطر، گاردیل «سقف بودجه» را بردارید.</span></div>';
+  on(pgReset, 'click', () => {
+    pgLog.innerHTML = ''; pgStep.textContent = '0/8'; pgTok.textContent = '0/32,000';
+    pgTools.textContent = '0'; pgCost.textContent = '$0.00'; pgState.textContent = 'idle';
+  });
+
+  /* ==========================================================
+     SLIDE 13 — code in motion
+     ========================================================== */
+  const HARNESS_CODE = [
+'<span class="c-c">"""Reference architecture of an agent harness."""</span>',
+'<span class="c-k">from</span> dataclasses <span class="c-k">import</span> dataclass, field',
+'',
+'<span class="c-k">@dataclass</span>',
+'<span class="c-k">class</span> <span class="c-t">Guard</span>:',
+'    allow: <span class="c-p">set</span> = field(default_factory=set)',
+'    <span class="c-k">def</span> <span class="c-f">check</span>(self, action: dict) <span class="c-k">-&gt;</span> <span class="c-k">None</span>:',
+'        <span class="c-k">if</span> action[<span class="c-s">"tool"</span>] <span class="c-k">not in</span> self.allow:',
+'            <span class="c-k">raise</span> <span class="c-t">PermissionError</span>(action[<span class="c-s">"tool"</span>])',
+'        <span class="c-k">if</span> action.get(<span class="c-s">"destructive"</span>):',
+'            <span class="c-k">raise</span> <span class="c-t">PermissionError</span>(<span class="c-s">"human approval"</span>)',
+'',
+'<span class="c-k">@dataclass</span>',
+'<span class="c-k">class</span> <span class="c-t">Harness</span>:',
+'    llm: <span class="c-p">Any</span>',
+'    tools: <span class="c-p">dict</span>',
+'    memory: <span class="c-p">list</span> = field(default_factory=list)',
+'    limits: <span class="c-p">dict</span> = field(default_factory=<span class="c-k">lambda</span>: {<span class="c-s">"steps"</span>: <span class="c-n">8</span>, <span class="c-s">"tokens"</span>: <span class="c-n">32_000</span>})',
+'    guard: <span class="c-t">Guard</span> = field(default_factory=<span class="c-t">Guard</span>)',
+'    <span class="c-k">def</span> <span class="c-f">run</span>(self, task: <span class="c-p">str</span>) <span class="c-p">str</span>:',
+'        <span class="c-k">for</span> step <span class="c-k">in</span> <span class="c-p">range</span>(self.limits[<span class="c-s">"steps"</span>]):',
+'            thought = self.llm.<span class="c-f">think</span>(task, self.memory)   <span class="c-c"># ۱ · فکر</span>',
+'            action  = self.<span class="c-f">parse</span>(thought)        <span class="c-c"># ۲ · JSON</span>',
+'            self.guard.<span class="c-f">check</span>(action)           <span class="c-c"># ۳ · گاردیل</span>',
+'            <span class="c-k">try</span>:',
+'                obs = self.<span class="c-f">dispatch</span>(action)     <span class="c-c"># ۴ · sandbox</span>',
+'            <span class="c-k">except</span> <span class="c-t">ToolError</span> <span class="c-k">as</span> exc:',
+'                obs = {<span class="c-s">"error"</span>: <span class="c-p">str</span>(exc)}    <span class="c-c"># ۵ · بازیابی</span>',
+'            self.memory.<span class="c-f">append</span>({<span class="c-s">"step"</span>: step, <span class="c-s">"obs"</span>: obs})  <span class="c-c"># ۶ · حافظه</span>',
+'        <span class="c-k">return</span> self.llm.<span class="c-f">summarize</span>(self.memory)  <span class="c-c"># ۷ · پاسخ</span>'
+  ];
+  const PHASES = [
+    { t:'تفکر', l:[22], d:'مدل روی حافظه و فهرست ابزارها طرح‌وارهٔ عمل را می‌نویسد. هارنس هنوز هیچ چیزی اجرا نکرده است.' },
+    { t:'اعتبارسنجی خروجی', l:[23], d:'خروجی مدل باید JSON معتبر باشد. اگر نبود، هارنس آن را به خطا تبدیل می‌کند و از مدل می‌خواهد دوباره بنویسد.' },
+    { t:'گاردیل', l:[24], d:'تنها جایی که هارنس می‌تواند «نه» بگوید: ابزار مجاز است؟ عمل مخرب است؟ بودجه کافی است؟' },
+    { t:'اجرای ایزوله', l:[26], d:'عمل داخل sandbox اجرا می‌شود. مدل هیچ دسترسی مستقیمی به سیستم ندارد — فقط از راه هارنس.' },
+    { t:'بازیابی خطا', l:[27,28], d:'خطا استثنا نیست، داده است. هارنس آن را می‌گیرد، به حافظه می‌سپارد و به مدل می‌دهد تا راه دیگری امتحان کند.' },
+    { t:'ثبت در حافظه', l:[29], d:'مشاهده در حافظهٔ کوتاه‌مدت ذخیره می‌شود تا گام بعدی زمینه داشته باشد و لازم نباشد همه‌چیز را دوباره بخواند.' },
+    { t:'جمع‌بندی', l:[30], d:'پس از پایان حلقه (یا سقف گام)، مدل از روی حافظه پاسخ نهایی را می‌سازد.' }
+  ];
+  const codeEl = $('#harnessCode');
+  if (codeEl) codeEl.innerHTML = HARNESS_CODE.map((l, i) =>
+    '<span class="cl" data-l="' + (i + 1) + '">' + (l || ' ') + '</span>').join('');
+  const phaseEls = $$('.phase');
+  let phIdx = 0, phTimer = null;
+  function paintPhase(i){
+    phIdx = (i + PHASES.length) % PHASES.length;
+    const p = PHASES[phIdx];
+    phaseEls.forEach((e, k) => e.classList.toggle('on', k === phIdx));
+    $$('.cl').forEach(el => el.classList.remove('hot'));
+    p.l.forEach(n => { const el = $('.cl[data-l="' + n + '"]'); if (el) el.classList.add('hot'); });
+    $('#phaseTitle').textContent = p.t;
+    $('#phaseText').textContent = p.d;
+    $('#phaseState').textContent = 'گام ' + (phIdx + 1) + ' / ' + PHASES.length;
+  }
+  on($('#phasePlay'), 'click', () => {
+    if (phTimer){ clearInterval(phTimer); phTimer = null; return; }
+    phTimer = setInterval(() => paintPhase(phIdx + 1), 2400);
+  });
+  phaseEls.forEach((e, k) => on(e, 'click', () => { clearInterval(phTimer); phTimer = null; paintPhase(k); }));
+  paintPhase(0);
+
+  /* ==========================================================
+     SLIDE 15 — context window animation
+     ========================================================== */
+  const CTX_STEPS = [
+    { c:'system prompt', t:1200 }, { c:'tools schema (۵ ابزار)', t:2400 },
+    { c:'task کاربر', t:120 }, { c:'read: report.py', t:900 },
+    { c:'grep: price', t:600 }, { c:'edit diff', t:400 },
+    { c:'test output (fail)', t:1100 }, { c:'iteration 2', t:2200 },
+    { c:'iteration 3', t:2600 }
+  ];
+  const ctxBar = $('#ctxBar'), ctxUsed = $('#ctxUsed'), ctxState = $('#ctxState');
+  let ctxTimer = null, ctxUsed_ = 0;
+  function ctxRender(chunks, used, state){
+    ctxBar.innerHTML = chunks.map(c => '<div class="ctx-chunk ' + c.cl + '">' + c.t + '</div>').join('');
+    ctxUsed.textContent = used.toLocaleString('en-US') + ' / 32,000 توکن';
+    ctxState.textContent = state;
+  }
+  function ctxReset(){
+    ctxUsed_ = 3600;
+    ctxRender([{t:'system prompt', cl:''}, {t:'tools schema (۵ ابزار)', cl:''}], 3600, 'آمادهٔ شروع');
+  }
+  function ctxPlay(){
+    if (ctxTimer){ clearInterval(ctxTimer); ctxTimer = null; return; }
+    const chunks = [];
+    let i = 0;
+    const tick = () => {
+      if (i >= CTX_STEPS.length){
+        // compaction
+        const old = chunks.splice(0, 5);
+        const freed = old.reduce((a, c) => a + c.t, 0);
+        chunks.unshift({ t:'خلاصهٔ ۵ رویداد قبلی (' + freed + ' توکن آزاد شد)', cl:'summary' });
+        ctxUsed_ = Math.max(0, ctxUsed_ - freed);
+        ctxRender(chunks, ctxUsed_, 'فشرده‌سازی انجام شد');
+        clearInterval(ctxTimer); ctxTimer = null;
+        return;
+      }
+      const s = CTX_STEPS[i++];
+      chunks.push({ t:s.c, cl: i > 5 ? 'old' : '' });
+      ctxUsed_ += s.t;
+      if (ctxUsed_ > 26000){
+        ctxRender(chunks, ctxUsed_, 'نزدیک سقف');
+        chunks.splice(0, 5);
+        const freed = 5200;
+        chunks.unshift({ t:'خلاصهٔ حلقهٔ قبل (' + freed + ' توکن آزاد شد)', cl:'summary' });
+        ctxUsed_ = Math.max(0, ctxUsed_ - freed);
+      }
+      ctxRender(chunks, ctxUsed_, ctxUsed_ > 22000 ? 'نزدیک سقف' : 'در حال پر شدن');
+    };
+    ctxTimer = setInterval(tick, 700);
+  }
+  on($('#ctxPlay'), 'click', ctxPlay);
+  on($('#ctxReset'), 'click', ctxReset);
+  ctxReset();
+
+  /* ==========================================================
+     SLIDE 17 — video slot
+     ========================================================== */
+  const VIDEO_SRC = '';   // ← اگر ویدئو دارید: داده‌ی base64 را اینجا بگذارید
+  const demoVideo = $('#demoVideo');
+  if (demoVideo && VIDEO_SRC){ demoVideo.src = VIDEO_SRC; demoVideo.classList.add('on'); $('#vidFallback').style.display = 'none'; }
+
+  /* ==========================================================
+     SLIDE HOOK
+     ========================================================== */
+  window.__slideEnter = function(slide){
+    if (!slide) return;
+    if (slide.id === 'fundSlide') playFund();
+    if (slide.id === 'tcSlide') paintTC(0);
+    if (slide.id === 'anatSlide') paintAnat('loop');
+    if (slide.id === 'replaySlide') rpReset();
+    if (slide.id === 'memSlide') ctxReset();
+  };
+
+  document.addEventListener('deck:slide', e => {
+    currentIndex = e.detail.index;
+    renderNotes(currentIndex);
+    paintTimer();
+  });
+  document.addEventListener('deck:goto', e => {
+    const t = e.detail.index;
+    const ev = new KeyboardEvent('keydown', { key:'Home' });
+    document.dispatchEvent(new CustomEvent('deck:jump', { detail:{ index:t } }));
+  });
+
+  /* initial paint */
+  renderNotes(0);
+  paintTimer();
+  paintTC(0);
+  rpReset();
+})();

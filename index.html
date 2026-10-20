@@ -1,0 +1,3448 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="معماری ایجنت‌های هوش مصنوعی و هارنس — ارائه‌ای تعاملی">
+<title>معماری ایجنت‌های هوش مصنوعی و هارنس</title>
+
+<!-- فونت فارسی (CDN) — در نبود اینترنت به فونت جایگزین سیستم برمی‌گردد -->
+<!-- font: self-hosted Vazirmatn (assets/fonts) -->
+
+<!-- نقشهٔ ماژول برای Three.js (CDN) — در نبود اینترنت، نمای دوبعدی جایگزین می‌شود -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+/* ============================================================
+   THEME TOKENS
+   ============================================================ */
+:root{
+  --bg:        #090d16;
+  --bg-2:      #0c1220;
+  --panel:     rgba(17,26,43,.72);
+  --panel-2:   rgba(13,20,34,.86);
+  --line:      rgba(56,189,248,.18);
+  --line-soft: rgba(148,163,184,.14);
+
+  --cyan:      #38bdf8;
+  --emerald:   #10b981;
+  --amber:     #f59e0b;
+  --rose:      #f43f5e;
+  --violet:    #a78bfa;
+
+  --text:      #e9eff8;
+  --text-2:    #b8c6da;
+  --muted:     #8497b1;
+
+  --pad:       clamp(16px, 3.1vw, 60px);
+  --gap:       clamp(10px, 1.5vw, 24px);
+  --radius:    clamp(10px, 1.1vw, 18px);
+
+  --fs-hero:   clamp(30px, 5.1vw, 82px);
+  --fs-h2:     clamp(20px, 2.65vw, 44px);
+  --fs-h3:     clamp(14px, 1.25vw, 21px);
+  --fs-body:   clamp(12.5px, .95vw, 17px);
+  --fs-small:  clamp(11px, .78vw, 14px);
+  --fs-micro:  clamp(9.5px, .66vw, 12.5px);
+
+  --ease:      cubic-bezier(.16,1,.3,1);
+  --dur:       .6s;
+
+  --font: "Vazirmatn", "IRANSans", "Segoe UI", Tahoma, system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+
+html,body{ height:100%; }
+body{
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: 1.85;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body::selection{ background: rgba(56,189,248,.3); }
+
+/* ============================================================
+   BACKGROUND LAYER
+   ============================================================ */
+.bg{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+.bg::before{  /* structural grid */
+  content:"";
+  position:absolute; inset:-2px;
+  background-image:
+    linear-gradient(rgba(56,189,248,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,.045) 1px, transparent 1px);
+  background-size: clamp(38px, 4.4vw, 74px) clamp(38px, 4.4vw, 74px);
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, #000 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, #000 30%, transparent 100%);
+}
+.orb{ position:absolute; border-radius:50%; filter: blur(70px); opacity:.5; }
+.orb.a{ width:46vw; height:46vw; top:-12vw; right:-10vw; background: radial-gradient(circle, rgba(56,189,248,.34), transparent 66%); animation: drift1 26s ease-in-out infinite alternate; }
+.orb.b{ width:40vw; height:40vw; bottom:-14vw; left:-8vw;  background: radial-gradient(circle, rgba(16,185,129,.26), transparent 66%); animation: drift2 32s ease-in-out infinite alternate; }
+.orb.c{ width:30vw; height:30vw; top:38%; left:38%;      background: radial-gradient(circle, rgba(245,158,11,.14), transparent 68%); animation: drift3 38s ease-in-out infinite alternate; }
+@keyframes drift1{ to{ transform: translate3d(-6vw, 5vh, 0) scale(1.14); } }
+@keyframes drift2{ to{ transform: translate3d(7vw, -6vh, 0) scale(1.2);  } }
+@keyframes drift3{ to{ transform: translate3d(-5vw, -7vh, 0) scale(.85);  } }
+.scanline{
+  position:absolute; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,.45), transparent);
+  animation: scan 11s linear infinite;
+}
+@keyframes scan{ 0%{ top:-2%; opacity:0 } 12%{opacity:.9} 88%{opacity:.9} 100%{ top:102%; opacity:0 } }
+.vignette{ position:absolute; inset:0; background: radial-gradient(ellipse 80% 70% at 50% 45%, transparent 40%, rgba(3,6,12,.85) 100%); }
+
+/* ============================================================
+   DECK / SLIDES
+   ============================================================ */
+#deck{ position:relative; z-index:1; width:100%; height:100vh; height:100dvh; overflow:hidden; }
+.slide{
+  position:absolute; inset:0;
+  padding: calc(var(--pad) + 26px) var(--pad) calc(var(--pad) + 54px);
+  display:flex; flex-direction:column; gap: var(--gap);
+  opacity:0; visibility:hidden;
+  transform: translateX(var(--x, 0)) scale(.988);
+  transition: opacity .5s var(--ease), transform .62s var(--ease), visibility .62s;
+}
+/* در RTL: اسلاید با ایندکس بزرگ‌تر سمت چپ قرار می‌گیرد */
+.slide.out-left { --x: -7%; }
+.slide.out-right{ --x:  7%; }
+.slide.active{ opacity:1; visibility:visible; --x:0; transform:none; z-index:2; }
+
+/* ghost number (dribbble TOC style) */
+.ghost{
+  position:absolute; z-index:0; pointer-events:none;
+  font-size: clamp(90px, 19vw, 300px); font-weight:900; line-height:.78;
+  color: transparent; -webkit-text-stroke: 1.5px rgba(56,189,248,.16);
+  bottom: clamp(-30px, -1vw, 0px); left: clamp(-14px, 1vw, 26px);
+  letter-spacing:-.04em;
+}
+.ghost.fill{ color: rgba(56,189,248,.045); -webkit-text-stroke:0; }
+/* content wrappers sit above the ghost number */
+.s1 > *:not(.ghost), .s2-body, .s3-body, .s4-body, .s5-body, .closing{ position:relative; z-index:1; }
+
+/* اسلاید ۱ — مدار چرخان (تزئین) */
+.slide.s1 > .orbit{
+  position:absolute; z-index:0; pointer-events:none;
+  left: clamp(1%, 3vw, 6%); top:46%;
+  width: clamp(240px, 32vw, 520px);
+  margin-top: calc(clamp(240px, 32vw, 520px) / -2);
+  opacity:.85;
+}
+.orbit svg{ width:100%; height:auto; overflow:visible; }
+.orbit .ring{ fill:none; stroke:rgba(56,189,248,.22); stroke-width:1; stroke-dasharray:3 9; }
+.orbit .r2{ stroke:rgba(16,185,129,.28); stroke-dasharray:2 7; }
+.orbit .r3{ stroke:rgba(245,158,11,.22); stroke-dasharray:10 6; }
+.orbit .core{ fill:rgba(56,189,248,.05); stroke:rgba(56,189,248,.3); stroke-width:1; }
+.orbit .core-in{ fill:none; stroke:rgba(56,189,248,.45); stroke-width:1; stroke-dasharray:4 6; }
+.orbit .dot{ filter: drop-shadow(0 0 8px currentColor); }
+.orbit .cyan{ fill:#38bdf8; color:#38bdf8; }
+.orbit .emerald{ fill:#10b981; color:#10b981; }
+.orbit .amber{ fill:#f59e0b; color:#f59e0b; }
+.orbit .spin, .orbit .r3{ transform-box: view-box; transform-origin: 210px 210px; }
+.orbit .s-a{ animation: orbit 22s linear infinite; }
+.orbit .s-b{ animation: orbit 15s linear infinite reverse; }
+.orbit .s-c{ animation: orbit 31s linear infinite; }
+.orbit .r1{ animation: orbit 46s linear infinite; }
+.orbit .r2{ animation: orbit 33s linear infinite reverse; }
+.orbit .r3{ animation: orbit 60s linear infinite; }
+@keyframes orbit{ from{ transform: rotate(0deg); } to{ transform: rotate(360deg); } }
+@media (max-width:1000px){ .slide.s1 > .orbit{ display:none; } }
+
+/* ============================================================
+   REVEAL ANIMATIONS
+   ============================================================ */
+.rv{ opacity:0; transform: translateY(22px); transition: opacity .7s var(--ease), transform .7s var(--ease); transition-delay: var(--d, 0s); }
+.slide.active .rv{ opacity:1; transform:none; }
+.rv-r{ opacity:0; transform: translateX(-26px); transition: opacity .7s var(--ease), transform .7s var(--ease); transition-delay: var(--d, 0s); }
+.slide.active .rv-r{ opacity:1; transform:none; }
+.rv-s{ opacity:0; transform: scale(.9); transition: opacity .75s var(--ease), transform .75s var(--ease); transition-delay: var(--d, 0s); }
+.slide.active .rv-s{ opacity:1; transform:none; }
+.rv-b{ opacity:0; filter: blur(12px); transition: opacity .85s var(--ease), filter .85s var(--ease); transition-delay: var(--d, 0s); }
+.slide.active .rv-b{ opacity:1; filter:none; }
+
+/* ============================================================
+   SHARED PIECES
+   ============================================================ */
+.kicker{
+  display:inline-flex; align-items:center; gap:.6em;
+  font-family: var(--mono); font-size: var(--fs-micro);
+  letter-spacing:.22em; text-transform:uppercase;
+  color: var(--cyan); direction:ltr;
+}
+.kicker .n{ color: var(--muted); }
+.kicker::after{ content:""; width: clamp(28px, 4vw, 70px); height:1px; background: linear-gradient(90deg, var(--cyan), transparent); }
+
+.s-title{
+  font-size: var(--fs-h2); font-weight:800; line-height:1.35;
+  letter-spacing:-.01em; margin-top:.15em;
+}
+.s-title em{ font-style:normal; color: var(--cyan); }
+.s-sub{ color: var(--muted); font-size: var(--fs-body); max-width: 62ch; }
+
+.card{
+  background: var(--panel);
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  padding: clamp(12px, 1.3vw, 22px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position:relative; overflow:hidden;
+}
+.card::after{
+  content:""; position:absolute; top:0; right:0; width:2px; height:38%;
+  background: linear-gradient(180deg, var(--accent, var(--cyan)), transparent);
+}
+.card h3{ font-size: var(--fs-h3); font-weight:700; line-height:1.5; }
+.card p{ color: var(--text-2); font-size: var(--fs-small); line-height:1.95; }
+
+.rule{ height:1px; background: linear-gradient(90deg, var(--line), transparent); border:0; }
+
+.chip{
+  display:inline-flex; align-items:center; gap:.45em;
+  padding:.32em .75em; border-radius:999px;
+  border:1px solid var(--line); background: rgba(56,189,248,.06);
+  font-size: var(--fs-micro); color: var(--text-2);
+  font-family: var(--mono); direction:ltr; white-space:nowrap;
+}
+.chip .dot{ width:7px; height:7px; border-radius:50%; background: var(--accent, var(--cyan)); box-shadow: 0 0 10px var(--accent, var(--cyan)); }
+.chip.cy{ --accent: var(--cyan); }
+.chip.em{ --accent: var(--emerald); }
+.chip.am{ --accent: var(--amber); }
+.chip.ro{ --accent: var(--rose); }
+
+/* CTA / buttons */
+.btn{
+  font-family: var(--font); font-size: var(--fs-small); font-weight:600;
+  color: var(--bg); background: var(--cyan);
+  border:0; border-radius: 999px; padding: .62em 1.35em; cursor:pointer;
+  display:inline-flex; align-items:center; gap:.5em;
+  box-shadow: 0 8px 26px rgba(56,189,248,.28);
+  transition: transform .18s var(--ease), box-shadow .18s var(--ease), background .18s;
+}
+.btn:hover{ transform: translateY(-2px); box-shadow: 0 12px 32px rgba(56,189,248,.4); }
+.btn:active{ transform: translateY(0); }
+.btn.ghost-btn{
+  background: transparent; color: var(--text); border:1px solid var(--line);
+  box-shadow:none;
+}
+.btn.ghost-btn:hover{ border-color: var(--cyan); color: var(--cyan); }
+.btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
+
+/* ============================================================
+   SLIDE 1 — TITLE
+   ============================================================ */
+.s1{ justify-content:center; gap: clamp(14px, 1.8vw, 30px); }
+.s1 .eyebrow{
+  display:inline-flex; align-items:center; gap:.7em; align-self:flex-start;
+  font-family:var(--mono); font-size: var(--fs-micro); letter-spacing:.24em;
+  color: var(--cyan); direction:ltr; text-transform:uppercase;
+  border:1px solid var(--line); border-radius:999px; padding:.45em 1.1em;
+  background: rgba(56,189,248,.05);
+}
+.s1 h1{
+  font-size: var(--fs-hero); font-weight:900; line-height:1.22; letter-spacing:-.02em;
+  max-width: 20ch;
+}
+.s1 h1 .hl{
+  background: linear-gradient(100deg, var(--cyan), #7dd3fc 40%, var(--emerald));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.s1 .lede{
+  font-size: clamp(14px, 1.25vw, 22px); color: var(--text-2); max-width: 60ch; line-height:1.9;
+}
+.s1 .lede b{ color: var(--cyan); font-weight:700; }
+.s1 .lede .em{ color: var(--emerald); font-weight:700; }
+.s1-meta{ display:flex; flex-wrap:wrap; gap: clamp(10px, 1.2vw, 20px); align-items:stretch; }
+.meta-card{
+  display:flex; align-items:center; gap: clamp(9px, 1vw, 16px);
+  border:1px solid var(--line); background: var(--panel-2);
+  border-radius: var(--radius); padding: clamp(9px, 1vw, 15px) clamp(13px, 1.4vw, 22px);
+  min-width: clamp(150px, 16vw, 230px);
+  transition: border-color .25s, transform .25s var(--ease);
+}
+.meta-card:hover{ border-color: rgba(56,189,248,.45); transform: translateY(-3px); }
+.meta-card .ico{
+  width: clamp(28px, 2.6vw, 40px); height: clamp(28px, 2.6vw, 40px); flex:0 0 auto;
+  display:grid; place-items:center; border-radius: 10px;
+  background: rgba(56,189,248,.1); border:1px solid var(--line);
+  color: var(--cyan); font-size: clamp(12px, 1.1vw, 17px);
+}
+.meta-card .k{ font-size: var(--fs-micro); color: var(--muted); letter-spacing:.06em; }
+.meta-card .v{ font-size: var(--fs-small); font-weight:700; color: var(--text); line-height:1.6; }
+.s1-stats{ display:flex; flex-wrap:wrap; gap: clamp(12px, 1.6vw, 30px); margin-top:.4em; }
+.s1-stats .st{ display:flex; flex-direction:column; }
+.s1-stats .st b{ font-family:var(--mono); font-size: clamp(16px, 1.6vw, 26px); color: var(--cyan); font-weight:700; direction:ltr; }
+.s1-stats .st span{ font-size: var(--fs-micro); color: var(--muted); }
+
+/* ============================================================
+   SLIDE 2 — CAR / 3D
+   ============================================================ */
+.s2{ display:grid; grid-template-rows: auto 1fr; }
+.s2-body{ display:grid; grid-template-columns: 1.05fr .95fr; gap: var(--gap); min-height:0; }
+.car-stage{
+  position:relative; border:1px solid var(--line); border-radius: var(--radius);
+  overflow:hidden; background:
+    radial-gradient(ellipse 60% 60% at 50% 60%, rgba(56,189,248,.10), transparent 70%),
+    linear-gradient(180deg, #070b13, #0a1120);
+  min-height:0;
+}
+.car-stage canvas{ display:block; width:100%; height:100%; }
+.car-topbar{
+  position:absolute; top:0; right:0; left:0; z-index:3;
+  display:flex; justify-content:space-between; align-items:center;
+  padding: clamp(7px, .8vw, 13px) clamp(9px, 1.1vw, 18px);
+  font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr;
+  pointer-events:none;
+}
+.car-hint{
+  position:absolute; bottom: clamp(7px, .8vw, 14px); left: 50%; transform: translateX(-50%);
+  z-index:3; font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted);
+  border:1px solid var(--line-soft); border-radius:999px; padding:.35em .9em;
+  background: rgba(9,13,22,.72); backdrop-filter: blur(6px); white-space:nowrap;
+}
+.lbl{
+  position:absolute; z-index:2; pointer-events:none;
+  transform: translate(-50%,-50%);
+  font-size: var(--fs-micro); font-weight:600; white-space:nowrap;
+  padding:.28em .7em; border-radius:999px;
+  border:1px solid var(--c, var(--cyan)); color: var(--c, var(--cyan));
+  background: rgba(9,13,22,.82); backdrop-filter: blur(6px);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c, var(--cyan)) 35%, transparent);
+  opacity:0; transition: opacity .4s ease;
+}
+.lbl.on{ opacity:1; }
+.car-fallback{
+  position:absolute; inset:0; z-index:2; display:none;
+  place-items:center; padding: clamp(8px, 1.4vw, 22px);
+  background: linear-gradient(180deg, #070b13, #0a1120);
+}
+.car-fallback.on{ display:grid; }
+.car-fallback svg{ width:100%; max-width: 620px; height:auto; }
+.car-fallback .fb-note{ margin-top:.8em; font-size: var(--fs-micro); color: var(--amber); text-align:center; }
+
+.cmp{ display:grid; grid-template-rows: 1fr auto; gap: var(--gap); min-height:0; }
+.cmp-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+.cmp-card{ --accent: var(--rose); display:flex; flex-direction:column; gap:.55em; }
+.cmp-card.harness{ --accent: var(--cyan); }
+.cmp-head{ display:flex; align-items:center; gap:.6em; }
+.cmp-head .ic{
+  width: clamp(26px, 2.4vw, 38px); height: clamp(26px, 2.4vw, 38px);
+  display:grid; place-items:center; border-radius:9px; font-size: clamp(12px, 1.1vw, 17px);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+}
+.cmp-head .t{ font-weight:800; font-size: var(--fs-h3); line-height:1.4; }
+.cmp-head .s{ display:block; font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+.cmp-card ul{ list-style:none; display:flex; flex-direction:column; gap:.42em; margin-top:.2em; }
+.cmp-card li{ display:flex; gap:.55em; font-size: var(--fs-small); color: var(--text-2); line-height:1.85; }
+.cmp-card li i{ font-style:normal; color: var(--accent); flex:0 0 auto; font-family:var(--mono); }
+.cmp-spec{ margin-top:auto; padding-top:.6em; border-top:1px solid var(--line-soft); display:flex; flex-direction:column; gap:.3em; }
+.cmp-spec div{ display:flex; justify-content:space-between; gap:.6em; font-size: var(--fs-micro); }
+.cmp-spec span{ color: var(--muted); }
+.cmp-spec b{ font-family:var(--mono); font-weight:600; color: var(--accent); direction:ltr; }
+.cmp-note{
+  display:flex; align-items:center; gap:.7em; flex-wrap:wrap;
+  border:1px solid var(--line); border-left:3px solid var(--emerald);
+  border-radius: var(--radius); padding: clamp(9px, 1vw, 15px) clamp(12px, 1.3vw, 20px);
+  background: rgba(16,185,129,.06); font-size: var(--fs-small); color: var(--text-2);
+}
+.cmp-note b{ color: var(--emerald); }
+
+/* ============================================================
+   SLIDE 3 — ReAct LOOP
+   ============================================================ */
+.s3{ display:grid; grid-template-rows: auto 1fr; }
+.s3-body{ display:grid; grid-template-columns: 1.05fr .95fr; gap: var(--gap); min-height:0; }
+.loop-box{ display:grid; place-items:center; position:relative; }
+.loop-svg{ width:100%; max-width: 540px; height:auto; overflow:visible; }
+.loop-ring{ transform-origin: 50% 50%; animation: spin 22s linear infinite; }
+@keyframes spin{ to{ transform: rotate(360deg); } }
+.loop-node{ transition: opacity .35s ease; }
+.loop-node .nd{ transition: transform .45s var(--ease), fill .35s; transform-origin:center; transform-box: fill-box; }
+.loop-node.hot .nd{ transform: scale(1.12); }
+.loop-node .lb{ font-size: 11px; fill: var(--muted); font-family: var(--font); }
+.loop-node.hot .lb{ fill: var(--text); }
+.loop-arrow{ opacity:.25; transition: opacity .35s; }
+
+.steps{ display:grid; grid-template-rows: repeat(3, 1fr); gap: var(--gap); min-height:0; }
+.step{
+  display:grid; grid-template-columns: auto 1fr; gap: clamp(9px, 1.1vw, 18px);
+  align-items:center; border:1px solid var(--line); border-radius: var(--radius);
+  padding: clamp(10px, 1.2vw, 20px); background: var(--panel-2);
+  transition: border-color .35s, background .35s, transform .35s var(--ease);
+  cursor:pointer;
+}
+.step .num{
+  width: clamp(30px, 2.8vw, 46px); height: clamp(30px, 2.8vw, 46px);
+  display:grid; place-items:center; border-radius:12px;
+  font-family:var(--mono); font-weight:700; font-size: var(--fs-small);
+  border:1px solid var(--line); color: var(--muted); direction:ltr;
+  transition: all .35s var(--ease);
+}
+.step .t{ font-weight:700; font-size: var(--fs-h3); display:flex; align-items:center; gap:.5em; flex-wrap:wrap; }
+.step .t code{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--cyan); direction:ltr; }
+.step .d{ font-size: var(--fs-small); color: var(--muted); line-height:1.85; }
+.step .snip{ margin-top:.35em; font-family:var(--mono); font-size: var(--fs-micro); color: var(--c); direction:ltr; text-align:left; opacity:.8; }
+.step.hot{ border-color: color-mix(in srgb, var(--c) 55%, transparent); background: color-mix(in srgb, var(--c) 9%, var(--panel-2)); transform: translateX(-8px); }
+.step.hot .num{ background: var(--c); color: #06101c; border-color: var(--c); box-shadow: 0 0 22px color-mix(in srgb, var(--c) 55%, transparent); }
+.step.hot .d{ color: var(--text-2); }
+.react-ctl{ display:flex; align-items:center; gap:.6em; flex-wrap:wrap; }
+.mini-note{ font-size: var(--fs-micro); color: var(--muted); font-family:var(--mono); direction:ltr; }
+
+/* ============================================================
+   SLIDE 4 — CODE + SIMULATOR
+   ============================================================ */
+.s4{ display:grid; grid-template-rows: auto 1fr; }
+.s4-body{ display:grid; grid-template-columns: 1.08fr .92fr; gap: var(--gap); min-height:0; }
+.code-wrap{ display:flex; flex-direction:column; border:1px solid var(--line); border-radius: var(--radius); overflow:hidden; background: #070b12; min-height:0; }
+.code-bar{ display:flex; align-items:center; gap:.5em; padding:.55em .9em; background: rgba(56,189,248,.05); border-bottom:1px solid var(--line-soft); }
+.code-bar .dots{ display:flex; gap:.35em; }
+.code-bar .dots i{ width:9px; height:9px; border-radius:50%; background: rgba(148,163,184,.3); }
+.code-bar .dots i:nth-child(1){ background: var(--rose); }
+.code-bar .dots i:nth-child(2){ background: var(--amber); }
+.code-bar .dots i:nth-child(3){ background: var(--emerald); }
+.code-bar .fname{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+pre.code{
+  margin:0; padding: clamp(9px, 1.1vw, 20px); overflow:auto; direction:ltr; text-align:left;
+  font-family: var(--mono); font-size: clamp(8.5px, min(.6vw, 1.02vh), 12px); line-height:1.52;
+  color: var(--text-2); flex:1; min-height:0;
+  unicode-bidi: isolate;
+}
+pre.code::-webkit-scrollbar{ width:8px; height:8px; }
+pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radius:8px; }
+.c-k{ color: #c084fc; } .c-f{ color: #7dd3fc; } .c-s{ color: #86efac; } .c-c{ color: #5c6b82; font-style:italic; }
+.c-n{ color: #fbbf24; } .c-t{ color: #38bdf8; } .c-p{ color: #e9eff8; }
+
+.console{ display:flex; flex-direction:column; border:1px solid var(--line); border-radius: var(--radius); overflow:hidden; background:#060a11; min-height:0; }
+.con-bar{ display:flex; align-items:center; justify-content:space-between; gap:.6em; padding:.5em .9em; border-bottom:1px solid var(--line-soft); background: rgba(16,185,129,.05); }
+.con-bar .ttl{ display:flex; align-items:center; gap:.5em; font-family:var(--mono); font-size: var(--fs-micro); color: var(--emerald); direction:ltr; }
+.con-bar .ttl .pulse{ width:8px; height:8px; border-radius:50%; background: var(--emerald); box-shadow:0 0 10px var(--emerald); animation: blink 1.4s infinite; }
+@keyframes blink{ 50%{ opacity:.25 } }
+.con-log{
+  padding: clamp(8px, 1vw, 16px); overflow:auto; direction:ltr; text-align:left;
+  font-family:var(--mono); font-size: var(--fs-micro); line-height:1.9;
+  flex:1; min-height:0; unicode-bidi: isolate;
+}
+.con-log::-webkit-scrollbar{ width:8px; }
+.con-log::-webkit-scrollbar-thumb{ background: rgba(16,185,129,.25); border-radius:8px; }
+.log{ opacity:0; transform: translateY(6px); animation: logIn .32s var(--ease) forwards; white-space:pre-wrap; word-break: break-word; }
+@keyframes logIn{ to{ opacity:1; transform:none; } }
+.log .tag{ display:inline-block; min-width: 6.4em; color: var(--muted); }
+.log.SYSTEM .tag{ color:#7dd3fc } .log.THOUGHT .tag{ color:#c084fc }
+.log.TOOL .tag{ color:#34d399 } .log.GUARD .tag{ color:#fbbf24 }
+.log.ERROR .tag{ color:#fb7185 } .log.MEMORY .tag{ color:#7dd3fc }
+.log.DONE .tag{ color:#34d399; font-weight:700 }
+.log .msg{ color: var(--text-2); }
+.log.ERROR .msg{ color:#fda4af } .log.GUARD .msg{ color:#fcd34d } .log.DONE .msg{ color:#86efac }
+.caret{ display:inline-block; width:.55em; height:1em; background: var(--emerald); vertical-align:-2px; animation: blink 1s steps(2) infinite; }
+.sim-metrics{ display:flex; gap:.5em; flex-wrap:wrap; padding:.55em .9em; border-top:1px solid var(--line-soft); background: rgba(255,255,255,.015); }
+.sim-metrics .m{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+.sim-metrics .m b{ color: var(--cyan); font-weight:600; }
+
+/* ============================================================
+   SLIDE 5 — SUMMARY
+   ============================================================ */
+.s5{ display:grid; grid-template-rows: auto 1fr; }
+.s5-body{ display:grid; grid-template-columns: .95fr 1.05fr; gap: var(--gap); min-height:0; }
+.metrics{ display:grid; grid-template-columns: 1fr 1fr; gap: var(--gap); align-content:start; }
+.metric{ display:flex; flex-direction:column; gap:.1em; }
+.metric b{ font-family:var(--mono); font-size: clamp(26px, 3.4vw, 58px); font-weight:800; line-height:1.1; color: var(--c, var(--cyan)); direction:ltr; }
+.metric span{ font-size: var(--fs-small); color: var(--text-2); }
+.metric small{ font-size: var(--fs-micro); color: var(--muted); }
+.check{ list-style:none; display:flex; flex-direction:column; gap:.55em; }
+.check li{
+  display:grid; grid-template-columns: auto 1fr; gap:.75em; align-items:start;
+  border:1px solid var(--line-soft); border-radius: var(--radius);
+  padding: clamp(9px, 1vw, 15px) clamp(11px, 1.2vw, 18px);
+  background: var(--panel-2);
+  transition: border-color .3s, transform .3s var(--ease), background .3s;
+}
+.check li:hover{ border-color: rgba(16,185,129,.45); transform: translateX(-6px); background: rgba(16,185,129,.05); }
+.check .ck{
+  width: clamp(19px, 1.8vw, 26px); height: clamp(19px, 1.8vw, 26px); border-radius:7px;
+  display:grid; place-items:center; flex:0 0 auto;
+  background: rgba(16,185,129,.14); border:1px solid rgba(16,185,129,.5); color: var(--emerald);
+  font-size: var(--fs-micro);
+}
+.check .tx b{ display:block; font-size: var(--fs-small); font-weight:700; }
+.check .tx span{ font-size: var(--fs-micro); color: var(--muted); line-height:1.8; }
+.closing{
+  display:flex; align-items:center; justify-content:space-between; gap: var(--gap); flex-wrap:wrap;
+  border-top:1px solid var(--line); padding-top: clamp(10px, 1.2vw, 20px);
+}
+.closing .q{ font-size: var(--fs-body); color: var(--text-2); }
+.closing .q b{ color: var(--cyan); }
+
+/* ============================================================
+   HUD / NAVIGATION
+   ============================================================ */
+.hud{
+  position:fixed; z-index:20; bottom:0; right:0; left:0;
+  display:flex; align-items:center; justify-content:space-between; gap: var(--gap);
+  padding: clamp(7px, .8vw, 14px) var(--pad) calc(clamp(7px, .8vw, 14px) + env(safe-area-inset-bottom));
+  background: linear-gradient(0deg, rgba(6,10,18,.92), rgba(6,10,18,0));
+  font-size: var(--fs-micro);
+}
+.hud .brand{ display:flex; align-items:center; gap:.6em; color: var(--muted); font-family:var(--mono); direction:ltr; }
+.hud .brand .mk{ width:9px; height:9px; background: var(--cyan); border-radius:2px; transform: rotate(45deg); box-shadow:0 0 12px var(--cyan); }
+.hud-steps{ display:flex; align-items:center; gap:.4em; }
+.hud-steps button{
+  width: clamp(24px, 2.3vw, 34px); height: clamp(24px, 2.3vw, 34px);
+  border-radius:9px; border:1px solid var(--line-soft); background: rgba(255,255,255,.02);
+  color: var(--muted); font-family:var(--mono); font-size: var(--fs-micro); cursor:pointer;
+  transition: all .25s var(--ease);
+}
+.hud-steps button:hover{ color: var(--cyan); border-color: var(--cyan); }
+.hud-steps button.on{ background: var(--cyan); color:#06101c; border-color: var(--cyan); font-weight:700; box-shadow:0 0 18px rgba(56,189,248,.45); }
+.hud-right{ display:flex; align-items:center; gap: var(--gap); }
+.hud .count{ font-family:var(--mono); color: var(--text-2); direction:ltr; }
+.hud .count b{ color: var(--cyan); }
+.hud .keys{ color: var(--muted); display:flex; align-items:center; gap:.45em; }
+.hud kbd{
+  font-family:var(--mono); font-size: var(--fs-micro); border:1px solid var(--line-soft);
+  border-bottom-width:2px; border-radius:5px; padding:.1em .45em; color: var(--text-2);
+}
+.nav-arrows{ position:fixed; z-index:21; bottom: clamp(46px, 5vw, 78px); left: var(--pad); display:flex; gap:.4em; }
+.nav-arrows button{
+  width: clamp(34px, 3.2vw, 46px); height: clamp(34px, 3.2vw, 46px); border-radius:50%;
+  border:1px solid var(--line); background: rgba(9,13,22,.8); color: var(--text-2);
+  cursor:pointer; display:grid; place-items:center; backdrop-filter: blur(8px);
+  transition: all .22s var(--ease);
+}
+.nav-arrows button:hover{ border-color: var(--cyan); color: var(--cyan); transform: scale(1.07); }
+.nav-arrows button:disabled{ opacity:.3; cursor:not-allowed; transform:none; }
+.progress{ position:fixed; z-index:22; bottom:0; right:0; left:0; height:2px; background: rgba(148,163,184,.14); }
+.progress i{ display:block; height:100%; background: linear-gradient(90deg, var(--emerald), var(--cyan)); transform-origin: right center; transition: transform .55s var(--ease); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1000px){
+  .s2-body, .s3-body, .s4-body, .s5-body{ grid-template-columns: 1fr; }
+  .s3-body{ grid-template-rows: .9fr 1.1fr; }
+  .car-stage{ min-height: clamp(220px, 38vh, 360px); }
+  .loop-box{ min-height: 190px; }
+  .hud .keys{ display:none; }
+  /* اسلایدهای بلند روی موبایل اسکرول می‌خورند */
+  .slide{ overflow-y: auto; overscroll-behavior: contain; }
+}
+@media (max-width: 700px){
+  :root{ --pad: 16px; }
+  .slide{ padding: calc(var(--pad) + 34px) var(--pad) calc(var(--pad) + 62px); }
+  .s1 h1{ max-width:none; }
+  .s1-meta{ gap:8px; }
+  .meta-card{ min-width:0; flex:1 1 46%; }
+  .metrics{ grid-template-columns: 1fr 1fr; }
+  .cmp-grid{ grid-template-columns: 1fr; }
+  .steps{ gap:8px; }
+  .hud{ flex-wrap:wrap; justify-content:center; }
+  .hud .brand, .hud .count{ display:none; }
+  .nav-arrows{ bottom: auto; top: calc(var(--pad) + 6px); left: var(--pad); }
+  .ghost{ font-size: 32vw; }
+}
+@media (max-height: 560px){
+  .slide{ padding-top: calc(var(--pad) + 12px); }
+  .nav-arrows{ display:none; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.05ms !important; }
+  .rv,.rv-r,.rv-s,.rv-b{ opacity:1 !important; transform:none !important; filter:none !important; }
+}
+/* ============================================================
+   EXTENSIONS — 18-slide deck (agenda, dividers, action slides)
+   ============================================================ */
+.slide [class$="-body"]{ position:relative; z-index:1; }
+
+/* ---------- agenda ---------- */
+.s-agenda{ display:grid; grid-template-rows:auto 1fr; }
+.agenda-list{ display:flex; flex-direction:column; gap: clamp(7px,.85vw,14px); min-height:0; }
+.ag-row{
+  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap: clamp(10px,1.3vw,22px);
+  text-align:start; cursor:pointer; font-family:var(--font); color:inherit;
+  border:1px solid var(--line-soft); border-radius: var(--radius); background: var(--panel-2);
+  padding: clamp(9px,1.1vw,19px) clamp(12px,1.4vw,24px);
+  transition: border-color .3s, transform .3s var(--ease), background .3s;
+}
+.ag-row:hover{ border-color: rgba(56,189,248,.45); transform: translateX(-6px); background: rgba(56,189,248,.05); }
+.ag-num{ font-family:var(--mono); font-size: clamp(15px,1.5vw,24px); font-weight:700; color: var(--cyan); }
+.ag-t{ font-size: var(--fs-h3); font-weight:700; line-height:1.5; }
+.ag-d{ display:block; font-size: var(--fs-small); color: var(--muted); line-height:1.8; }
+.ag-min{ font-family:var(--mono); font-size: var(--fs-small); color: var(--emerald); white-space:nowrap; }
+
+/* ---------- section dividers ---------- */
+.s-div{ justify-content:center; }
+.s-div .ghost{ display:none; } /* the section number is the hero here */
+.div-wrap{ display:flex; flex-direction:column; gap: clamp(7px,.9vw,15px); max-width: 62ch; }
+.div-tag{ font-family:var(--mono); font-size: var(--fs-micro); letter-spacing:.22em; color: var(--cyan); direction:ltr; text-transform:uppercase; }
+.div-num{ font-family:var(--mono); font-size: clamp(66px,12vw,190px); font-weight:900; line-height:.85;
+  color:transparent; -webkit-text-stroke:1.5px rgba(56,189,248,.32); }
+.div-title{ font-size: var(--fs-h2); font-weight:800; line-height:1.3; }
+.div-sub{ color: var(--text-2); font-size: var(--fs-body); line-height:1.9; }
+.div-chips{ display:flex; flex-wrap:wrap; gap:.5em; margin-top:.35em; }
+
+/* ---------- fundamentals ---------- */
+.s-fund{ display:grid; grid-template-rows:auto 1fr; }
+.fund-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: var(--gap); min-height:0; }
+.fund-build{ display:flex; flex-direction:column; gap: clamp(7px,.8vw,13px); }
+.fund-row{
+  border:1px solid var(--line-soft); border-radius: var(--radius); background: var(--panel-2);
+  padding: clamp(9px,1vw,16px) clamp(11px,1.2vw,20px); cursor:pointer;
+  transition: border-color .35s, background .35s, transform .35s var(--ease);
+}
+.fund-row .ft{ display:flex; align-items:center; gap:.5em; font-weight:700; font-size: var(--fs-small); }
+.fund-row .ft i{ font-style:normal; font-family:var(--mono); color: var(--muted); font-size: var(--fs-micro); }
+.fund-row .fd{ font-size: var(--fs-micro); color: var(--muted); line-height:1.85; margin-top:.15em; }
+.fund-row.on{ border-color: var(--c,var(--cyan)); background: color-mix(in srgb, var(--c,var(--cyan)) 9%, var(--panel-2)); transform: translateX(-7px); }
+.fund-row.on .ft{ color: var(--c,var(--cyan)); }
+.fund-right{ display:flex; flex-direction:column; gap: var(--gap); min-height:0; }
+.def-card{ --accent: var(--cyan); }
+.def-card .eq{ font-family:var(--mono); direction:ltr; text-align:left; font-size: var(--fs-small); color: var(--text);
+  background: rgba(0,0,0,.3); border:1px solid var(--line-soft); border-radius:10px; padding:.65em .85em; margin-top:.5em; }
+.vs-grid{ display:grid; grid-template-columns:1fr 1fr; gap: var(--gap); }
+.vs-col{ border:1px solid var(--line-soft); border-radius: var(--radius); background: var(--panel-2); padding: clamp(9px,1vw,16px); }
+.vs-col h4{ font-size: var(--fs-small); font-weight:800; display:flex; align-items:center; gap:.45em; }
+.vs-col h4 em{ font-style:normal; font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+.vs-col p{ font-size: var(--fs-micro); color: var(--text-2); line-height:1.85; margin-top:.35em; }
+.vs-col.flow h4{ color: var(--muted); }
+.vs-col.agent h4{ color: var(--cyan); }
+
+/* ---------- action A: tool-call anatomy ---------- */
+.s-tc{ display:grid; grid-template-rows:auto 1fr auto; }
+.tc-grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap: var(--gap); min-height:0; }
+.tc-flow{ display:grid; grid-template-rows: repeat(5,1fr); gap: clamp(6px,.7vw,12px); }
+.tc-node{
+  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:.7em; text-align:start;
+  cursor:pointer; font-family:var(--font); color:inherit;
+  border:1px solid var(--line-soft); border-radius: var(--radius); background: var(--panel-2);
+  padding: clamp(8px,.9vw,15px) clamp(10px,1.1vw,18px); transition: all .3s var(--ease);
+}
+.tc-node .n{ width: clamp(24px,2.2vw,34px); height: clamp(24px,2.2vw,34px); display:grid; place-items:center;
+  border-radius:9px; border:1px solid var(--line); font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); }
+.tc-node .t{ font-weight:700; font-size: var(--fs-small); }
+.tc-node .s{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+.tc-node.on{ border-color: var(--c,var(--cyan)); background: color-mix(in srgb, var(--c,var(--cyan)) 11%, var(--panel-2));
+  box-shadow: 0 0 26px color-mix(in srgb, var(--c,var(--cyan)) 18%, transparent); }
+.tc-node.on .n{ background: var(--c,var(--cyan)); color:#06101c; border-color:transparent; font-weight:700; }
+.tc-pane{ display:flex; flex-direction:column; gap: var(--gap); min-height:0; }
+.tc-json{ flex:1; border:1px solid var(--line); border-radius: var(--radius); background:#070b12;
+  padding: clamp(9px,1.1vw,18px); overflow:auto; }
+.tc-json pre{ margin:0; font-family:var(--mono); font-size: var(--fs-small); direction:ltr; text-align:left;
+  color: var(--text-2); white-space:pre-wrap; line-height:1.8; }
+.tc-cap{ border:1px solid var(--line); border-inline-start:3px solid var(--cyan); border-radius: var(--radius);
+  background: rgba(56,189,248,.06); padding: clamp(9px,1vw,16px); font-size: var(--fs-small); color: var(--text-2); }
+.tc-ctl{ display:flex; align-items:center; gap:.6em; flex-wrap:wrap; }
+
+/* ---------- harness anatomy ---------- */
+.s-anat{ display:grid; grid-template-rows:auto 1fr; }
+.anat-grid{ display:grid; grid-template-columns: 1.05fr .95fr; gap: var(--gap); min-height:0; }
+.anat-svg-wrap{ display:grid; place-items:center; border:1px solid var(--line); border-radius: var(--radius);
+  background: linear-gradient(180deg,#070b13,#0a1120); padding: clamp(6px,1vw,16px); overflow:hidden; }
+.anat-svg{ width:100%; max-width: 560px; height:auto; overflow:visible; }
+.anat-part{ cursor:pointer; }
+.anat-part .pb{ fill: rgba(15,23,40,.92); stroke: rgba(148,163,184,.3); stroke-width:1.2; transition: all .3s var(--ease); }
+.anat-part .pl{ font-family: var(--font); font-size: 11px; fill: var(--text-2); text-anchor: middle; }
+.anat-part .pe{ font-family: var(--mono); font-size: 7.6px; fill: var(--muted); text-anchor: middle; }
+.anat-part.hot .pb{ stroke: var(--c,var(--cyan)); fill: color-mix(in srgb, var(--c,var(--cyan)) 15%, rgba(15,23,40,.92));
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--c,var(--cyan)) 45%, transparent)); }
+.anat-part.hot .pl{ fill: var(--text); }
+.anat-part.hot .pe{ fill: var(--c,var(--cyan)); }
+.anat-link{ stroke: rgba(148,163,184,.22); stroke-width:1; stroke-dasharray:3 6; }
+.anat-side{ display:flex; flex-direction:column; gap: var(--gap); min-height:0; }
+.anat-chips{ display:flex; flex-wrap:wrap; gap:.45em; }
+.anat-chip{ cursor:pointer; background: transparent; font-family:var(--font); }
+.anat-chip.on{ border-color: var(--c,var(--cyan)); color: var(--c,var(--cyan)); background: color-mix(in srgb, var(--c,var(--cyan)) 12%, transparent); }
+.anat-desc{ --accent: var(--cyan); flex:1; display:flex; flex-direction:column; gap:.35em; }
+.anat-desc .aq{ margin-top:auto; padding-top:.55em; border-top:1px solid var(--line-soft);
+  font-size: var(--fs-micro); color: var(--muted); line-height:1.85; }
+.anat-desc .aq b{ color: var(--cyan); }
+.anat-desc h3{ margin-bottom:.2em; }
+.anat-desc .k{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+
+/* ---------- action B: session replay ---------- */
+.s-replay{ display:grid; grid-template-rows:auto 1fr auto; }
+.rp-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: var(--gap); min-height:0; }
+.rp-left,.rp-right{ display:flex; flex-direction:column; gap: var(--gap); min-height:0; }
+.rp-transcript{ flex:1; min-height:0; overflow:auto; border:1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel-2); padding: clamp(9px,1vw,16px); display:flex; flex-direction:column; gap:.5em; }
+.rp-msg{ border-radius:12px; padding:.55em .8em; font-size: var(--fs-small); line-height:1.8;
+  border:1px solid transparent; animation: logIn .3s var(--ease) both; }
+.rp-msg .who{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); display:block; letter-spacing:.1em; }
+.rp-msg.user{ background: rgba(56,189,248,.08); border-color: rgba(56,189,248,.28); }
+.rp-msg.asst{ background: rgba(167,139,250,.08); border-color: rgba(167,139,250,.28); }
+.rp-msg.tool{ background: rgba(16,185,129,.07); border-color: rgba(16,185,129,.26); }
+.rp-msg.err{ background: rgba(244,63,94,.1); border-color: rgba(244,63,94,.42); }
+.rp-msg .code{ font-family:var(--mono); direction:ltr; text-align:left; display:block; white-space:pre-wrap;
+  color: var(--text-2); font-size: var(--fs-micro); }
+.rp-file{ --accent: var(--cyan); display:flex; flex-direction:column; gap:0; min-height:0; padding:0; overflow:hidden; }
+.rp-file-bar{ display:flex; align-items:center; justify-content:space-between; gap:.5em; padding:.42em .8em;
+  border-bottom:1px solid var(--line-soft); background: rgba(56,189,248,.05);
+  font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+.rp-code{ margin:0; padding: clamp(8px,.9vw,14px); font-family:var(--mono); font-size: var(--fs-micro);
+  line-height:1.8; direction:ltr; text-align:left; color: var(--text-2); overflow:auto; flex:1; min-height:0; }
+.rp-code .ln{ display:block; padding-inline-start: 2.6em; position:relative; white-space:pre; }
+.rp-code .ln::before{ content: attr(data-n); position:absolute; inset-inline-start:0; color: rgba(148,163,184,.45); font-size:.85em; }
+.rp-code .ln.hot{ background: rgba(56,189,248,.14); color: var(--text); }
+.rp-code .ln.add{ background: rgba(16,185,129,.13); color:#86efac; }
+.rp-code .ln.del{ background: rgba(244,63,94,.1); color:#fda4af; opacity:.8; }
+.rp-note{ --accent: var(--amber); font-size: var(--fs-small); }
+.rp-note b{ color: var(--amber); }
+.rp-transport{ display:flex; align-items:center; gap:.6em; flex-wrap:wrap; }
+.rp-btn{ width: clamp(28px,2.6vw,38px); height: clamp(28px,2.6vw,38px); border-radius:10px; border:1px solid var(--line);
+  background: rgba(9,13,22,.8); color: var(--text-2); cursor:pointer; font-size: var(--fs-small);
+  display:grid; place-items:center; transition: all .2s var(--ease); }
+.rp-btn:hover{ border-color: var(--cyan); color: var(--cyan); }
+.rp-btn.rp-play{ background: var(--cyan); color:#06101c; font-weight:700; }
+.rp-track{ flex:1; min-width: 120px; height: 4px; border-radius:4px; background: rgba(148,163,184,.18); position:relative; overflow:hidden; }
+.rp-track i{ position:absolute; top:0; bottom:0; inset-inline-start:0; width:0;
+  background: linear-gradient(90deg,var(--emerald),var(--cyan)); transition: width .25s linear; }
+.rp-time{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+.rp-speed{ font-family:var(--mono); font-size: var(--fs-micro); border:1px solid var(--line); border-radius:999px;
+  background:transparent; color: var(--text-2); padding:.35em .9em; cursor:pointer; }
+
+/* ---------- action C: playground ---------- */
+.s-play{ display:grid; grid-template-rows:auto 1fr; }
+.pg-grid{ display:grid; grid-template-columns: .78fr 1.22fr; gap: var(--gap); min-height:0; }
+.pg-side{ display:flex; flex-direction:column; gap: clamp(8px,1vw,16px); min-height:0; }
+.pg-lbl{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); letter-spacing:.14em; margin-bottom:.45em; }
+.pg-goals{ display:flex; flex-direction:column; gap:.35em; }
+.pg-goal{ text-align:start; cursor:pointer; border:1px solid var(--line-soft); background: var(--panel-2);
+  color: var(--text-2); border-radius:10px; padding:.5em .8em; font-family:var(--font); font-size: var(--fs-small); transition: all .25s; }
+.pg-goal.on{ border-color: var(--cyan); color: var(--cyan); background: rgba(56,189,248,.1); }
+.pg-tools{ display:flex; flex-wrap:wrap; gap:.4em; }
+.pg-tool{ cursor:pointer; }
+.pg-tool:not(.on){ opacity:.35; }
+.pg-guards{ display:flex; flex-direction:column; gap:.35em; }
+.pg-guard{ display:flex; align-items:center; gap:.55em; font-size: var(--fs-small); color: var(--text-2); cursor:pointer; }
+.pg-guard input{ accent-color: var(--cyan); width: 15px; height: 15px; }
+.pg-ctl{ display:flex; gap:.5em; flex-wrap:wrap; }
+
+/* ---------- action D: code in motion ---------- */
+.s-code{ display:grid; grid-template-rows:auto 1fr; }
+.cl{ display:block; transition: background .3s, color .3s; }
+.cl.hot{ background: rgba(56,189,248,.15); color: var(--text); }
+.phases{ display:flex; flex-direction:column; gap: var(--gap); min-height:0; }
+.phase-list{ display:flex; flex-direction:column; gap:.3em; }
+.phase{ display:flex; align-items:center; gap:.6em; font-size: var(--fs-small); color: var(--muted);
+  border:1px solid transparent; border-radius:10px; padding:.42em .7em; cursor:pointer; transition: all .25s; }
+.phase .pn{ font-family:var(--mono); font-size: var(--fs-micro); width:1.7em; }
+.phase.on{ color: var(--cyan); border-color: var(--line); background: rgba(56,189,248,.08); }
+.phase-desc{ --accent: var(--cyan); font-size: var(--fs-small); }
+.phase-desc .ph{ font-weight:800; font-size: var(--fs-h3); margin-bottom:.2em; }
+
+/* ---------- tools & MCP ---------- */
+.s-tools{ display:grid; grid-template-rows:auto 1fr; }
+.tools-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: var(--gap); min-height:0; }
+.tool-io{ display:flex; flex-direction:column; gap:.45em; margin:.55em 0; }
+.io-card{ border:1px solid var(--line-soft); border-radius:10px; overflow:hidden; background: rgba(0,0,0,.28); }
+.io-t{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--cyan); padding:.35em .7em; border-bottom:1px solid var(--line-soft); }
+.io-card pre{ margin:0; padding:.5em .7em; font-family:var(--mono); font-size: var(--fs-micro);
+  direction:ltr; text-align:left; color: var(--text-2); white-space:pre-wrap; line-height:1.7; }
+.rules{ list-style:none; display:flex; flex-direction:column; gap:.45em; }
+.rules li{ display:flex; gap:.55em; font-size: var(--fs-small); color: var(--text-2); line-height:1.8; }
+.rules li i{ font-style:normal; color: var(--emerald); font-family:var(--mono); flex:0 0 auto; }
+.mcp-svg{ width:100%; max-width: 440px; height:auto; margin:.3em auto; }
+.mcp-node{ fill: rgba(15,23,40,.92); stroke: rgba(56,189,248,.38); stroke-width:1.2; }
+.mcp-lbl{ font-family: var(--font); font-size: 11px; fill: var(--text-2); text-anchor: middle; }
+.mcp-sub{ font-family: var(--mono); font-size: 7.6px; fill: var(--muted); text-anchor: middle; }
+.mcp-link{ stroke: rgba(56,189,248,.45); stroke-width:1.2; stroke-dasharray:4 5; fill:none; }
+
+/* ---------- memory & context ---------- */
+.s-mem{ display:grid; grid-template-rows:auto 1fr; }
+.mem-grid{ display:grid; grid-template-columns: 1.08fr .92fr; gap: var(--gap); min-height:0; }
+.ctx-card{ --accent: var(--cyan); display:flex; flex-direction:column; gap:.6em; }
+.ctx-bar{ display:flex; flex-direction:column; gap:4px; border:1px solid var(--line-soft); border-radius:10px;
+  padding:.55em; background: rgba(0,0,0,.3); min-height: clamp(150px,24vh,290px); justify-content:flex-end; }
+.ctx-chunk{ font-family:var(--mono); font-size: var(--fs-micro); padding:.32em .6em; border-radius:7px;
+  color: var(--text-2); background: rgba(56,189,248,.12); border:1px solid rgba(56,189,248,.25);
+  animation: logIn .35s var(--ease) both; }
+.ctx-chunk.summary{ background: rgba(16,185,129,.14); border-color: rgba(16,185,129,.38); color:#86efac; }
+.ctx-chunk.old{ opacity:.4; }
+.ctx-foot{ display:flex; justify-content:space-between; font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); }
+.mem-side{ display:flex; flex-direction:column; gap: var(--gap); min-height:0; }
+.mem-card{ --accent: var(--emerald); font-size: var(--fs-small); }
+.warn-card{ --accent: var(--amber); }
+.warn-card ul{ list-style:none; display:flex; flex-direction:column; gap:.35em; }
+.warn-card li{ font-size: var(--fs-small); color: var(--text-2); }
+
+/* ---------- real-world harnesses ---------- */
+.s-real{ display:grid; grid-template-rows:auto 1fr auto; }
+.real-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap: var(--gap); min-height:0; }
+.real-card{ --accent: var(--c,var(--cyan)); display:flex; flex-direction:column; gap:.5em; }
+.real-head .nm{ font-size: var(--fs-h3); font-weight:800; }
+.real-head .tagline{ display:block; font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
+.real-card ul{ list-style:none; display:flex; flex-direction:column; gap:.42em; }
+.real-card li{ font-size: var(--fs-small); color: var(--text-2); line-height:1.8; }
+.real-card li b{ color: var(--text); }
+.real-take{ margin-top:auto; padding-top:.5em; border-top:1px solid var(--line-soft);
+  font-size: var(--fs-micro); color: var(--c,var(--cyan)); }
+
+/* ---------- live demo ---------- */
+.s-live .div-wrap{ max-width:none; }
+.live-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: var(--gap); margin-top:.5em; }
+.live-check ol{ list-style:none; display:flex; flex-direction:column; gap:.45em; margin-top:.5em; }
+.live-check li{ display:flex; gap:.6em; font-size: var(--fs-small); color: var(--text-2); line-height:1.8; }
+.live-check li .no{ font-family:var(--mono); color: var(--cyan); flex:0 0 auto; }
+.live-check code{ font-family:var(--mono); color: var(--emerald); background: rgba(16,185,129,.1);
+  border:1px solid rgba(16,185,129,.28); border-radius:5px; padding:.05em .4em; direction:ltr; }
+.live-video{ display:flex; flex-direction:column; gap:.5em; }
+.live-video video{ width:100%; border-radius:10px; background:#000; display:none; }
+.live-video video.on{ display:block; }
+.vid-fallback{ border:1px dashed var(--line); border-radius:10px; padding: clamp(10px,1.2vw,20px);
+  font-size: var(--fs-small); color: var(--muted); text-align:center; line-height:1.9; }
+.vid-fallback b{ color: var(--text-2); }
+
+/* ---------- presenter aids ---------- */
+.notes{
+  position:fixed; z-index:24; bottom: clamp(58px,6vw,92px); right: var(--pad);
+  width: min(430px, 44vw); max-height: 46vh; overflow:auto;
+  border:1px solid var(--line); border-radius: var(--radius);
+  background: rgba(8,13,22,.95); backdrop-filter: blur(10px);
+  padding: clamp(11px,1.2vw,18px); display:none;
+  box-shadow: 0 20px 60px rgba(0,0,0,.55);
+}
+.notes.on{ display:block; }
+.notes .nt{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--amber); letter-spacing:.16em; }
+.notes h4{ font-size: var(--fs-h3); font-weight:800; margin:.25em 0 .5em; }
+.notes ul{ list-style:none; display:flex; flex-direction:column; gap:.38em; }
+.notes li{ font-size: var(--fs-small); color: var(--text-2); line-height:1.85; padding-inline-start:1em; position:relative; }
+.notes li::before{ content:"◂"; position:absolute; inset-inline-start:0; color: var(--cyan); }
+.notes .nm{ margin-top:.6em; padding-top:.5em; border-top:1px solid var(--line-soft);
+  font-size: var(--fs-micro); color: var(--muted); }
+.hud-timer{ display:none; align-items:center; gap:.45em; font-family:var(--mono); color: var(--text-2); direction:ltr; }
+.hud-timer.on{ display:flex; }
+.hud-timer b{ color: var(--cyan); font-size: var(--fs-small); }
+.hud-timer .sec{ color: var(--muted); font-family: var(--font); }
+.hud-timer.over b{ color: var(--rose); }
+body.clean .hud, body.clean .nav-arrows, body.clean .progress, body.clean .notes{ display:none !important; }
+
+/* ---------- responsive additions ---------- */
+@media (max-width:1000px){
+  .fund-grid, .tc-grid, .anat-grid, .rp-grid, .pg-grid, .mem-grid, .tools-grid, .live-grid, .vs-grid{ grid-template-columns:1fr; }
+  .real-grid{ grid-template-columns:1fr; }
+  .tc-flow{ grid-template-rows: repeat(5,auto); }
+  .hud-steps button{ width:11px; height:11px; font-size:0; padding:0; border-radius:50%; }
+  .notes{ width: min(430px, 88vw); }
+}
+
+/* ============================================================
+   Vazirmatn — self-hosted (no CDN → the deck works offline)
+   ============================================================ */
+@font-face{
+  font-family:'Vazirmatn'; font-style:normal; font-weight:100 900; font-display:swap;
+  src:url('assets/fonts/vazirmatn-arabic-wght-normal.woff2') format('woff2');
+  unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0898-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FEFF;
+}
+@font-face{
+  font-family:'Vazirmatn'; font-style:normal; font-weight:100 900; font-display:swap;
+  src:url('assets/fonts/vazirmatn-latin-wght-normal.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD;
+}
+
+/* ==========================================================
+   13-SLIDE EDITION — timeline · anatomy demo · teaser
+   replay preload · merged tools/mcp/memory · terminal reel
+   real-world table · nav labels · help overlay
+   ========================================================== */
+
+/* ---------- timeline agenda ---------- */
+.s-agenda{ display:flex; flex-direction:column; gap:var(--gap); }
+.s-agenda .tl-wrap{ flex:0 0 auto; margin-top:clamp(.6rem,2.6vh,1.8rem); }
+.s-agenda .tl-cards{ flex:1 1 auto; min-height:0; }
+.tl-card{ display:flex; flex-direction:column; }
+.tl-wrap{ display:flex; flex-direction:column; gap:.55rem; }
+.tl-bar{ position:relative; display:flex; height:clamp(76px,11vh,112px); border:1px solid var(--line);
+  border-radius:14px; overflow:visible; background:rgba(8,12,20,.5); }
+.tl-seg{ position:relative; flex:0 0 var(--w); display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:2px; background:transparent; border:0; border-inline-end:1px dashed var(--line-soft);
+  color:var(--text-2); font-family:inherit; cursor:pointer; transition:background .3s, color .3s; padding:0 .4rem; }
+.tl-seg:hover{ background:rgba(56,189,248,.08); color:var(--text); }
+.tl-seg.on{ background:linear-gradient(180deg, rgba(56,189,248,.18), rgba(56,189,248,.04)); color:var(--text); }
+.tl-s-n{ font-family:var(--mono); font-size:clamp(9px,.72vw,12px); color:var(--cyan); letter-spacing:.14em; }
+.tl-s-t{ font-size:clamp(11px,.95vw,16px); font-weight:700; }
+.tl-s-m{ font-family:var(--mono); font-size:clamp(9px,.7vw,11px); color:var(--muted); }
+.tl-fill{ position:absolute; inset-block:0; right:0; width:0; pointer-events:none;
+  border-start-start-radius:14px; border-end-start-radius:14px;
+  background:linear-gradient(90deg, rgba(16,185,129,.20), rgba(56,189,248,.18));
+  border-inline-start:1px solid rgba(56,189,248,.55); transition:width .9s linear; }
+.tl-here{ position:absolute; top:0; bottom:0; width:2px; background:var(--emerald);
+  box-shadow:0 0 14px rgba(16,185,129,.85); transition:right .9s linear; }
+.tl-here i{ position:absolute; top:-5px; left:-4px; width:10px; height:10px; border-radius:50%; background:var(--emerald); }
+.tl-here span{ position:absolute; top:-24px; right:0; transform:translateX(50%); white-space:nowrap;
+  background:rgba(9,13,22,.92); border:1px solid rgba(16,185,129,.4); border-radius:6px; padding:1px 7px;
+  font-family:var(--mono); font-size:10px; color:var(--emerald); }
+.tl-here.over{ background:var(--amber); box-shadow:0 0 14px rgba(245,158,11,.85); }
+.tl-here.over i{ background:var(--amber); }
+.tl-here.over span{ color:var(--amber); border-color:rgba(245,158,11,.5); }
+.tl-scale{ display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; color:var(--muted); }
+.tl-cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--gap); margin-top:.9rem; }
+.tl-card b{ display:block; color:var(--cyan); font-size:.95rem; margin-bottom:.35em; }
+.tl-card p{ color:var(--text-2); font-size:var(--fs-small); line-height:1.9; }
+
+/* ---------- anatomy: live demo per part ---------- */
+.s-anat .anat-desc{ flex:0 0 auto; }
+.s-anat .anat-demo{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+.s-anat .ad-log{ flex:1 1 auto; min-height:0; overflow:hidden; }
+.anat-demo{ margin-top:.85rem; padding:.75rem .9rem; }
+.ad-bar{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.45rem; }
+.ad-bar .ttl{ font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--muted); }
+.ad-log{ margin:0; min-height:4.8em; font-family:var(--mono); font-size:clamp(9px,.72vw,12px); line-height:1.8;
+  color:var(--emerald); white-space:pre-wrap; direction:ltr; text-align:left; }
+
+/* ---------- divider teaser ---------- */
+.teaser{ margin-top:1.1rem; max-width:min(660px,94%); }
+.teaser-bar{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.45rem; }
+.teaser-bar .ttl{ font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.08em; }
+.teaser .pulse{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--emerald);
+  margin-inline-end:.5em; animation:pulse 1.7s infinite; }
+@keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(16,185,129,.55);} 70%{ box-shadow:0 0 0 10px rgba(16,185,129,0);} 100%{ box-shadow:0 0 0 0 rgba(16,185,129,0);} }
+.teaser-log{ min-height:8.8em; padding:.6rem .8rem; border:1px solid var(--line-soft); border-radius:10px;
+  background:rgba(8,12,20,.55); font-family:var(--mono); font-size:clamp(9px,.78vw,12.5px); line-height:1.9;
+  color:var(--text-2); white-space:pre-wrap; direction:ltr; text-align:left; }
+.teaser-foot{ margin-top:.4rem; font-size:12px; color:var(--muted); }
+
+/* ---------- replay: preloaded (pending) transcript ---------- */
+.rp-ghost-wrap{ margin-top:.45rem; max-height:26%; overflow:hidden; }
+.rp-ghost-wrap .rp-msg{ border-style:dashed; opacity:.6; background:rgba(255,255,255,.015); }
+.rp-ghost-wrap .rp-msg .who{ opacity:.7; }
+.rp-tool{ font-family:var(--mono); font-size:11px; color:var(--cyan); padding:2px 9px;
+  border:1px solid rgba(56,189,248,.35); border-radius:7px; background:rgba(56,189,248,.07); }
+
+/* ---------- merged tools + mcp + memory ---------- */
+.mix-grid{ display:grid; grid-template-columns:1.05fr .95fr; gap:var(--gap); align-items:start; }
+.mix-card{ display:flex; flex-direction:column; gap:.6rem; }
+.io-flow{ display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+.io-step{ background:rgba(8,12,20,.6); border:1px solid var(--line-soft); border-radius:10px; padding:.5rem .6rem; }
+.io-step b{ display:block; font-size:12px; color:var(--cyan); margin-bottom:.25rem; }
+.io-step code{ display:block; font-family:var(--mono); font-size:10.5px; line-height:1.6; color:var(--text-2);
+  direction:ltr; text-align:left; white-space:pre-wrap; word-break:break-word; }
+.mix-mcp{ width:100%; height:auto; max-height:210px; }
+.mcp-pkt{ fill:var(--cyan); filter:drop-shadow(0 0 5px rgba(56,189,248,.95)); }
+.mcp-pkt.em{ fill:var(--emerald); filter:drop-shadow(0 0 5px rgba(16,185,129,.95)); }
+.ctx-ctl{ display:flex; gap:.5rem; margin-top:.55rem; flex-wrap:wrap; }
+.mem-row{ display:grid; grid-template-columns:1fr 1fr; gap:.55rem; }
+.mix-card h3.mt{ margin-top:.4rem; }
+
+/* ---------- live demo: terminal reel ---------- */
+.term-reel{ margin-top:1rem; border:1px solid var(--line-soft); border-radius:12px; overflow:hidden; background:rgba(6,9,16,.8); }
+.term-bar{ display:flex; align-items:center; gap:.4rem; padding:.45rem .7rem; background:rgba(255,255,255,.03);
+  border-bottom:1px solid var(--line-soft); }
+.term-bar .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+.term-bar .dot.r{ background:#f43f5e; } .term-bar .dot.y{ background:#f59e0b; } .term-bar .dot.g{ background:#10b981; }
+.term-bar .ttl{ font-family:var(--mono); font-size:11px; color:var(--muted); margin-inline-start:.5rem; }
+.term-body{ margin:0; min-height:8.6em; padding:.7rem .8rem; font-family:var(--mono);
+  font-size:clamp(9px,.78vw,12.5px); line-height:1.85; color:var(--emerald); white-space:pre-wrap;
+  direction:ltr; text-align:left; }
+
+/* ---------- ReAct: live phase inside the ring ---------- */
+.s3 .steps{ grid-template-rows: repeat(4, 1fr); }
+.s3 .step{ padding: clamp(8px,1vw,16px); }
+.s3 .step .d{ font-size: calc(var(--fs-small) * .94); line-height:1.7; }
+.s3 .step .snip{ margin-top:.25em; }
+.loop-box{ position:relative; }
+.loop-live{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:124px; height:124px;
+  border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  background:radial-gradient(circle, rgba(9,13,22,.96) 52%, rgba(9,13,22,0) 74%); pointer-events:none; }
+.loop-live b{ font-size:clamp(13px,1.25vw,20px); color:var(--c, var(--cyan)); text-shadow:0 0 16px var(--c, var(--cyan)); }
+.loop-live span{ font-family:var(--mono); font-size:9.5px; letter-spacing:.2em; color:var(--muted); }
+.loop-node .nd{ transition:stroke-width .3s, filter .3s; }
+.loop-node.hot .nd{ stroke-width:3.4; filter:drop-shadow(0 0 12px rgba(56,189,248,.8)); }
+.loop-node.hot .lb{ fill:#fff; }
+.loop-arrow{ transition:stroke-width .3s, filter .3s; }
+.loop-arrow.hot, .loop-arrow.on{ stroke-width:3.6; filter:drop-shadow(0 0 7px rgba(56,189,248,.7)); }
+
+/* ---------- summary: real-world harness table ---------- */
+.rm-wrap{ margin-top:.9rem; }
+.rm-cap{ display:block; margin-bottom:.4rem; font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.06em; }
+.rm-table{ width:100%; border-collapse:collapse; font-size:clamp(10px,.82vw,13.5px); }
+.rm-table th{ text-align:right; padding:.32rem .5rem; border-bottom:1px solid var(--line); color:var(--muted);
+  font-weight:600; font-size:11px; }
+.rm-table td{ padding:.38rem .5rem; border-bottom:1px solid var(--line-soft); color:var(--text-2); }
+.rm-n{ color:var(--cyan); font-weight:700; white-space:nowrap; }
+.rm-l{ color:var(--emerald); white-space:nowrap; }
+
+/* ---------- nav arrows: glyph + label ---------- */
+.nav-arrows button.nav-lbl{ width:auto; min-width:78px; height:34px; padding:0 12px; border-radius:18px;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+.nav-arrows .nav-lbl .g{ font-size:15px; line-height:1; }
+.nav-arrows .nav-lbl .t{ font-family:var(--mono); font-size:11px; letter-spacing:.04em; }
+body.hide-nav .nav-arrows{ display:none; }
+
+/* ---------- help overlay (?) ---------- */
+.help-overlay{ position:fixed; inset:0; z-index:60; display:none; place-items:center;
+  background:rgba(5,8,14,.74); backdrop-filter:blur(3px); }
+.help-overlay.on{ display:grid; }
+.help-card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:1.3rem 1.6rem;
+  max-width:min(470px,88vw); box-shadow:0 30px 80px rgba(0,0,0,.6); }
+.help-card h3{ margin:0 0 .7rem; font-size:1.05rem; color:var(--cyan); }
+.help-card ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem; }
+.help-card li{ display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; font-size:13px; color:var(--text-2); }
+.help-card em{ color:var(--muted); font-style:normal; font-size:12px; }
+
+/* ---------- dividers: teaser / demo fill the empty half ---------- */
+@media (min-width:1100px){
+  .s-div:has(.teaser){
+    display:grid; grid-template-columns: 1fr 1fr; align-items:center;
+    gap:calc(var(--gap) * 1.4);
+  }
+  .s-div:has(.teaser) .div-wrap{ align-self:center; }
+  .s-div:has(.teaser) .teaser{ align-self:center; margin-top:0; }
+  .s-div:has(.live-grid){
+    display:grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr auto;
+    gap:var(--gap); align-items:start;
+  }
+  .s-div:has(.live-grid) .div-wrap{ grid-area:1 / 1 / 3 / 2; align-self:center; }
+  .s-div:has(.live-grid) .live-grid{ grid-area:1 / 2 / 2 / 3; }
+  .s-div:has(.live-grid) .term-reel{ grid-area:2 / 2 / 3 / 3; margin-top:0; }
+}
+
+/* ---------- slide 03: «ایجنت چیست؟» + ضد-مثال‌ها ---------- */
+.def-line{ margin:0 0 .38em; font-size: var(--fs-micro); color: var(--text-2); line-height:1.75; }
+.def-line b{ color: var(--c, var(--cyan)); font-weight:700; }
+.notagent{ margin-top:.55rem; padding:.5rem .7rem; border:1px dashed rgba(244,63,94,.3); border-radius:10px; background:rgba(244,63,94,.05); }
+.notagent .na-h{ display:block; margin-bottom:.3em; font-family:var(--mono); font-size:10.5px; color:#fda4af; letter-spacing:.05em; }
+.notagent ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.18em; }
+.notagent li{ font-size:clamp(9.5px,.74vw,12px); color:var(--muted); line-height:1.6; }
+.notagent li b{ color:#fda4af; font-weight:600; }
+
+@media (max-width:1000px){
+  .tl-cards{ grid-template-columns:1fr; }
+  .io-flow, .mem-row{ grid-template-columns:1fr; }
+  .tl-wrap{ margin-top:2.6rem; }
+  .loop-live{ width:92px; height:92px; }
+  .nav-arrows .nav-lbl .t{ display:none; }
+  .nav-arrows button.nav-lbl{ min-width:0; width:38px; padding:0; }
+}
+.tl-c-min{ margin-top:auto; padding-top:.6rem; font-family:var(--mono); font-size:11px; color:var(--cyan); opacity:.75; }
+
+/* ---------- fund: layer picker readout ---------- */
+.fund-detail{
+  display:flex; align-items:center; gap:.5em; flex-wrap:wrap;
+  min-height:2.15em; padding:.5em .75em; border-radius:10px;
+  border:1px dashed color-mix(in srgb, var(--c,var(--cyan)) 45%, transparent);
+  background:color-mix(in srgb, var(--c,var(--cyan)) 7%, transparent);
+  font-size:var(--fs-micro); color:var(--text-2); line-height:1.7;
+}
+.fund-detail b{ color:var(--c,var(--cyan)); font-family:var(--mono); white-space:nowrap; }
+.fund-detail code{ font-family:var(--mono); direction:ltr; unicode-bidi:isolate; color:var(--c,var(--cyan)); }
+.fund-row{ transition: border-color .3s, background .3s, transform .3s var(--ease), opacity .35s; }
+.fund-row:not(.on){ opacity:.5; }
+.fund-row.on{ transform:translateX(-9px);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c,var(--cyan)) 55%, transparent),
+              0 16px 36px -16px color-mix(in srgb, var(--c,var(--cyan)) 90%, transparent); }
+.fund-row.on .fd{ color: var(--text-2); }
+
+/* ============================================================
+   compact mode — short viewports (720p projector, 1280×640 …)
+   the deck was laid out for ~900px tall; below that the grids
+   need to give space back, otherwise the HUD eats the content
+   ============================================================ */
+@media (max-height: 860px){
+  :root{
+    --pad:  clamp(12px, 2.2vw, 34px);
+    --gap:  clamp(8px, 1.05vw, 16px);
+    --fs-h2: clamp(19px, 2.2vw, 34px);
+  }
+  .slide{ padding: calc(var(--pad) + 12px) var(--pad) calc(var(--pad) + 40px); }
+  .s-sub{ font-size: var(--fs-micro); line-height:1.6; }
+  .card{ padding: clamp(9px, 1vw, 16px); }
+
+  /* 03 — layers + readout + counter-examples */
+  .fund-row{ padding:.45em .65em; }
+  .fund-row .fd{ line-height:1.6; }
+  .fund-detail{ min-height:1.8em; padding:.35em .6em; }
+  .notagent li{ line-height:1.5; }
+
+  /* 05 — anatomy: let the diagram shrink instead of overflow */
+  .anat-svg-wrap{ min-height:0; overflow:hidden; }
+  .anat-svg-wrap svg{ width:100%; height:100%; max-height:100%; }
+
+  /* 10 — code: keep 30 lines inside the stage */
+  .code{ font-size:.92em; line-height:1.5; }
+
+  /* 06 — ReAct: 4 stacked steps → 2×2 */
+  .s3-body .steps{ grid-template-rows:none; grid-template-columns:1fr 1fr; grid-auto-rows:min-content; }
+
+  /* 04 — car comparison */
+  .cmp{ gap:.5em; }
+  .cmp-grid{ gap:.5em; }
+  .cmp-card{ gap:.35em; }
+  .cmp-card p{ line-height:1.65; }
+
+  /* 11 — tools / MCP / memory */
+  .ctx-bar{ min-height:clamp(86px,14vh,170px); }
+  .mcp-svg{ max-width:320px; }
+  .mix-card{ gap:.4rem; }
+
+}
+
+/* ---- breathing room: the HUD is ~60px tall, the slide reserved more ---- */
+.slide{ padding-bottom: calc(var(--pad) + 38px); gap: clamp(9px, 1.2vw, 20px); }
+
+/* ---- slide 06: four ReAct steps, tighter cards ---- */
+.step{ padding: clamp(8px, 1vw, 16px); }
+.step .d{ line-height:1.55; }
+.snip{ margin-top:.25em; }
+
+/* ---- slide 04: the canvas must not drive the stage height ---- */
+.car-stage canvas{ position:absolute; inset:0; }
+
+/* ---- slide 04: comparison cards ---- */
+.cmp-card{ gap:.4em; }
+.cmp-card li, .cmp-card p, .cmp-card .d{ line-height:1.55; }
+.cmp-card .rule{ margin:.35em 0; }
+
+/* ---- slide 13: the 6-point checklist needs two columns to fit ---- */
+.s5-body .check{ display:grid; grid-template-columns:1fr 1fr; gap:.5em var(--gap); }
+
+/* ---- slide 04: the 3D stage must fit its row ---- */
+.car-stage{ min-height: clamp(190px, 30vh, 320px); }
+
+/* ---- slide 06: four ReAct steps in a tighter stack ---- */
+.steps{ gap: clamp(8px, 1vw, 16px); }
+
+/* ---- focus ring (keyboard users) ---- */
+:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; border-radius:8px; }
+
+/* ---- slide 03: the caveat (this is a mental model, not a standard) ---- */
+.def-caveat{
+  margin-top:.55em; padding:.5em .7em; border-radius:10px;
+  border:1px dashed var(--line); background:rgba(255,255,255,.02);
+  font-size:var(--fs-micro); color:var(--muted); line-height:1.75;
+}
+.def-caveat b{ color:var(--text-2); }
+
+/* ---- projector legibility: nothing smaller than 9px ---- */
+.anat-part .pe{ font-size:9px; }
+.mcp-sub{ font-size:9px; }
+
+/* ---- print / PDF backup: one slide per page, no HUD ---- */
+@media print{
+  html{ zoom:.7; }
+  .hud, .notes, .help, .nojs, .keys, .nav-arrows{ display:none !important; }
+  #deck{ height:auto !important; overflow:visible !important; }
+  .slide{
+    position:static !important; opacity:1 !important; visibility:visible !important;
+    transform:none !important; page-break-after:always; break-after:page;
+    height:auto; min-height:0; padding:12mm 10mm;
+  }
+}
+
+/* ---- very short windows (a 720p screen with browser chrome) ---- */
+@media (max-height: 700px){
+  .slide{ padding: calc(var(--pad) + 6px) var(--pad) calc(var(--pad) + 30px); }
+  .code{ font-size:.86em; line-height:1.42; }
+  .s5-body .check{ grid-template-columns:1fr 1fr 1fr; }
+  .steps .snip{ display:none; }
+}
+.nojs{
+  position:fixed; inset:auto 0 0 0; z-index:99; padding:14px 18px;
+  background:#b91c1c; color:#fff; font-family:system-ui,sans-serif; text-align:center; font-size:15px;
+}
+
+</style>
+</head>
+
+<body>
+<div class="bg" aria-hidden="true">
+  <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+  <div class="scanline"></div>
+  <div class="vignette"></div>
+</div>
+
+<noscript><div class="nojs">این ارائه با جاوااسکریپت اجرا می‌شود — لطفاً جاوااسکریپت مرورگر را روشن کنید.</div></noscript>
+<main id="deck" aria-live="polite">
+
+  <!-- ==========================================================
+       SLIDE 1 — TITLE
+       ========================================================== -->
+  <section class="slide s1 active" data-label="مقدمه">
+    <div class="ghost fill">01</div>
+
+    <div class="orbit rv-s" style="--d:.3s" aria-hidden="true">
+      <svg viewBox="0 0 420 420">
+        <g class="ring r1"><circle cx="210" cy="210" r="196"/></g>
+        <g class="ring r2"><circle cx="210" cy="210" r="146"/></g>
+        <g class="ring r3"><ellipse cx="210" cy="210" rx="196" ry="66"/></g>
+        <g class="spin s-a"><circle class="dot cyan" cx="210" cy="14" r="5"/></g>
+        <g class="spin s-b"><circle class="dot emerald" cx="210" cy="64" r="4"/></g>
+        <g class="spin s-c"><circle class="dot amber" cx="210" cy="144" r="4"/></g>
+        <circle class="core" cx="210" cy="210" r="44"/>
+        <circle class="core-in" cx="210" cy="210" r="30"/>
+      </svg>
+    </div>
+
+    <span class="eyebrow rv" style="--d:.05s">AI · AGENTS · ARCHITECTURE</span>
+
+    <h1 class="rv" style="--d:.14s">معماری <span class="hl">ایجنت‌های</span> هوش مصنوعی و هارنس</h1>
+
+    <p class="lede rv" style="--d:.24s">
+      مدل زبانی فقط <b>موتور</b> است؛ آنچه یک ایجنت را قابل‌استفاده می‌کند،
+      <span class="em">هارنس</span> است: لایه‌ای که قدرت خام LLM را به
+      <b>ابزار</b>، <b>حافظه</b> و <b>گاردیل</b> تبدیل می‌کند.
+    </p>
+
+    <div class="s1-meta">
+      <!-- EDIT: نام / نقش / تاریخ ارائه‌دهنده -->
+      <div class="meta-card rv-r" style="--d:.34s">
+        <div class="ico">👤</div>
+        <div><div class="k">ارائه‌دهنده</div><div class="v">فرزاد — مهندس هوش مصنوعی</div></div>
+      </div>
+      <div class="meta-card rv-r" style="--d:.42s">
+        <div class="ico">🗓</div>
+        <div><div class="k">جلسه</div><div class="v">مهندسی ایجنت‌ها، نشست ۰۳</div></div>
+      </div>
+      <div class="meta-card rv-r" style="--d:.50s">
+        <div class="ico">⏱</div>
+        <div><div class="k">مدت</div><div class="v">۳۰ دقیقه + پرسش و پاسخ</div></div>
+      </div>
+    </div>
+
+    <div class="s1-stats">
+      <div class="st rv" style="--d:.6s"><b>13</b><span>اسلاید</span></div>
+      <div class="st rv" style="--d:.66s"><b>3D</b><span>مدل تعاملی خودرو</span></div>
+      <div class="st rv" style="--d:.72s"><b>LIVE</b><span>شبیه‌ساز اجرای هارنس</span></div>
+      <div class="st rv" style="--d:.78s"><b>۰۴</b><span>دموی تعاملی</span></div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 2 — TIMELINE AGENDA (30-minute axis)
+       ========================================================== -->
+  <section class="slide s-agenda" id="agendaSlide" data-label="نقشهٔ راه">
+    <div class="ghost">02</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">02</span> — roadmap</span>
+      <h2 class="s-title rv" style="--d:.12s">نقشهٔ راه: <em>۳۰ دقیقه</em> روی یک محور</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        محور زمان از راست به چپ است. روی هر بخش بزنید تا مستقیم به آن بروید؛
+        نشانگر «شما اینجایید» با زمان‌سنج هم‌حرکت است.
+      </p>
+    </header>
+
+    <div class="tl-wrap rv" style="--d:.28s">
+      <div class="tl-bar" id="tlBar">
+        <button class="tl-seg s-intro" data-goto="0" style="--w:5%">
+          <span class="tl-s-t">مقدمه</span><span class="tl-s-m">۱٫۵′</span>
+        </button>
+        <button class="tl-seg" data-goto="2" style="--w:36.7%">
+          <span class="tl-s-n">۰۱</span><span class="tl-s-t">مبانی و هارنس</span><span class="tl-s-m">۱۱′</span>
+        </button>
+        <button class="tl-seg" data-goto="6" style="--w:33.3%">
+          <span class="tl-s-n">۰۲</span><span class="tl-s-t">در عمل — سه دمو</span><span class="tl-s-m">۱۰′</span>
+        </button>
+        <button class="tl-seg" data-goto="10" style="--w:13.3%">
+          <span class="tl-s-n">۰۳</span><span class="tl-s-t">ابزار و حافظه</span><span class="tl-s-m">۴′</span>
+        </button>
+        <button class="tl-seg" data-goto="11" style="--w:11.7%">
+          <span class="tl-s-n">۰۴</span><span class="tl-s-t">دمو و جمع‌بندی</span><span class="tl-s-m">۳٫۵′</span>
+        </button>
+        <div class="tl-fill" id="tlFill"></div>
+        <div class="tl-here" id="tlHere"><i></i><span>شما اینجایید</span></div>
+      </div>
+      <div class="tl-scale">
+        <span>۰۰:۰۰</span><span>۰۵:۰۰</span><span>۱۰:۰۰</span><span>۱۵:۰۰</span>
+        <span>۲۰:۰۰</span><span>۲۵:۰۰</span><span>۳۰:۰۰</span>
+      </div>
+    </div>
+
+    <div class="tl-cards">
+      <div class="card tl-card rv-r" style="--d:.34s">
+        <b>۰۱ · مبانی</b>
+        <p>مدل چه چیزی کم دارد؟ خودروی سه‌بعدی، نقشهٔ قطعات هارنس و حلقهٔ ReAct.</p>
+        <span class="tl-c-min">۱۱ دقیقه · اسلاید ۰۳ تا ۰۶</span>
+      </div>
+      <div class="card tl-card rv-r" style="--d:.4s">
+        <b>۰۲ · در عمل</b>
+        <p>تماشای یک جلسهٔ واقعی، خاموش‌کردن گاردیل در سکوی آزمایش، و خواندن کد در حرکت.</p>
+        <span class="tl-c-min">۱۰ دقیقه · اسلاید ۰۷ تا ۱۰</span>
+      </div>
+      <div class="card tl-card rv-r" style="--d:.46s">
+        <b>۰۳ · ابزار و حافظه</b>
+        <p>مکانیزم فراخوانی، استاندارد MCP، و اینکه کانتکست چطور پر و فشرده می‌شود.</p>
+        <span class="tl-c-min">۴ دقیقه · اسلاید ۱۱</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 4 — FROM LLM TO AGENT
+       ========================================================== -->
+  <section class="slide s-fund" id="fundSlide" data-label="از مدل تا ایجنت">
+    <div class="ghost">03</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">03</span> — fundamentals</span>
+      <h2 class="s-title rv" style="--d:.12s">سه لایه که یک مدل را به <em>ایجنت</em> تبدیل می‌کند</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        مدل موتور است، هارنس شاسی و ECU و پدال. ایجنت آن چیزی است که وقتی این دو کنار هم کار می‌کنند اتفاق می‌افتد — <b>نه یک قطعه، یک رفتار</b>.
+      </p>
+    </header>
+
+    <div class="fund-grid">
+      <div class="fund-build">
+        <div class="fund-row on" data-i="0" style="--c:#8497b1">
+          <div class="ft"><i>۰۱</i> مدل تنها</div>
+          <div class="fd">یک پرامپت، یک پاسخ. نه دست، نه حافظه، نه امکان ادامه‌دادن.</div>
+        </div>
+        <div class="fund-row" data-i="1" style="--c:#38bdf8">
+          <div class="ft"><i>۰۲</i> مدل + ابزار</div>
+          <div class="fd">می‌تواند بخواند و اجرا کند — اما هنوز یک‌بار: یک عمل، یک پاسخ، پایان.</div>
+        </div>
+        <div class="fund-row" data-i="2" style="--c:#10b981">
+          <div class="ft"><i>۰۳</i> مدل + ابزار + حلقه</div>
+          <div class="fd">نتیجهٔ هر عمل برمی‌گردد. حالا می‌تواند اشتباه کند — و اصلاحش کند.</div>
+        </div>
+        <div class="fund-row" data-i="3" style="--c:#f59e0b">
+          <div class="ft"><i>۰۴</i> هارنس</div>
+          <div class="fd">حلقه + سیاست + حافظه + بودجه. اینجاست که ایجنتِ آزمایشی قابل‌اتکا می‌شود.</div>
+        </div>
+        <div class="fund-detail" id="fundDetail"><b>لایهٔ ۰۱</b> <code>model = f(prompt) → text</code> — مدل تنها: خطا یعنی از صفر شروع کن؛ بین دو فراخوانی هیچ حافظه‌ای نیست.</div>
+        <div class="notagent">
+          <span class="na-h">این ایجنت نیست</span>
+          <ul>
+            <li><b>جواب تک‌مرحله‌ای چت</b> — یک پرامپت، یک پاسخ؛ هیچ «گام بعدی»‌ای نیست.</li>
+            <li><b>ورک‌فلو یا RAG با مسیر ثابت</b> — مسیر از پیش نوشته شده؛ کنترلِ جریان دست مدل نیست.</li>
+            <li><b>یک پرامپت بزرگ</b> — دستور بیشتر، اما باز هم یک‌بار و بدون ابزار.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="fund-right">
+        <div class="card def-card rv-r" style="--d:.3s">
+          <h3>ایجنت چیست؟</h3>
+          <p class="def-line" style="--c:#8497b1"><b>مدل</b> = تابعی بی‌حافظه: متن در، متن بیرون. نه دست دارد، نه حافظه، نه ساعت.</p>
+          <p class="def-line" style="--c:#38bdf8"><b>ایجنت</b> = رفتار: دنبال یک هدف، در چند گام. گام بعدی را خودش انتخاب می‌کند و خودش هم متوقف می‌شود.</p>
+          <p class="def-line" style="--c:#10b981"><b>هارنس</b> = کدی که این رفتار را ممکن می‌کند: پرامپت، ابزار، حلقه، گاردیل، بودجه، حافظه، لاگ.</p>
+          <div class="eq">harness = prompt + tools + loop + policy + memory + log</div>
+        <p class="def-caveat"><b>این یک مدل ذهنی است، نه یک مرز جهانی:</b> در بعضی پیاده‌سازی‌ها ابزار و حلقه داخل خودِ API مدل جای دارند و «هارنس» به بخشی از محصول تبدیل می‌شود. پس مرز میان مدل، ایجنت و هارنس را هر پروژه خودش می‌کشد.</p>
+        </div>
+
+        <div class="vs-grid">
+          <div class="vs-col flow rv-r" style="--d:.36s">
+            <h4>ورک‌فلو <em>WORKFLOW</em></h4>
+            <p>مسیر از پیش نوشته شده. مدل فقط گاهی یک گام را پر می‌کند. خطا = شکست کل مسیر.</p>
+          </div>
+          <div class="vs-col agent rv-r" style="--d:.42s">
+            <h4>ایجنت <em>AGENT</em></h4>
+            <p>مسیر را مدل در هر لحظه انتخاب می‌کند. خطا = یک گام دیگر در حلقه، با امکان بازگشت.</p>
+          </div>
+        </div>
+
+        <div class="cmp-note rv" style="--d:.48s">
+          <span class="chip em"><span class="dot"></span>نکته</span>
+          <span>هر جا که مسیر قابل پیش‌بینی است، ورک‌فلو ارزان‌تر و قابل‌اعتمادتر است. ایجنت را جایی بگذارید که مسیر را <b>نمی‌دانید</b>.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 2 — CAR ANALOGY (3D)
+       ========================================================== -->
+  <section class="slide s2" id="carSlide" data-label="استعارهٔ خودرو">
+    <div class="ghost">04</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">04</span> — analogy</span>
+      <h2 class="s-title rv" style="--d:.12s">تشبیه خودرو: <em>موتور</em>، <em>ECU</em> و <em>دستهٔ سیم</em></h2>
+      <p class="s-sub rv" style="--d:.2s">
+        LLM توان تولید نیرو دارد، اما بدون هارنس، خودرو حرکت نمی‌کند. مدل تعاملی را بکشید تا چرخش دهید و با اسکرول زوم کنید.
+      </p>
+    </header>
+
+    <div class="s2-body">
+      <!-- ---------- 3D canvas ---------- -->
+      <div class="car-stage rv-s" style="--d:.28s" id="carStage">
+        <div class="car-topbar">
+          <span>هارنس زنده — مدل سه‌بعدی</span>
+          <span id="carFps">—</span>
+        </div>
+        <canvas id="carCanvas"></canvas>
+
+        <span class="lbl" id="lblEngine" style="--c:#f43f5e">موتور — هستهٔ LLM</span>
+        <span class="lbl" id="lblEcu" style="--c:#38bdf8">ECU — هارنس</span>
+        <span class="lbl" id="lblLidar" style="--c:#f59e0b">LiDAR — ابزارها</span>
+        <span class="lbl" id="lblWiring" style="--c:#10b981">دستهٔ سیم — مسیر فراخوانی</span>
+        <span class="lbl" id="lblMemory" style="--c:#a78bfa">حافظه و وضعیت</span>
+
+        <!-- fallback if Three.js CDN is unavailable -->
+        <div class="car-fallback" id="carFallback">
+          <div>
+            <svg viewBox="0 0 640 300" role="img" aria-label="نمودار دوبعدی خودرو با اجزای هارنس">
+              <defs>
+                <linearGradient id="fg" x1="0" x2="1"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#10b981"/></linearGradient>
+              </defs>
+              <g fill="none" stroke="url(#fg)" stroke-width="2" opacity=".85">
+                <path d="M64 196 L64 166 Q64 150 86 147 L176 136 L236 92 Q247 83 266 83 L362 83 Q384 83 397 98 L446 142 L524 152 Q556 157 556 182 L556 200 L528 200"/>
+                <path d="M254 131 L288 96 L352 96 L388 133 Z" opacity=".6"/>
+                <path d="M140 200 A36 36 0 1 0 140 199" stroke-width="3"/>
+                <path d="M446 200 A36 36 0 1 0 446 199" stroke-width="3"/>
+                <path d="M176 196 L470 196" stroke-dasharray="4 6" opacity=".5"/>
+              </g>
+              <circle cx="140" cy="196" r="14" fill="none" stroke="#38bdf8" stroke-width="2"/>
+              <circle cx="446" cy="196" r="14" fill="none" stroke="#38bdf8" stroke-width="2"/>
+              <rect x="452" y="140" width="72" height="44" rx="6" fill="#f43f5e" opacity=".22" stroke="#f43f5e" stroke-width="2"/>
+              <rect x="292" y="128" width="44" height="34" rx="5" fill="#38bdf8" opacity=".22" stroke="#38bdf8" stroke-width="2"/>
+              <circle cx="314" cy="76" r="12" fill="#f59e0b" opacity=".22" stroke="#f59e0b" stroke-width="2"/>
+              <path d="M470 158 C 420 180, 380 150, 336 150" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="5 5"/>
+              <g font-family="Vazirmatn, sans-serif" font-size="13" fill="#b8c6da">
+                <text x="530" y="128" text-anchor="end">موتور (LLM)</text>
+                <text x="292" y="118" text-anchor="middle">ECU</text>
+                <text x="314" y="52" text-anchor="middle">LiDAR</text>
+                <text x="196" y="150" text-anchor="middle">دستهٔ سیم</text>
+              </g>
+            </svg>
+            <p class="fb-note">Three.js در دسترس نبود — نمای دوبعدی جایگزین شد.</p>
+          </div>
+        </div>
+
+        <div class="car-hint">برای چرخش بکشید · برای زوم اسکرول کنید</div>
+      </div>
+
+      <!-- ---------- comparison ---------- -->
+      <div class="cmp">
+        <div class="cmp-grid">
+          <div class="card cmp-card rv-r" style="--d:.36s">
+            <div class="cmp-head">
+              <div class="ic">🔥</div>
+              <div><div class="t">موتور</div><span class="s">ENGINE / LLM</span></div>
+            </div>
+            <hr class="rule">
+            <ul>
+              <li><i>◂</i><span>تولید «گشتاور» زبانی و استدلال</span></li>
+              <li><i>◂</i><span>توانایی برنامه‌ریزی و تولید طرح‌وارهٔ ابزار</span></li>
+              <li><i>◂</i><span>اما: بدون سوخت، بدون مسیر، بدون ترمز</span></li>
+              <li><i>◂</i><span>هیچ دسترسی‌ای به دنیای واقعی ندارد</span></li>
+            </ul>
+            <div class="cmp-spec">
+              <div><span>خروجی</span><b>text / json</b></div>
+              <div><span>دسترسی به ابزار</span><b>none</b></div>
+              <div><span>ایمنی</span><b>none</b></div>
+              <div><span>حافظه</span><b>none</b></div>
+            </div>
+          </div>
+
+          <div class="card cmp-card harness rv-r" style="--d:.44s">
+            <div class="cmp-head">
+              <div class="ic">⚡</div>
+              <div><div class="t">ECU و دستهٔ سیم</div><span class="s">HARNESS / RUNTIME</span></div>
+            </div>
+            <hr class="rule">
+            <ul>
+              <li><i>◂</i><span>تبدیل خروجی مدل به فراخوانی ابزار امن</span></li>
+              <li><i>◂</i><span>گاردیل: سیاست، مجوز، بودجه و سقف مرحله</span></li>
+              <li><i>◂</i><span>حافظهٔ کوتاه‌مدت و بلندمدت + بازیابی</span></li>
+              <li><i>◂</i><span>رهگیری خطا، تلاش مجدد و ثبت کامل لاگ</span></li>
+            </ul>
+            <div class="cmp-spec">
+              <div><span>خروجی</span><b>tool_call</b></div>
+              <div><span>دسترسی به ابزار</span><b>allow-list</b></div>
+              <div><span>ایمنی</span><b>guard + sandbox</b></div>
+              <div><span>حافظه</span><b>short + long</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cmp-note rv" style="--d:.56s">
+          <span class="chip em"><span class="dot"></span>نتیجه</span>
+          <span>قدرت خام LLM با <b>هارنس</b> ضرب می‌شود: ابزار + حافظه + گاردیل = ایجنت قابل‌اتکا.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 8 — HARNESS ANATOMY (interactive schematic)
+       ========================================================== -->
+  <section class="slide s-anat" id="anatSlide" data-label="نقشهٔ هارنس">
+    <div class="ghost">05</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">05</span> — architecture</span>
+      <h2 class="s-title rv" style="--d:.12s">نقشهٔ هارنس: <em>هفت قطعه</em> که همیشه هستند</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        روی هر قطعه کلیک کنید (یا چیپش را بزنید) تا نقشش را ببینید. هر هارنسی که در پروژه دیدید، ترکیبی از همین‌هاست.
+      </p>
+    </header>
+
+    <div class="anat-grid">
+      <div class="anat-svg-wrap rv-s" style="--d:.28s">
+        <svg class="anat-svg" viewBox="0 0 520 420" role="img" aria-label="نقشهٔ قطعات هارنس">
+          <g class="anat-link">
+            <line x1="260" y1="205" x2="135" y2="80"/>
+            <line x1="260" y1="205" x2="385" y2="80"/>
+            <line x1="260" y1="205" x2="90" y2="255"/>
+            <line x1="260" y1="205" x2="430" y2="255"/>
+            <line x1="260" y1="205" x2="150" y2="348"/>
+            <line x1="260" y1="205" x2="370" y2="348"/>
+          </g>
+
+          <g class="anat-part" data-part="loop" style="--c:#38bdf8">
+            <circle class="pb" cx="260" cy="205" r="58"/>
+            <text class="pl" x="260" y="200" style="font-size:13px;font-weight:700">حلقهٔ کنترل</text>
+            <text class="pe" x="260" y="218">CONTROL LOOP</text>
+            <text class="pe" x="260" y="240">think · act · observe · stop</text>
+          </g>
+
+          <g class="anat-part" data-part="tools" style="--c:#38bdf8">
+            <rect class="pb" x="70" y="53" width="130" height="54" rx="10"/>
+            <text class="pl" x="135" y="75">رجیستری ابزار</text>
+            <text class="pe" x="135" y="93">TOOL REGISTRY</text>
+          </g>
+
+          <g class="anat-part" data-part="memory" style="--c:#a78bfa">
+            <rect class="pb" x="320" y="53" width="130" height="54" rx="10"/>
+            <text class="pl" x="385" y="75">موتور حافظه</text>
+            <text class="pe" x="385" y="93">MEMORY</text>
+          </g>
+
+          <g class="anat-part" data-part="guard" style="--c:#f59e0b">
+            <rect class="pb" x="25" y="228" width="130" height="54" rx="10"/>
+            <text class="pl" x="90" y="250">گاردیل</text>
+            <text class="pe" x="90" y="268">GUARDRAILS</text>
+          </g>
+
+          <g class="anat-part" data-part="budget" style="--c:#f43f5e">
+            <rect class="pb" x="365" y="228" width="130" height="54" rx="10"/>
+            <text class="pl" x="430" y="250">بودجه و سقف‌ها</text>
+            <text class="pe" x="430" y="268">LIMITS</text>
+          </g>
+
+          <g class="anat-part" data-part="context" style="--c:#10b981">
+            <rect class="pb" x="85" y="321" width="130" height="54" rx="10"/>
+            <text class="pl" x="150" y="343">مهندس کانتکست</text>
+            <text class="pe" x="150" y="361">CONTEXT ENGINE</text>
+          </g>
+
+          <g class="anat-part" data-part="log" style="--c:#38bdf8">
+            <rect class="pb" x="305" y="321" width="130" height="54" rx="10"/>
+            <text class="pl" x="370" y="343">دنبالهٔ لاگ</text>
+            <text class="pe" x="370" y="361">TRACE / REPLAY</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="anat-side">
+        <div class="anat-chips rv-r" style="--d:.34s">
+          <button class="chip cy anat-chip" data-part="loop" style="--c:#38bdf8"><span class="dot"></span>حلقهٔ کنترل</button>
+          <button class="chip cy anat-chip" data-part="tools" style="--c:#38bdf8"><span class="dot"></span>رجیستری ابزار</button>
+          <button class="chip cy anat-chip" data-part="memory" style="--c:#a78bfa"><span class="dot"></span>موتور حافظه</button>
+          <button class="chip cy anat-chip" data-part="guard" style="--c:#f59e0b"><span class="dot"></span>گاردیل</button>
+          <button class="chip cy anat-chip" data-part="budget" style="--c:#f43f5e"><span class="dot"></span>بودجه و سقف‌ها</button>
+          <button class="chip cy anat-chip" data-part="context" style="--c:#10b981"><span class="dot"></span>مهندس کانتکست</button>
+          <button class="chip cy anat-chip" data-part="log" style="--c:#38bdf8"><span class="dot"></span>دنبالهٔ لاگ</button>
+        </div>
+
+        <div class="card anat-desc rv-r" style="--d:.4s">
+          <h3 id="anatTitle">حلقهٔ کنترل</h3>
+          <span class="k" id="anatKey">CONTROL LOOP</span>
+          <p id="anatText">قلب هارنس. تصمیم می‌گیرد گام بعدی چیست، چند گام مجاز است و <b>شرط پایان</b> کِی فرا رسیده است: پاسخ نهایی، سقف بودجه، خطای مکرر یا تأیید انسان. بدون این حلقه، مدل فقط یک‌بار حرف می‌زند.</p>
+          <p class="aq" id="anatQ"><b>سؤال این قطعه:</b> «الان باید چه کاری انجام دهم — و کِی کافی است؟»</p>
+        </div>
+
+        <div class="card anat-demo rv-r" style="--d:.46s">
+          <div class="ad-bar">
+            <span class="ttl">نمونهٔ زندهٔ همین قطعه</span>
+            <span class="chip cy" id="adState">idle</span>
+          </div>
+          <pre class="ad-log" id="anatDemo"></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 3 — ReAct LOOP
+       ========================================================== -->
+  <section class="slide s3" id="reactSlide" data-label="حلقهٔ ReAct">
+    <div class="ghost">06</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">06</span> — theory</span>
+      <h2 class="s-title rv" style="--d:.12s">حلقهٔ <em>ReAct</em>: فکر ← عمل ← مشاهده ← حافظه</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        هارنس این حلقه را اجرا می‌کند: هر «عمل» پیش از اجرا از فیلتر گاردیل عبور می‌کند و نتیجهٔ آن به حافظه بازمی‌گردد.
+      </p>
+    </header>
+
+    <div class="s3-body">
+      <!-- loop diagram -->
+      <div class="loop-box rv-s" style="--d:.28s">
+        <svg class="loop-svg" viewBox="0 0 400 340" role="img" aria-label="نمودار حلقهٔ ReAct">
+          <defs>
+            <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+              <path d="M0 0 L9 4.5 L0 9 z" fill="#38bdf8"/>
+            </marker>
+          </defs>
+          <g class="loop-ring">
+            <circle cx="200" cy="170" r="118" fill="none" stroke="#38bdf8" stroke-width="1.4"
+                    stroke-dasharray="7 11" opacity=".45"/>
+            <circle cx="200" cy="170" r="96" fill="none" stroke="#10b981" stroke-width="1"
+                    stroke-dasharray="3 14" opacity=".35"/>
+          </g>
+          <path class="loop-arrow" id="arrow1" d="M200 52 A118 118 0 0 1 318 170" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+          <path class="loop-arrow" id="arrow2" d="M318 170 A118 118 0 0 1 200 288" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+          <path class="loop-arrow" id="arrow3" d="M200 288 A118 118 0 0 1 82 170" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+          <path class="loop-arrow" id="arrow4" d="M82 170 A118 118 0 0 1 200 52" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+
+          <g class="loop-node" id="node-thought">
+            <circle class="nd" cx="200" cy="52" r="40" fill="#0c1220" stroke="#a78bfa" stroke-width="2"/>
+            <text class="lb" x="200" y="57" text-anchor="middle">فکر</text>
+            <text class="lb" x="200" y="72" text-anchor="middle" style="font-size:9px;opacity:.75">THOUGHT</text>
+          </g>
+          <g class="loop-node" id="node-action">
+            <circle class="nd" cx="318" cy="170" r="40" fill="#0c1220" stroke="#38bdf8" stroke-width="2"/>
+            <text class="lb" x="318" y="175" text-anchor="middle">عمل</text>
+            <text class="lb" x="318" y="190" text-anchor="middle" style="font-size:9px;opacity:.75">ACTION</text>
+          </g>
+          <g class="loop-node" id="node-observation">
+            <circle class="nd" cx="200" cy="288" r="40" fill="#0c1220" stroke="#10b981" stroke-width="2"/>
+            <text class="lb" x="200" y="293" text-anchor="middle">مشاهده</text>
+            <text class="lb" x="200" y="308" text-anchor="middle" style="font-size:9px;opacity:.75">OBSERVATION</text>
+          </g>
+          <g class="loop-node" id="node-memory">
+            <circle class="nd" cx="82" cy="170" r="34" fill="#0c1220" stroke="#f59e0b" stroke-width="2"/>
+            <text class="lb" x="82" y="175" text-anchor="middle">حافظه</text>
+            <text class="lb" x="82" y="189" text-anchor="middle" style="font-size:9px;opacity:.75">MEMORY</text>
+          </g>
+        </svg>
+        <div class="loop-live" id="loopLive"></div>
+      </div>
+
+      <!-- steps -->
+      <div class="steps">
+        <div class="step rv-r" style="--d:.34s;--c:#a78bfa" data-step="0">
+          <div class="num">01</div>
+          <div>
+            <div class="t">فکر <code>Thought</code></div>
+            <div class="d">مدل هدف را می‌شکند و طرح‌وارهٔ عمل را می‌نویسد. هارنس این متن را به ساختار JSON معتبر تبدیل می‌کند.</div>
+            <div class="snip">{"thought": "ابتدا لاگ را جست‌وجو کن"}</div>
+          </div>
+        </div>
+        <div class="step rv-r" style="--d:.42s;--c:#38bdf8" data-step="1">
+          <div class="num">02</div>
+          <div>
+            <div class="t">عمل <code>Action</code></div>
+            <div class="d">هارنس عمل را در sandbox و از طریق ابزار مجاز اجرا می‌کند؛ سیاست‌ها پیش از اجرا بررسی می‌شوند.</div>
+            <div class="snip">{"tool": "shell", "args": {"cmd": "pytest -q"}}</div>
+          </div>
+        </div>
+        <div class="step rv-r" style="--d:.5s;--c:#10b981" data-step="2">
+          <div class="num">03</div>
+          <div>
+            <div class="t">مشاهده <code>Observation</code></div>
+            <div class="d">خروجی ابزار به حافظه بازگردانده می‌شود و حلقه تا رسیدن به پاسخ یا سقف بودجه تکرار می‌شود.</div>
+            <div class="snip">{"observation": "exit_code=1, 1 failed"}</div>
+          </div>
+        </div>
+
+        <div class="step rv-r" style="--d:.58s;--c:#f59e0b" data-step="3">
+          <div class="num">04</div>
+          <div>
+            <div class="t">حافظه <code>Memory</code></div>
+            <div class="d">هر مشاهده به حافظهٔ کوتاه‌مدت برمی‌گردد و خلاصه‌ای از آن در حافظهٔ بلندمدت ثبت می‌شود. حلقه از همین‌جا دوباره تغذیه می‌گیرد.</div>
+            <div class="snip">{"memory": "short=12 events · long=1 fact"}</div>
+          </div>
+        </div>
+
+        <div class="react-ctl rv" style="--d:.6s">
+          <button class="btn ghost-btn" id="reactPlay">▶ پخش دوبارهٔ حلقه</button>
+          <span class="mini-note" id="reactState">step: 1 / 4</span>
+          <span class="chip cy" style="margin-inline-start:auto"><span class="dot"></span>ReAct loop</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 10 — SECTION 03
+       ========================================================== -->
+  <section class="slide s-div" id="div3Slide" data-label="بخش ۰۳ — در عمل">
+    <div class="ghost">07</div>
+    <div class="div-wrap">
+      <span class="div-tag rv" style="--d:.05s">section 03 — hands on</span>
+      <div class="div-num rv-b" style="--d:.12s">03</div>
+      <h2 class="div-title rv" style="--d:.2s">در عمل</h2>
+      <p class="div-sub rv" style="--d:.28s">
+        سه دمو: یک جلسهٔ واقعی را تماشا می‌کنیم، روی سکوی آزمایش گاردیل‌ها را خاموش و روشن می‌کنیم،
+        و کد هارنس را گام‌به‌گام می‌خوانیم.
+      </p>
+      <div class="div-chips rv" style="--d:.36s">
+        <span class="chip cy"><span class="dot"></span>پخش جلسهٔ واقعی</span>
+        <span class="chip em"><span class="dot"></span>سکوی آزمایش</span>
+        <span class="chip am"><span class="dot"></span>کد در حرکت</span>
+      </div>
+    </div>
+      <div class="teaser rv-r" style="--d:.34s">
+        <div class="teaser-bar">
+          <span class="ttl"><span class="pulse"></span>پیش‌نمایش — ۳۰ ثانیه بعد</span>
+          <span class="chip em"><span class="dot"></span>خودکار</span>
+        </div>
+        <div class="teaser-log" id="teaserLog"></div>
+        <div class="teaser-foot">همین لحظه در بخش بعد: پخش کامل همین جلسه، گام‌به‌گام</div>
+      </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 11 — ACTION B: SESSION REPLAY
+       ========================================================== -->
+  <section class="slide s-replay" id="replaySlide" data-label="تماشای یک جلسهٔ واقعی">
+    <div class="ghost">08</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">08</span> — action · replay</span>
+      <h2 class="s-title rv" style="--d:.12s">یک جلسهٔ واقعی: از «باگ گزارش» تا <em>تست سبز</em></h2>
+      <p class="s-sub rv" style="--d:.2s">
+        پخش گام‌به‌گام یک اجرای واقعی هارنس روی پروژهٔ نمونه. دقت کنید: خطا وسط کار می‌آید
+        و ایجنت <b>متوقف نمی‌شود</b> — خودش مسیر تازه را امتحان می‌کند.
+      </p>
+    </header>
+
+    <div class="rp-grid">
+      <div class="rp-left">
+        <div class="rp-transcript rv-r" style="--d:.26s" id="rpLog"></div>
+        <div class="rp-ghost-wrap rv-r" style="--d:.26s" id="rpGhost"></div>
+      </div>
+      <div class="rp-right">
+        <div class="card rp-file rv-r" style="--d:.3s">
+          <div class="rp-file-bar"><span>billing/report.py</span><span id="rpFileState">idle</span></div>
+          <pre class="rp-code" id="rpCode"></pre>
+        </div>
+        <div class="card rp-note rv-r" style="--d:.36s" id="rpNote">
+          <b>چرا این کار؟</b> — روی «پخش» بزنید تا گام‌ها یکی‌یکی اجرا شوند.
+        </div>
+      </div>
+    </div>
+
+    <div class="rp-transport rv" style="--d:.44s" dir="ltr">
+      <button class="rp-btn" id="rpPrev" title="گام قبل">⏮</button>
+      <button class="rp-btn rp-play" id="rpPlay" title="پخش / توقف">▶</button>
+      <button class="rp-btn" id="rpNext" title="گام بعد">⏭</button>
+      <div class="rp-track"><i id="rpFill"></i></div>
+      <span class="rp-time" id="rpTime">00:00 / 01:40</span>
+      <button class="rp-speed" id="rpSpeed">1×</button>
+      <span class="rp-tool" id="rpTool">—</span>
+      <span class="chip cy rp-chip"><span class="dot"></span>جلسهٔ ضبط‌شده</span>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 12 — ACTION C: PLAYGROUND
+       ========================================================== -->
+  <section class="slide s-play" id="playSlide" data-label="سکوی آزمایش هارنس">
+    <div class="ghost">09</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">09</span> — action · playground</span>
+      <h2 class="s-title rv" style="--d:.12s">سکوی آزمایش: <em>گاردیل را خاموش کنید</em> و ببینید چه می‌شود</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        هدف، ابزارها و گاردیل‌ها را انتخاب کنید و هارنس را اجرا کنید. گاردیل را بردارید و
+        حلقهٔ بی‌پایان و هزینهٔ سرسام‌آور را ببینید.
+      </p>
+    </header>
+
+    <div class="pg-grid">
+      <div class="pg-side">
+        <div>
+          <div class="pg-lbl">هدف</div>
+          <div class="pg-goals">
+            <button class="pg-goal on" data-goal="bug">رفع باگ گزارش فروش</button>
+            <button class="pg-goal" data-goal="test">افزودن تست برای قیمت‌گذاری</button>
+            <button class="pg-goal" data-goal="clean">پاک‌سازی تابع تکراری</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="pg-lbl">ابزارهای در دسترس</div>
+          <div class="pg-tools">
+            <button class="chip cy pg-tool on" data-tool="read"><span class="dot"></span>read</button>
+            <button class="chip cy pg-tool on" data-tool="grep"><span class="dot"></span>grep</button>
+            <button class="chip cy pg-tool on" data-tool="bash"><span class="dot"></span>bash</button>
+            <button class="chip cy pg-tool on" data-tool="edit"><span class="dot"></span>edit</button>
+            <button class="chip cy pg-tool on" data-tool="test"><span class="dot"></span>test</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="pg-lbl">گاردیل‌ها</div>
+          <div class="pg-guards">
+            <label class="pg-guard"><input type="checkbox" checked data-guard="allow"><span>فهرست مجاز ابزار</span></label>
+            <label class="pg-guard"><input type="checkbox" checked data-guard="budget"><span>سقف بودجه و گام</span></label>
+            <label class="pg-guard"><input type="checkbox" checked data-guard="human"><span>تأیید انسانی برای عمل مخرب</span></label>
+          </div>
+        </div>
+
+        <div class="pg-ctl">
+          <button class="btn" id="pgRun">▶ اجرای هارنس</button>
+          <button class="btn ghost-btn" id="pgSample">اجرای نمونه</button>
+          <button class="btn ghost-btn" id="pgReset">بازنشانی</button>
+        </div>
+      </div>
+
+      <div class="console rv-r" style="--d:.3s">
+        <div class="con-bar">
+          <span class="ttl"><span class="pulse"></span>harness · playground</span>
+          <span class="chip" id="pgState" style="margin-inline-start:auto"><span class="dot"></span>idle</span>
+        </div>
+        <div class="con-log" id="pgLog"></div>
+        <div class="sim-metrics">
+          <span class="m">step <b id="pgStep">0/8</b></span>
+          <span class="m">tokens <b id="pgTok">0/32,000</b></span>
+          <span class="m">tools <b id="pgTools">0</b></span>
+          <span class="m">cost <b id="pgCost">$0.00</b></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 13 — ACTION D: CODE IN MOTION
+       ========================================================== -->
+  <section class="slide s-code" id="codeSlide" data-label="کد هارنس در حرکت">
+    <div class="ghost">10</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">10</span> — action · code</span>
+      <h2 class="s-title rv" style="--d:.12s">کد هارنس <em>در حرکت</em></h2>
+      <p class="s-sub rv" style="--d:.2s">
+        همان معماری مرجع، این‌بار خط‌به‌خط. «اجرای گام‌به‌گام» را بزنید تا ببینید در هر لحظه کدام خط از کد زنده است.
+      </p>
+    </header>
+
+    <div class="s4-body">
+      <div class="code-wrap rv-r" style="--d:.26s">
+        <div class="code-bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="fname">harness.py</span>
+          <span class="chip" style="margin-inline-start:auto"><span class="dot"></span>python 3.11</span>
+        </div>
+        <pre class="code"><code id="harnessCode"></code></pre>
+      </div>
+
+      <div class="phases rv-r" style="--d:.32s">
+        <div class="phase-list" id="phaseList">
+          <div class="phase" data-p="0"><span class="pn">۰۱</span>تفکر</div>
+          <div class="phase" data-p="1"><span class="pn">۰۲</span>اعتبارسنجی خروجی</div>
+          <div class="phase" data-p="2"><span class="pn">۰۳</span>گاردیل</div>
+          <div class="phase" data-p="3"><span class="pn">۰۴</span>اجرای ایزوله</div>
+          <div class="phase" data-p="4"><span class="pn">۰۵</span>بازیابی خطا</div>
+          <div class="phase" data-p="5"><span class="pn">۰۶</span>ثبت در حافظه</div>
+          <div class="phase" data-p="6"><span class="pn">۰۷</span>جمع‌بندی</div>
+        </div>
+        <div class="card phase-desc" id="phaseDesc">
+          <div class="ph" id="phaseTitle">تفکر</div>
+          <p id="phaseText">مدل روی حافظه و فهرست ابزارها طرح‌وارهٔ عمل را می‌نویسد. هارنس هنوز هیچ چیزی اجرا نکرده است.</p>
+        </div>
+        <div class="phase-ctl" style="display:flex;gap:.5em;align-items:center;flex-wrap:wrap">
+          <button class="btn" id="phasePlay">▶ اجرای گام‌به‌گام</button>
+          <span class="mini-note" id="phaseState">گام ۱ / ۷</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 11 — TOOLS + MCP + MEMORY (merged)
+       ========================================================== -->
+  <section class="slide s-mix" id="toolsSlide" data-label="ابزار، MCP و حافظه">
+    <div class="ghost">11</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">11</span> — tools · mcp · memory</span>
+      <h2 class="s-title rv" style="--d:.12s">ابزار، <em>MCP</em> و حافظه: سه سازوکار یک هارنس</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        مدل فقط «درخواست» می‌دهد؛ هارنس آن را به فراخوانی واقعی تبدیل می‌کند، با MCP به همهٔ ابزارها
+        وصل می‌شود، و با حافظه/کانتکست می‌داند چه چیزی را نگه دارد.
+      </p>
+    </header>
+
+    <div class="mix-grid">
+      <!-- ===== ابزار و MCP ===== -->
+      <div class="card mix-card rv-r" style="--d:.26s">
+        <h3><span class="ix">۱</span> ابزار: یک فراخوانی، سه پیام</h3>
+        <div class="io-flow">
+          <div class="io-step"><b>درخواست به مدل</b><code>{"tools":[{"name":"read_file",<br>  "description":"خواندن فایل"}]}</code></div>
+          <div class="io-step"><b>پاسخ مدل</b><code>{"tool_call":{"name":"read_file",<br>  "arguments":{"path":"billing/report.py"}}}</code></div>
+          <div class="io-step"><b>نتیجهٔ ابزار</b><code>{"ok":true,"content":"...","error":null}</code></div>
+        </div>
+        <ul class="rules">
+          <li><i>◂</i><span>نام ابزار کوتاه و فعلی باشد؛ شرح دقیق، بخشی از پرامپت است.</span></li>
+          <li><i>◂</i><span>پیام خطای قابل‌فهم برگردانید — پیام خطا ورودی مدل است، نه فقط لاگ سیستم.</span></li>
+        </ul>
+
+        <h3 class="mt"><span class="ix">۲</span> MCP: سوکت استاندارد ابزارها</h3>
+        <svg class="mcp-svg mix-mcp" viewBox="0 0 440 210" role="img" aria-label="معماری MCP">
+          <line class="mcp-link" x1="310" y1="105" x2="272" y2="105"/>
+          <line class="mcp-link" x1="176" y1="95" x2="140" y2="72"/>
+          <line class="mcp-link" x1="176" y1="115" x2="140" y2="150"/>
+          <rect class="mcp-node" x="310" y="75" width="110" height="60" rx="10"/>
+          <text class="mcp-lbl" x="365" y="100">هارنس / ایجنت</text>
+          <text class="mcp-sub" x="365" y="118">HOST</text>
+          <rect class="mcp-node" x="176" y="75" width="96" height="60" rx="10"/>
+          <text class="mcp-lbl" x="224" y="100">کلاینت MCP</text>
+          <text class="mcp-sub" x="224" y="118">CLIENT</text>
+          <rect class="mcp-node" x="20" y="44" width="120" height="52" rx="10"/>
+          <text class="mcp-lbl" x="80" y="66">سرور فایل‌ها</text>
+          <text class="mcp-sub" x="80" y="84">FILES</text>
+          <rect class="mcp-node" x="20" y="126" width="120" height="52" rx="10"/>
+          <text class="mcp-lbl" x="80" y="148">سرور دیتابیس</text>
+          <text class="mcp-sub" x="80" y="166">DB</text>
+          <circle class="mcp-pkt" r="4"><animateMotion dur="2.4s" repeatCount="indefinite" path="M365,105 L224,105"/></circle>
+          <circle class="mcp-pkt em" r="4"><animateMotion dur="2.4s" begin=".8s" repeatCount="indefinite" path="M224,105 L365,105"/></circle>
+          <circle class="mcp-pkt" r="4"><animateMotion dur="2.2s" begin="1.2s" repeatCount="indefinite" path="M224,95 L80,70"/></circle>
+          <circle class="mcp-pkt em" r="4"><animateMotion dur="2.2s" begin="1.9s" repeatCount="indefinite" path="M80,152 L224,115"/></circle>
+          <text class="mcp-sub" x="288" y="95">tools/list</text>
+          <text class="mcp-sub" x="152" y="88">call</text>
+        </svg>
+        <ul class="rules">
+          <li><i>◂</i><span><b>کشف</b>: هارنس می‌پرسد چه ابزارهایی موجود است — بدون کدنویسی.</span></li>
+          <li><i>◂</i><span><b>تعویض‌پذیری</b>: عوض‌کردن یک سرور، هارنس را تغییر نمی‌دهد.</span></li>
+        </ul>
+      </div>
+
+      <!-- ===== حافظه و کانتکست ===== -->
+      <div class="card mix-card rv-r" style="--d:.34s">
+        <h3><span class="ix">۳</span> حافظه و اقتصاد کانتکست</h3>
+        <div class="ctx-card">
+          <div class="ctx-bar" id="ctxBar"></div>
+          <div class="ctx-foot"><span id="ctxUsed">0 / 32,000 توکن</span><span id="ctxState">خالی</span></div>
+          <div class="ctx-ctl">
+            <button class="btn" id="ctxPlay">▶ پر شدن و فشرده‌سازی</button>
+            <button class="btn ghost-btn" id="ctxReset">بازنشانی</button>
+          </div>
+        </div>
+
+        <div class="mem-row">
+          <div class="mem-card">
+            <h4>حافظهٔ کوتاه‌مدت</h4>
+            <p>رویدادهای همین اجرا: هر فکر، عمل و مشاهده — چیزی که مدل «همین حالا» می‌بیند.</p>
+          </div>
+          <div class="mem-card">
+            <h4>حافظهٔ بلندمدت</h4>
+            <p>دانش ماندگار پروژه: قوانین، تصمیم‌های گذشته، نتایج یادگیری — با بازیابی معنایی.</p>
+          </div>
+        </div>
+
+        <div class="warn-card">
+          <h4>پوسیدگی کانتکست (context rot)</h4>
+          <ul>
+            <li>دستور اولیه در انبوهِ پیام‌ها گم می‌شود.</li>
+            <li>مدل به قدیمی‌ترین پیام‌ها بیشتر اعتماد می‌کند.</li>
+            <li>هزینه و تأخیر هر گام بالا می‌رود.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 17 — SECTION 04 / LIVE DEMO
+       ========================================================== -->
+  <section class="slide s-div s-live" id="liveSlide" data-label="دموی زنده">
+    <div class="ghost">12</div>
+    <div class="div-wrap">
+      <span class="div-tag rv" style="--d:.05s">section 04 — live demo</span>
+      <div class="div-num rv-b" style="--d:.12s">04</div>
+      <h2 class="div-title rv" style="--d:.2s">دموی زنده</h2>
+
+      <div class="live-grid">
+        <div class="card live-check rv-r" style="--d:.26s">
+          <h3>چک‌لیست ارائه‌دهنده</h3>
+          <ol>
+            <li><span class="no">۱</span><span>ترمینال را باز کنید و به پوشهٔ پروژهٔ نمونه بروید.</span></li>
+            <li><span class="no">۲</span><span>دستور: <code>claude</code> یا <code>python harness.py --task "fix report bug"</code></span></li>
+            <li><span class="no">۳</span><span>یک اجرای واقعی: خطا → اصلاح → تست سبز.</span></li>
+            <li><span class="no">۴</span><span>اگر اینترنت نبود: همین شبیه‌سازِ داخل فایل را اجرا کنید (اسلاید ۱۲).</span></li>
+          </ol>
+        </div>
+
+        <div class="card live-video rv-r" style="--d:.32s">
+          <video id="demoVideo" controls playsinline preload="metadata"></video>
+          <div class="vid-fallback" id="vidFallback">
+            <b>جای ویدئوی ضبط‌شده</b><br>
+            ویدئوی از پیش ضبط‌شده نیست: اجرای واقعی را جلوی جمع انجام می‌دهیم — خطا، اصلاح، تست سبز.
+            اگر ویدئویی آماده داشتید، این قاب جای آن بود.
+          </div>
+        </div>
+      </div>
+    </div>
+
+          <div class="term-reel rv-r" style="--d:.42s">
+            <div class="term-bar">
+              <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+              <span class="ttl">claude · ~/billing</span>
+            </div>
+            <pre class="term-body" id="termReel"></pre>
+          </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 5 — SUMMARY
+       ========================================================== -->
+  <section class="slide s5" id="sumSlide" data-label="جمع‌بندی">
+    <div class="ghost">13</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">13</span> — takeaways</span>
+      <h2 class="s-title rv" style="--d:.12s">جمع‌بندی: چه چیزی یک هارنس را <em>تولیدی</em> می‌کند</h2>
+    </header>
+
+    <div class="s5-body">
+      <div class="metrics">
+        <div class="card metric rv-s" style="--d:.24s;--c:#38bdf8">
+          <b data-count="8">0</b>
+          <span>ابزار متصل و قابل فراخوانی</span>
+          <small>search · code · shell · db · api · browser · fs · test</small>
+        </div>
+        <div class="card metric rv-s" style="--d:.3s;--c:#f59e0b">
+          <b data-count="3">0</b>
+          <span>لایهٔ گاردیل</span>
+          <small>سیاست · مجوز و تأیید انسانی · بودجه</small>
+        </div>
+        <div class="card metric rv-s" style="--d:.36s;--c:#10b981">
+          <b data-count="6">0</b>
+          <span>گام در یک چرخهٔ ReAct</span>
+          <small>فکر · عمل · مشاهده · بازخور</small>
+        </div>
+        <div class="card metric rv-s" style="--d:.42s;--c:#a78bfa">
+          <b data-count="100" data-suffix="٪">0</b>
+          <span>قابلیت ردیابی هر فراخوانی</span>
+          <small>لاگ ساختاریافته + replay</small>
+        </div>
+      </div>
+
+      <ul class="check">
+        <li class="rv-r" style="--d:.3s"><span class="ck">✓</span><span class="tx"><b>گاردیل چندلایه</b><span>هر عمل پیش از اجرا از فیلتر سیاست، مجوز و بودجه عبور می‌کند.</span></span></li>
+        <li class="rv-r" style="--d:.36s"><span class="ck">✓</span><span class="tx"><b>محدودیت‌های سخت</b><span>سقف مرحله، سقف توکن و timeout تا ایجنت نتواند در حلقه گیر کند.</span></span></li>
+        <li class="rv-r" style="--d:.42s"><span class="ck">✓</span><span class="tx"><b>ایزوله‌سازی اجرا</b><span>اجرای کد ابزار در sandbox، بدون دسترسی مستقیم به سیستم.</span></span></li>
+        <li class="rv-r" style="--d:.48s"><span class="ck">✓</span><span class="tx"><b>حافظهٔ دو لایه</b><span>حافظهٔ کوتاه‌مدت برای حلقه، حافظهٔ بلندمدت با بازیابی معنایی.</span></span></li>
+        <li class="rv-r" style="--d:.54s"><span class="ck">✓</span><span class="tx"><b>مدیریت خطا</b><span>خطا داده است نه استثنا: رهگیری، بازآزمایی و مسیر جایگزین.</span></span></li>
+        <li class="rv-r" style="--d:.6s"><span class="ck">✓</span><span class="tx"><b>ارزیابی و بازپخش</b><span>هر اجرا قابل بازپخش است تا تغییرات کیفیت سنجیده شود.</span></span></li>
+      </ul>
+    </div>
+
+    
+        <div class="rm-wrap rv-r" style="--d:.5s">
+          <span class="rm-cap">هارنس‌های واقعی — هر سه از همان هفت قطعه ساخته شده‌اند</span>
+          <table class="rm-table">
+            <thead>
+              <tr><th>هارنس</th><th>ابزارها</th><th>حافظه</th><th>گاردیل</th><th>درس</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="rm-n">Claude Code</td>
+                <td>Read · Edit · Bash</td>
+                <td>فایل‌های پروژه</td>
+                <td>تأیید انسان</td>
+                <td class="rm-l">ابزار کم، اما دقیق</td>
+              </tr>
+              <tr>
+                <td class="rm-n">Cursor / IDE-agent</td>
+                <td>جست‌وجو · ویرایش · ترمینال</td>
+                <td>ایندکس کد</td>
+                <td>پیش‌نمایش diff</td>
+                <td class="rm-l">حافظه = کد، نه گفتگو</td>
+              </tr>
+              <tr>
+                <td class="rm-n">هارنس سفارشی شما</td>
+                <td>فقط ابزارهای دامنه</td>
+                <td>کوتاه‌مدت + بلندمدت</td>
+                <td>بودجه و allow-list</td>
+                <td class="rm-l">حداقل قطعه، بیشترین کنترل</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+    <div class="closing rv" style="--d:.7s">
+      <div class="q">مدل، <b>موتور</b> است. هارنس، <b>خودرو</b> است. بدون هارنس، شما فقط یک قطعهٔ گران‌قیمت دارید.</div>
+      <span class="chip cy"><span class="dot"></span>پایان · پرسش و پاسخ</span>
+    </div>
+  </section>
+</main>
+
+<!-- ============================================================
+     HUD / NAVIGATION
+     ========================================================== -->
+<div class="nav-arrows">
+  <button id="btnPrev" class="nav-lbl" dir="ltr" title="قبلی (→)" aria-label="اسلاید قبلی"><span class="g">→</span><span class="t">قبلی</span></button>
+  <button id="btnNext" class="nav-lbl" dir="ltr" title="بعدی (←)" aria-label="اسلاید بعدی"><span class="g">←</span><span class="t">بعدی</span></button>
+</div>
+
+<nav class="hud" aria-label="ناوبری اسلایدها">
+  <div class="brand"><span class="mk"></span><span>agent-harness · fa</span></div>
+  <div class="hud-steps" id="hudSteps"></div>
+  <div class="hud-right">
+    <span class="hud-timer" id="hudTimer"><b id="tClock">00:00</b><span class="sec" id="tSec">—</span></span>
+    <span class="keys"><kbd>←</kbd><kbd>→</kbd><kbd>Space</kbd> حرکت · <kbd>F</kbd> تمام‌صفحه · <kbd>S</kbd> یادداشت · <kbd>T</kbd> زمان‌سنج · <kbd>C</kbd> حالت تمیز · <kbd>?</kbd> راهنما</span>
+    <span class="count"><b id="curNum">01</b> / <span id="totNum">05</span></span>
+  </div>
+</nav>
+<div class="progress"><i id="progressBar" style="transform:scaleX(.2)"></i></div>
+
+<script>
+/* ============================================================
+   THREE.JS — INTERACTIVE 3D CAR (CDN, graceful fallback)
+   ============================================================ */
+(function(){
+  const stage = document.getElementById('carStage');
+  const canvas = document.getElementById('carCanvas');
+  const fallback = document.getElementById('carFallback');
+  const fpsEl = document.getElementById('carFps');
+  const labels = {
+    engine:  document.getElementById('lblEngine'),
+    ecu:     document.getElementById('lblEcu'),
+    lidar:   document.getElementById('lblLidar'),
+    wiring:  document.getElementById('lblWiring'),
+    memory:  document.getElementById('lblMemory')
+  };
+
+  window.__carReady = false;
+  window.__carTick  = null;   // called by the deck controller when slide 2 is active
+
+  function showFallback(){
+    fallback.classList.add('on');
+    stage.querySelector('.car-hint').textContent = '2D FALLBACK · THREE.JS UNAVAILABLE';
+  }
+
+  async function init(){
+    if (!canvas) return;
+    let THREE, OrbitControls;
+    try {
+      THREE = await import('three');
+      ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+    } catch (e) {
+      console.warn('Three.js could not be loaded:', e);
+      showFallback();
+      return;
+    }
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x090d16, 0.035);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 120);
+    camera.position.set(5.4, 2.9, 6.4);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.75;
+    controls.minDistance = 4.4;
+    controls.maxDistance = 15;
+    controls.maxPolarAngle = Math.PI * 0.52;
+    controls.target.set(0, 0.95, 0);
+
+    /* ---------- lights ---------- */
+    scene.add(new THREE.AmbientLight(0x2b3b55, 0.9));
+    const hemi = new THREE.HemisphereLight(0x7dd3fc, 0x0a1120, 0.55);
+    scene.add(hemi);
+    const key = new THREE.DirectionalLight(0xbfd9ff, 0.8);
+    key.position.set(6, 9, 4); scene.add(key);
+
+    const car = new THREE.Group();
+    car.position.y = 0.02;
+    scene.add(car);
+
+    const CYAN = 0x38bdf8, RED = 0xf43f5e, EM = 0x10b981, AM = 0xf59e0b;
+
+    /* ---------- helper: holographic box ---------- */
+    function holoBox(w, h, d, x, y, z, color, fillAlpha){
+      const g = new THREE.Group();
+      const geo = new THREE.BoxGeometry(w, h, d);
+      const fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+        color, transparent:true, opacity: fillAlpha, side: THREE.DoubleSide, depthWrite:false
+      }));
+      const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(geo),
+        new THREE.LineBasicMaterial({ color, transparent:true, opacity:.85 })
+      );
+      g.add(fill, edges);
+      g.position.set(x, y, z);
+      return g;
+    }
+
+    /* ---------- chassis ---------- */
+    const bodyMat = new THREE.MeshBasicMaterial({ color:0x1a2c45, transparent:true, opacity:.55 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.62, 2.0), bodyMat);
+    body.position.set(0, 0.72, 0);
+    const bodyEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(4.5, 0.62, 2.0)),
+      new THREE.LineBasicMaterial({ color:CYAN, transparent:true, opacity:.9 })
+    );
+    bodyEdges.position.copy(body.position);
+    car.add(body, bodyEdges);
+
+    const cabin = holoBox(2.35, 0.62, 1.72, -0.28, 1.32, 0, CYAN, 0.10);
+    car.add(cabin);
+
+    // front + rear bumpers
+    car.add(holoBox(0.3, 0.34, 1.8, 2.32, 0.62, 0, CYAN, 0.12));
+    car.add(holoBox(0.3, 0.34, 1.8, -2.32, 0.62, 0, CYAN, 0.12));
+
+    // windshield plane
+    const wind = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.2, 0.62),
+      new THREE.MeshBasicMaterial({ color:0x7dd3fc, transparent:true, opacity:.14, side:THREE.DoubleSide })
+    );
+    wind.position.set(0.85, 1.32, 0); wind.rotation.y = Math.PI/2; wind.rotation.z = -0.5;
+    car.add(wind);
+
+    /* ---------- wheels ---------- */
+    const wheelMat = new THREE.MeshBasicMaterial({ color:0x0d1626, transparent:true, opacity:.85 });
+    const wheelGeo = new THREE.CylinderGeometry(0.56, 0.56, 0.36, 24, 1, true);
+    const wheelEdges = new THREE.EdgesGeometry(wheelGeo);
+    [[1.55, 1.02], [1.55, -1.02], [-1.55, 1.02], [-1.55, -1.02]].forEach(p => {
+      const w = new THREE.Mesh(wheelGeo, wheelMat);
+      w.rotation.x = Math.PI/2; w.position.set(p[0], 0.56, p[1]);
+      const we = new THREE.LineSegments(wheelEdges, new THREE.LineBasicMaterial({ color:0x7dd3fc, transparent:true, opacity:.7 }));
+      we.rotation.x = Math.PI/2; we.position.copy(w.position);
+      car.add(w, we);
+    });
+
+    /* ---------- engine (LLM core) ---------- */
+    const engine = new THREE.Group();
+    const engMat = new THREE.MeshStandardMaterial({
+      color:0x3b0d16, emissive:RED, emissiveIntensity:1.6, roughness:.35, metalness:.5
+    });
+    const engMesh = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.85, 1.25), engMat);
+    const engEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(1.15, 0.85, 1.25)),
+      new THREE.LineBasicMaterial({ color:RED })
+    );
+    engine.add(engMesh, engEdges);
+    engine.position.set(1.62, 0.98, 0);
+    car.add(engine);
+    const engLight = new THREE.PointLight(RED, 2.2, 7);
+    engLight.position.set(1.62, 1.1, 0); car.add(engLight);
+
+    /* ---------- ECU hub (the harness) ---------- */
+    const ecu = new THREE.Group();
+    const ecuMat = new THREE.MeshStandardMaterial({
+      color:0x072033, emissive:CYAN, emissiveIntensity:1.9, roughness:.25, metalness:.6
+    });
+    const ecuCore = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.52, 32), ecuMat);
+    ecuCore.rotation.x = Math.PI/2;
+    ecu.add(ecuCore);
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.72, 0.035, 12, 64),
+      new THREE.MeshBasicMaterial({ color:CYAN, transparent:true, opacity:.9 })
+    );
+    ecu.add(ring);
+    const ring2 = new THREE.Mesh(
+      new THREE.TorusGeometry(0.92, 0.018, 10, 64),
+      new THREE.MeshBasicMaterial({ color:EM, transparent:true, opacity:.65 })
+    );
+    ring2.rotation.x = 0.5; ecu.add(ring2);
+    ecu.position.set(0, 1.02, 0);
+    car.add(ecu);
+    const ecuLight = new THREE.PointLight(CYAN, 2.6, 9);
+    ecuLight.position.set(0, 1.15, 0); car.add(ecuLight);
+
+    /* ---------- memory module (violet) ---------- */
+    const mem = new THREE.Group();
+    const memMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.85, 0.3, 0.95),
+      new THREE.MeshStandardMaterial({ color:0x1b1233, emissive:0xa78bfa, emissiveIntensity:1.1, roughness:.4 })
+    );
+    const memEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(0.85, 0.3, 0.95)),
+      new THREE.LineBasicMaterial({ color:0xa78bfa })
+    );
+    mem.add(memMesh, memEdges);
+    mem.position.set(-1.55, 1.12, 0);
+    car.add(mem);
+
+    /* ---------- LiDAR sensor ---------- */
+    const lidar = new THREE.Group();
+    const lidarBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.2, 0.24, 0.18, 20),
+      new THREE.MeshStandardMaterial({ color:0x2a1f05, emissive:AM, emissiveIntensity:1.2, roughness:.5 })
+    );
+    lidar.add(lidarBase);
+    const beam = new THREE.Mesh(
+      new THREE.ConeGeometry(1.35, 1.7, 28, 1, true),
+      new THREE.MeshBasicMaterial({ color:AM, transparent:true, opacity:.10, side:THREE.DoubleSide, depthWrite:false })
+    );
+    beam.position.y = -0.85; // نوک مخروط روی LiDAR، قاعده رو به پایین
+    lidar.add(beam);
+    const spin = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.26, 0.26, 0.08, 24),
+      new THREE.MeshBasicMaterial({ color:AM, transparent:true, opacity:.85 })
+    );
+    spin.position.y = 0.13; lidar.add(spin);
+    lidar.position.set(0.05, 1.7, 0);
+    car.add(lidar);
+    const lidarLight = new THREE.PointLight(AM, 1.6, 6);
+    lidarLight.position.set(0.05, 1.8, 0); car.add(lidarLight);
+
+    /* ---------- wiring harness conduits + signal packets ---------- */
+    const conduits = [
+      { color: EM, pts:[[1.62,1.05,0.45],[0.9,1.5,0.62],[0.2,1.35,0.5],[0,1.05,0]] },
+      { color: EM, pts:[[1.62,1.05,-0.45],[0.9,1.5,-0.62],[0.2,1.35,-0.5],[0,1.05,0]] },
+      { color: CYAN, pts:[[0,1.25,0],[0.05,1.6,0.28],[0.05,1.72,0]] },
+      { color: CYAN, pts:[[0,1.2,0],[-0.8,1.3,0.4],[-1.5,1.25,0.3],[-1.55,1.2,0]] },
+      { color: AM, pts:[[1.62,0.85,0.2],[1.5,0.7,1.0],[1.55,0.6,1.02]] }
+    ];
+    const packets = [];
+    conduits.forEach(c => {
+      const curve = new THREE.CatmullRomCurve3(c.pts.map(p => new THREE.Vector3(p[0], p[1], p[2])));
+      const tube = new THREE.Mesh(
+        new THREE.TubeGeometry(curve, 48, 0.035, 8, false),
+        new THREE.MeshBasicMaterial({ color:c.color, transparent:true, opacity:.55 })
+      );
+      car.add(tube);
+      for (let i = 0; i < 3; i++){
+        const pk = new THREE.Mesh(
+          new THREE.SphereGeometry(0.075, 10, 10),
+          new THREE.MeshBasicMaterial({ color:0xffffff })
+        );
+        car.add(pk);
+        packets.push({ mesh: pk, curve, t: i/3, speed: 0.16 + Math.random()*0.14 });
+      }
+    });
+
+    /* ---------- floor grid + platform ---------- */
+    const grid = new THREE.GridHelper(30, 30, 0x1d3a52, 0x0d1a2b);
+    grid.position.y = 0.0; grid.material.transparent = true; grid.material.opacity = .5;
+    scene.add(grid);
+    const platform = new THREE.Mesh(
+      new THREE.CircleGeometry(3.0, 64),
+      new THREE.MeshBasicMaterial({ color:0x0a1524, transparent:true, opacity:.7 })
+    );
+    platform.rotation.x = -Math.PI/2; platform.position.y = 0.01; scene.add(platform);
+    const rim = new THREE.Mesh(
+      new THREE.RingGeometry(2.95, 3.08, 96),
+      new THREE.MeshBasicMaterial({ color:CYAN, transparent:true, opacity:.5, side:THREE.DoubleSide })
+    );
+    rim.rotation.x = -Math.PI/2; rim.position.y = 0.02; scene.add(rim);
+
+    /* ---------- ambient dust ---------- */
+    const dustCount = 220;
+    const dustPos = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++){
+      dustPos[i*3]   = (Math.random()-0.5) * 22;
+      dustPos[i*3+1] = Math.random() * 8;
+      dustPos[i*3+2] = (Math.random()-0.5) * 22;
+    }
+    const dustGeo = new THREE.BufferGeometry();
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+    const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+      color:0x7dd3fc, size:0.055, transparent:true, opacity:.55
+    }));
+    scene.add(dust);
+
+    /* ---------- label anchors ---------- */
+    const anchors = {
+      engine:  new THREE.Vector3( 1.62, 1.75, 0),
+      ecu:     new THREE.Vector3( 0.00, 1.62, 0),
+      lidar:   new THREE.Vector3( 0.05, 2.55, 0),
+      wiring:  new THREE.Vector3( 0.75, 0.85, 0.75),
+      memory:  new THREE.Vector3(-1.55, 1.55, 0)
+    };
+
+    /* ---------- resize ---------- */
+    function resize(){
+      const w = stage.clientWidth || 1, h = stage.clientHeight || 1;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    resize();
+    new ResizeObserver(resize).observe(stage);
+    window.addEventListener('resize', resize);
+
+    /* ---------- render loop ---------- */
+    const clock = new THREE.Clock();
+    let frames = 0, fpsTimer = 0;
+
+    function frame(){
+      const t = clock.getElapsedTime();
+
+      engMat.emissiveIntensity = 1.3 + Math.sin(t * 3.2) * 0.55;
+      engLight.intensity      = 1.6 + Math.sin(t * 3.2) * 1.0;
+      ecuMat.emissiveIntensity = 1.5 + Math.sin(t * 2.1 + 1) * 0.5;
+      ecuLight.intensity      = 2.0 + Math.sin(t * 2.1 + 1) * 0.9;
+      ecu.rotation.z          = t * 0.9;
+      ring.rotation.x         = t * 1.2;
+      ring2.rotation.y        = t * 0.7;
+      memMesh.material.emissiveIntensity = 0.8 + Math.sin(t * 1.6) * 0.35;
+      spin.rotation.y         = t * 2.6;
+      beam.rotation.y         = t * 1.1;
+
+      packets.forEach(p => {
+        p.t += p.speed * 0.016;
+        if (p.t > 1) p.t -= 1;
+        p.mesh.position.copy(p.curve.getPointAt(p.t));
+      });
+
+      dust.rotation.y = t * 0.02;
+      rim.material.opacity = 0.35 + Math.sin(t * 1.4) * 0.18;
+
+      controls.update();
+      renderer.render(scene, camera);
+
+      // project labels to screen (callout: pushed radially off the body, no overlap)
+      const rect = canvas.getBoundingClientRect();
+      const cc = new THREE.Vector3(0, 1.0, 0).project(camera);
+      const ccx = (cc.x * 0.5 + 0.5) * rect.width, ccy = (-cc.y * 0.5 + 0.5) * rect.height;
+      const placed = [];
+      Object.keys(anchors).forEach(k => {
+        const el = labels[k];
+        if (!el) return;
+        const v = anchors[k].clone().project(camera);
+        if (v.z > 1){ el.classList.remove('on'); return; }
+        let x = (v.x * 0.5 + 0.5) * rect.width;
+        let y = (-v.y * 0.5 + 0.5) * rect.height;
+        const dx = x - ccx, dy = y - ccy, dl = Math.hypot(dx, dy) || 1;
+        x += dx / dl * 52; y += dy / dl * 46;              // callout offset
+        const w = el.offsetWidth || 130, h = el.offsetHeight || 24;
+        for (let t = 0; t < 5; t++){
+          const hit = placed.find(p => Math.abs(p.x - x) < (p.w + w) / 2 && Math.abs(p.y - y) < (p.h + h) / 2);
+          if (!hit) break;
+          y = hit.y - (hit.h + h) / 2 - 5;
+        }
+        placed.push({ x, y, w, h });
+        el.style.left = x + 'px';
+        el.style.top  = y + 'px';
+        el.classList.add('on');
+      });
+
+      frames++; fpsTimer += 0.016;
+      if (fpsTimer >= 1){ fpsEl.textContent = frames + ' FPS'; frames = 0; fpsTimer = 0; }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    let rafId = null;
+    window.__carReady = true;
+
+    /* فقط وقتی اسلاید ۲ فعال است رندر می‌شود (صرفه‌جویی در CPU/GPU) */
+    function setActive(on){
+      if (on && rafId == null){ clock.getDelta(); rafId = requestAnimationFrame(frame); }
+      if (!on && rafId != null){ cancelAnimationFrame(rafId); rafId = null; }
+    }
+    window.__carTick = setActive;
+    let deckIndex = 0;
+    document.addEventListener('deck:slide', e => { deckIndex = e.detail.index; setActive(!!document.querySelector('#carSlide.active')); });
+    setActive(!!document.querySelector('#carSlide.active'));
+  }
+
+  init();
+})();
+
+/* ============================================================
+   DECK CONTROLLER
+   ============================================================ */
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const hudSteps = document.getElementById('hudSteps');
+  const curNum = document.getElementById('curNum');
+  const totNum = document.getElementById('totNum');
+  const bar = document.getElementById('progressBar');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  let index = 0;
+
+  totNum.textContent = String(slides.length).padStart(2, '0');
+
+  slides.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.textContent = String(i + 1).padStart(2, '0');
+    b.setAttribute('aria-label', 'اسلاید ' + (i + 1) + ': ' + (s.dataset.label || ''));
+    b.addEventListener('click', () => show(i));
+    hudSteps.appendChild(b);
+  });
+  const dots = Array.from(hudSteps.children);
+
+  function show(i){
+    index = Math.max(0, Math.min(i, slides.length - 1));
+    slides.forEach((s, k) => {
+      s.classList.toggle('active', k === index);
+      s.classList.toggle('out-left',  k >  index);
+      s.classList.toggle('out-right', k <  index);
+    });
+    dots.forEach((d, k) => d.classList.toggle('on', k === index));
+    curNum.textContent = String(index + 1).padStart(2, '0');
+    bar.style.transform = 'scaleX(' + ((index + 1) / slides.length) + ')';
+    btnPrev.disabled = index === 0;
+    btnNext.disabled = index === slides.length - 1;
+    if (window.__carTick) window.__carTick(slides[index].id === 'carSlide');
+    document.dispatchEvent(new CustomEvent('deck:slide', { detail:{ index } }));
+    onEnter(slides[index], index);
+  }
+  const next = () => show(index + 1);
+  const prev = () => show(index - 1);
+
+  btnNext.addEventListener('click', next);
+  btnPrev.addEventListener('click', prev);
+
+  /* keyboard */
+  document.addEventListener('keydown', e => {
+    const k = e.key;
+    const t = e.target;
+    // never hijack typing in a field, and let a focused control keep Space/Enter
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    if (k === ' ' || k === 'Enter'){
+      const ctl = t && t.closest ? t.closest('button, [role="button"]') : null;
+      if (ctl) return;
+    }
+    if (k === 'ArrowLeft' || k === 'ArrowDown' || k === ' ' || k === 'PageDown'){ e.preventDefault(); next(); }
+    else if (k === 'ArrowRight' || k === 'ArrowUp' || k === 'PageUp'){ e.preventDefault(); prev(); }
+    else if (k === 'Home'){ e.preventDefault(); show(0); }
+    else if (k === 'End'){ e.preventDefault(); show(slides.length - 1); }
+    else if (k === 'f' || k === 'F'){
+      e.preventDefault();
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+  });
+
+  /* touch swipe (روی بوم سه‌بعدی لغزش = چرخش خودرو، نه تغییر اسلاید) */
+  let sx = 0, sy = 0, swiping = false, onCanvas = false;
+  document.addEventListener('touchstart', e => {
+    sx = e.changedTouches[0].clientX; sy = e.changedTouches[0].clientY; swiping = true;
+    onCanvas = !!e.target.closest && !!e.target.closest('#carStage');
+  }, { passive:true });
+  document.addEventListener('touchend', e => {
+    if (!swiping) return;
+    swiping = false;
+    if (onCanvas) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? next() : prev(); }
+  }, { passive:true });
+
+  /* wheel (desktop, throttled) */
+  let wheelLock = false;
+  document.addEventListener('wheel', e => {
+    if (Math.abs(e.deltaY) < 24 || wheelLock) return;
+    wheelLock = true;
+    setTimeout(() => wheelLock = false, 700);
+    e.deltaY > 0 ? next() : prev();
+  }, { passive:true });
+
+  /* ============================================================
+     SLIDE 3 — ReAct auto highlight
+     ============================================================ */
+  const steps = Array.from(document.querySelectorAll('.step'));
+  const nodeMap = ['node-thought', 'node-action', 'node-observation'];
+  const arrowMap = ['arrow1', 'arrow2', 'arrow3'];
+  const reactState = document.getElementById('reactState');
+  const reactPlay = document.getElementById('reactPlay');
+  let reactIdx = 0, reactTimer = null;
+
+  function paintReact(i){
+    steps.forEach((s, k) => s.classList.toggle('hot', k === i));
+    nodeMap.forEach((id, k) => {
+      const n = document.getElementById(id);
+      if (n) n.classList.toggle('hot', k === i);
+    });
+    arrowMap.forEach((id, k) => {
+      const a = document.getElementById(id);
+      if (a) a.style.opacity = (k === i) ? '1' : '.25';
+    });
+    reactState.textContent = 'step: ' + (i + 1) + ' / ' + steps.length;
+  }
+  function startReact(){
+    clearInterval(reactTimer);
+    reactIdx = 0; paintReact(0);
+    reactTimer = setInterval(() => { reactIdx = (reactIdx + 1) % steps.length; paintReact(reactIdx); }, 2400);
+  }
+  reactPlay.addEventListener('click', startReact);
+  steps.forEach((s, k) => s.addEventListener('click', () => {
+    clearInterval(reactTimer);
+    reactIdx = k; paintReact(k);
+    reactTimer = setInterval(() => { reactIdx = (reactIdx + 1) % steps.length; paintReact(reactIdx); }, 2400);
+  }));
+
+  /* ============================================================
+     SLIDE 5 — metric count-up
+     ============================================================ */
+  function countUp(el){
+    const target = parseFloat(el.dataset.count) || 0;
+    const suffix = el.dataset.suffix || '';
+    const dur = 1100, t0 = performance.now();
+    (function step(now){
+      const p = Math.min(1, (now - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased).toLocaleString('en-US') + suffix;
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+
+  /* ============================================================
+     SLIDE HOOKS
+     ============================================================ */
+  function onEnter(slide, i){
+    if (slide.id === 'reactSlide') startReact();
+    if (slide.id === 'sumSlide') slide.querySelectorAll('[data-count]').forEach(countUp);
+    if (window.__slideEnter) window.__slideEnter(slide, i);
+  }
+
+  document.addEventListener('deck:jump', e => show(e.detail.index));
+  show(0);
+})();
+
+/* ============================================================
+   NEW DECK LOGIC — 18 slides, action demos, presenter aids
+   ============================================================ */
+(function(){
+  const $  = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  /* ==========================================================
+     SPEAKER NOTES + TIMER + CLEAN MODE
+     ========================================================== */
+
+  const NOTES = [
+    { t:'معماری ایجنت‌ها و هارنس', m:'۱ دقیقه', b:[
+      'خودتان را معرفی کنید و بگویید امروز دو چیز را با هم می‌بینیم: ایجنت چیست و هارنس چه چیزی به آن اضافه می‌کند.',
+      'قرارداد جلسه: ۳۰ دقیقه، ۵ بخش، و یک دموی زنده در انتها.' ] },
+    { t:'نقشهٔ راه', m:'۳۰ ثانیه', b:[
+      'محور زمان را نشان دهید: ۱.۵ دقیقه مقدمه، ۱۱ دقیقه مبانی و هارنس، ۱۰ دقیقه در عمل، ۴ دقیقه ابزار و حافظه، ۳.۵ دقیقه دمو و جمع‌بندی.',
+      'قول بدهید: تا دقیقهٔ ۲۰ همه‌چیز روی کاغذ است، بعدش همه‌چیز در حال اجراست.' ] },
+    { t:'از مدل تا ایجنت', m:'۳ دقیقه', b:[
+      'مدل تنها یک‌بار حرف می‌زند؛ ایجنت در حلقه، با ابزار و اختیار مشخص کار می‌کند.',
+      'تعریف را صریح بگویید: مدل = تابع بی‌حافظه (متن در، متن بیرون) · ایجنت = رفتارِ چندگامه‌ای که خودش گام بعدی را انتخاب می‌کند · هارنس = کدی که آن رفتار را ممکن می‌کند.',
+      'مرزها را مطلق نگیرید (این مدل ذهنی است): در بعضی پیاده‌سازی‌ها ابزار و حلقه داخل SDK مدل‌اند و «هارنس» به بخشی از محصول تبدیل می‌شود. اگر کسی «ایجنت» را جایی دیگر تعریف کرد، بحث را باز کنید.',
+      'روی چهار لایه کلیک کنید: هر لایه معادله و جملهٔ کلیدی خودش را نشان می‌دهد و پخش خودکار متوقف می‌شود.',
+      'سه ضد-مثال را سریع رد کنید: جواب تک‌مرحله‌ای چت، ورک‌فلو/RAG با مسیر ثابت، و یک پرامپت بزرگ — هیچ‌کدام ایجنت نیستند.',
+      'فرمول: ابزار بدون حلقه = یک‌بارمصرف؛ حلقه بدون ابزار = حرف؛ ابزار + حلقه + گاردیل = ایجنت.',
+      'مثال: «قیمت سهام» در برابر «قیمت سهام ۳۰ روزه را تحلیل کن و فایل بساز».' ] },
+    { t:'استعارهٔ خودرو', m:'۲.۵ دقیقه', b:[
+      'بگذارید مخاطب خودش بچرخاند: دراگ برای چرخش، اسکرول برای زوم.',
+      'موتور = LLM (توان و گشتاور، اما بدون فرمان)؛ هارنس = ECU و دسته‌سیم (فرمان، ایمنی، حافظه).',
+      'نکته: هیچ خودرویی بدون ECU حرکت نمی‌کند؛ هیچ ایجنتی بدون هارنس کار نمی‌کند.' ] },
+    { t:'نقشهٔ هارنس', m:'۲ دقیقه', b:[
+      'هفت قطعه را یکی‌یکی بزنید: حلقه، ابزارها، حافظه، گاردیل، بودجه، کانتکست، لاگ.',
+      'حلقه را با «شرط پایان» توضیح دهید: پاسخ نهایی، سقف بودجه، خطای مکرر یا تأیید انسان — بدون شرط پایان، حلقه یعنی اجرای بی‌پایان.',
+      'هر بار که روی یک چیپ می‌زنید، پنجرهٔ «نمونهٔ زنده» همان قطعه را در عمل نشان می‌دهد.' ] },
+    { t:'حلقهٔ ReAct', m:'۲ دقیقه', b:[
+      'چهار فاز: فکر، عمل، مشاهده، حافظه. حافظه فاز چهارم است، نه یک ویژگی جانبی.',
+      'روی «پخش دوبارهٔ حلقه» بزنید و بگذارید حلقه یک دور کامل بچرخد.' ] },
+    { t:'در عمل', m:'۲۰ ثانیه', b:[
+      'فاصلهٔ کوتاه: از تئوری به اجرای واقعی.',
+      'سه چیز در عمل می‌بینیم: یک جلسهٔ واقعی، یک سکوی آزمایش، و کد در حال حرکت.' ] },
+    { t:'تماشای یک جلسهٔ واقعی', m:'۴ دقیقه', b:[
+      'پخش خودکار: ۱۷ رویداد، یک خطای واقعی وسط کار و دو اصلاح.',
+      'هر ابزار قبل از اجرا از گاردیل رد می‌شود — به خط «چرا این کار؟» اشاره کنید.',
+      'نکتهٔ کلیدی: خطا باعث توقف نمی‌شود؛ ایجنت مسیر تازه را امتحان می‌کند.' ] },
+    { t:'سکوی آزمایش هارنس', m:'۳ دقیقه', b:[
+      '«اجرای نمونه» را بزنید: یک اجرای سالم با همهٔ گاردیل‌ها.',
+      'بعد «سقف بودجه» را خاموش کنید و دوباره اجرا کنید: حلقهٔ سرکش، ۷۹ هزار توکن و ۶ دلار هزینه.',
+      'پیام: گاردیل تنها چیزی است که جلوی این را می‌گیرد.' ] },
+    { t:'کد هارنس در حرکت', m:'۲ دقیقه', b:[
+      '۳۰ خط پایتون: همان هارنسی که در جلسهٔ قبل دیدیم.',
+      'هر فاز خطوط خودش را هایلایت می‌کند: حلقه، ابزار، گاردیل، بودجه، لاگ.' ] },
+    { t:'ابزار، MCP و حافظه', m:'۴ دقیقه', b:[
+      'ابزار: مدل فقط درخواست می‌دهد؛ اجرا با هارنس است.',
+      'MCP: سوکت استاندارد؛ کشف ابزار بدون کدنویسی.',
+      'حافظه: کوتاه‌مدت (رویدادهای همین اجرا) و بلندمدت (دانش پروژه).',
+      'پنجرهٔ کانتکست را پر و فشرده کنید تا ببینند چه اتفاقی می‌افتد.' ] },
+    { t:'دموی زنده', m:'۵ دقیقه', b:[
+      'اگر اینترنت و کلید دارید: ترمینال را باز کنید و یک تسک واقعی بدهید.',
+      'اگر ندارید: همین شبیه‌ساز داخل فایل (اسلاید ۹) جایگزین است.',
+      'ترمینال را از قبل باز و آماده نگه دارید؛ ریسک را از روی صحنه بردارید.' ] },
+    { t:'جمع‌بندی', m:'۲ دقیقه', b:[
+      'چهار چیز: حلقه، ابزار، حافظه، گاردیل — اگر این‌ها نباشند، ایجنتی در کار نیست.',
+      'جدول هارنس‌های واقعی را مرور کنید: از هرکدام چه چیزی قابل الگوبرداری است.',
+      'پرسش و پاسخ.' ] }
+  ];
+
+  const notesEl = document.createElement('div');
+  notesEl.className = 'notes';
+  document.body.appendChild(notesEl);
+
+  function renderNotes(i){
+    const n = NOTES[i];
+    if (!n) return;
+    notesEl.innerHTML =
+      '<div class="nt">SPEAKER NOTES · ' + (i + 1) + '/' + NOTES.length + '</div>' +
+      '<h4>' + n.t + '</h4><ul>' + n.b.map(x => '<li>' + x + '</li>').join('') + '</ul>' +
+      '<div class="nm">زمان پیشنهادی این اسلاید: ' + n.m + '</div>';
+  }
+
+  /* --- timer --- */
+
+  const SECTIONS = [
+    { name:'مقدمه',              from:0,  to:1,  min:1.5 },
+    { name:'۰۱ مبانی و هارنس',   from:2,  to:5,  min:11  },
+    { name:'۰۲ در عمل',          from:6,  to:9,  min:10  },
+    { name:'۰۳ ابزار و حافظه',   from:10, to:10, min:4   },
+    { name:'۰۴ دمو و جمع‌بندی',   from:11, to:12, min:3.5 }
+  ];
+  const TOTAL = 30 * 60;
+  let tSec = 0, tRunning = false, tTimer = null, currentIndex = 0;
+  const hudTimer = $('#hudTimer'), tClock = $('#tClock'), tSecEl = $('#tSec');
+
+  function fmt(s){
+    const m = Math.floor(s / 60), r = Math.floor(s % 60);
+    return String(m).padStart(2,'0') + ':' + String(r).padStart(2,'0');
+  }
+  function sectionOf(i){
+    return SECTIONS.find(s => i >= s.from && i <= s.to) || SECTIONS[SECTIONS.length - 1];
+  }
+  function paintTimer(){
+    if (!hudTimer) return;
+    hudTimer.classList.toggle('over', tSec > TOTAL);
+    tClock.textContent = fmt(tSec) + ' / ' + fmt(TOTAL);
+    const s = sectionOf(currentIndex);
+    tSecEl.textContent = s.name + ' · ' + s.min + '′';
+  }
+  function toggleTimer(){
+    if (!hudTimer) return;
+    if (!tTimer){
+      hudTimer.classList.add('on');
+      tRunning = true;
+      tTimer = setInterval(() => { tSec++; paintTimer(); }, 1000);
+      paintTimer();
+    } else if (tRunning){
+      clearInterval(tTimer); tTimer = null; tRunning = false;
+    } else {
+      tRunning = true;
+      tTimer = setInterval(() => { tSec++; paintTimer(); }, 1000);
+    }
+  }
+  function resetTimer(){
+    if (tTimer){ clearInterval(tTimer); tTimer = null; }
+    tRunning = false; tSec = 0; paintTimer();
+  }
+
+  /* --- keys: S notes · T timer · C clean --- */
+  document.addEventListener('keydown', e => {
+    const k = e.key;
+    if (k === 's' || k === 'S' || k === '؟'){ e.preventDefault(); notesEl.classList.toggle('on'); }
+    else if (k === 't' || k === 'T'){ e.preventDefault(); e.shiftKey ? resetTimer() : toggleTimer(); }
+    else if (k === 'c' || k === 'C'){ e.preventDefault(); document.body.classList.toggle('clean'); }
+  });
+
+  /* ==========================================================
+     AGENDA — jump to section
+     ========================================================== */
+  $$('.ag-row').forEach(row => on(row, 'click', () => {
+    const target = parseInt(row.dataset.goto, 10);
+    if (!isNaN(target)) document.dispatchEvent(new CustomEvent('deck:goto', { detail:{ index:target } }));
+  }));
+
+  /* ==========================================================
+     SLIDE 4 — build-up animation
+     ========================================================== */
+  const fundRows = $$('.fund-row');
+  function paintFund(i){ fundRows.forEach((r, k) => r.classList.toggle('on', k === i)); }
+  function playFund(){
+    let i = 0; paintFund(i);
+    const t = setInterval(() => { i = (i + 1) % fundRows.length; paintFund(i); if (i === 0) clearInterval(t); }, 1600);
+  }
+  fundRows.forEach((r, k) => on(r, 'click', () => paintFund(k)));
+
+  /* ==========================================================
+
+  /* ==========================================================
+     SLIDE 8 — harness anatomy
+     ========================================================== */
+  const ANAT = {
+    loop:    { k:'CONTROL LOOP',   t:'حلقهٔ کنترل', d:'قلب هارنس. تصمیم می‌گیرد گام بعدی چیست، چند گام مجاز است و کِی باید متوقف شود. بدون این حلقه، مدل فقط یک‌بار حرف می‌زند.' },
+    tools:   { k:'TOOL REGISTRY',  t:'رجیستری ابزار', d:'نام، شرح و اسکیمای ورودی هر ابزار. مدل فقط همین فهرست را می‌بیند؛ هر ابزاری که اینجا نباشد، قابل اجرا نیست.' },
+    memory:  { k:'MEMORY',         t:'موتور حافظه', d:'حافظهٔ کوتاه‌مدت (رویدادهای همین اجرا) و حافظهٔ بلندمدت (دانش پروژه). بدون آن، ایجنت هر بار از صفر شروع می‌کند.' },
+    guard:   { k:'GUARDRAILS',     t:'گاردیل', d:'پیش از اجرا تصمیم می‌گیرد: این ابزار مجاز است؟ این عمل مخرب است؟ آیا انسان باید تأیید کند؟ تنها جایی که هارنس می‌تواند «نه» بگوید.' },
+    budget:  { k:'LIMITS',         t:'بودجه و سقف‌ها', d:'حداکثر گام، توکن، زمان و هزینه. سقف‌ها تضمین می‌کنند یک ایجنتِ خراب، جیب و زمان شما را بی‌نهایت نخورد.' },
+    context: { k:'CONTEXT ENGINE', t:'مهندس کانتکست', d:'تعیین می‌کند چه چیزی در پنجرهٔ کانتکست بماند، چه چیزی خلاصه شود و چه چیزی دور ریخته شود. قلب اقتصاد کانتکست.', q:'«چه چیزی را نگه دارم و چه چیزی را دور بریزم؟»' },
+    log:     { k:'TRACE / REPLAY', t:'دنبالهٔ لاگ', d:'هر فراخوانی با ورودی، خروجی و زمان ثبت می‌شود. همین لاگ است که بعداً ارزیابی، بازپخش و اشکال‌زدایی را ممکن می‌کند.' }
+  };
+  const ANAT_Q = {
+    loop:'«الان گام بعدی چیست و کِی باید متوقف شوم؟»',
+    tools:'«مدل دقیقاً چه چیزهایی می‌تواند صدا بزند؟»',
+    memory:'«چه چیزی را باید به خاطر بسپارم و چه چیزی را دور بریزم؟»',
+    guard:'«آیا اجازهٔ این کار را دارم؟»',
+    budget:'«تا کِی و با چه هزینه‌ای ادامه بدهم؟»',
+    context:'«چه چیزی در پنجرهٔ کانتکست بماند؟»',
+    log:'«چه اتفاقی افتاد و چرا؟»'
+  };
+  const anatParts = $$('.anat-part'), anatChips = $$('.anat-chip');
+  function paintAnat(part){
+    anatParts.forEach(p => p.classList.toggle('hot', p.dataset.part === part));
+    anatChips.forEach(c => c.classList.toggle('on', c.dataset.part === part));
+    const d = ANAT[part];
+    if (!d) return;
+    $('#anatTitle').textContent = d.t;
+    $('#anatKey').textContent = d.k;
+    $('#anatText').textContent = d.d;
+    const q = $('#anatQ'); if (q) q.innerHTML = '<b>سؤال این قطعه:</b> ' + (ANAT_Q[part] || '');
+  }
+  anatParts.forEach(p => on(p, 'click', () => paintAnat(p.dataset.part)));
+  anatChips.forEach(c => on(c, 'click', () => paintAnat(c.dataset.part)));
+  paintAnat('loop');
+
+  /* ==========================================================
+     SLIDE 11 — session replay
+     ========================================================== */
+  const RP_FILE = [
+    'from .pricing import format_price',
+    '',
+    'def monthly_report(rows, discount=0):',
+    '    total = sum(r["amount"] for r in rows)',
+    '    if discount:',
+    '        total = total * (1 - discount)',
+    '    return f"گزارش {format_price(total)}"',
+    '',
+    'def format_price(v):',
+    '    if v is None:',
+    '        return "—"',
+    '    return f"{v:,.0f} تومان"'
+  ];
+  const RP_EVENTS = [
+    { k:'user', who:'USER', txt:'گزارش فروش ماهانه خطا می‌دهد. پیدا و رفعش کن.', dur:1500,
+      note:'درخواست مبهم است. هارنس آن را به دو کارِ قابل‌بررسی تبدیل می‌کند: پیدا کردن ریشه، اصلاح، تست.' },
+    { k:'asst', who:'THOUGHT', txt:'اول ساختار پروژه را می‌بینم تا فایل درست را پیدا کنم.', tool:'Read', dur:1700 },
+    { k:'tool', who:'Read', txt:'README.md\nbilling/\n  report.py\n  pricing.py\ntests/\n  test_report.py', dur:1800, focus:3,
+      note:'ابزار اول همیشه ارزان‌ترین و پرکاربردترین است: نقشهٔ پروژه. بدون آن، مدل حدس می‌زند.' },
+    { k:'asst', who:'THOUGHT', txt:'گزارش در billing/report.py است؛ دنبال قالب‌بندی قیمت می‌گردم.', tool:'Grep', dur:1700 },
+    { k:'tool', who:'Grep', txt:'billing/report.py:12:    return f"{v:,.0f} تومان"\nbilling/pricing.py:11:def format_price(v):', dur:1800, focus:12,
+      note:'جست‌وجو نقطهٔ ورود را کوتاه کرد. ابزار خوب، مدل را از خواندن کل پروژه نجات می‌دهد.' },
+    { k:'asst', who:'THOUGHT', txt:'format_price روی مقدار نامعتبر خطا می‌دهد؛ بخش مربوطه را می‌خوانم.', tool:'Read', dur:1700 },
+    { k:'tool', who:'Read', txt:' 9  def format_price(v):\n10      if v is None:\n11          return "—"\n12      return f"{v:,.0f} تومان"', dur:1900, focus:12,
+      note:'ریشه: وقتی تخفیف ۱۰۰٪ می‌شود، مقدار صفر/None می‌شود و قالب‌بندی عددی می‌شکند.' },
+    { k:'asst', who:'THOUGHT', txt:'ریشه پیدا شد: قیمتِ صفر باید جدا حساب شود.', dur:1600 },
+    { k:'asst', who:'ACTION', txt:'اصلاح: اگر مقدار صفر یا کمتر بود، قیمت صفر برگردانده شود.', tool:'Edit', dur:1800,
+      patch:[ { op:'del', line:12, txt:'    return f"{v:,.0f} تومان"' },
+              { op:'add', line:12, txt:'    if v <= 0: return "۰ تومان"' } ] },
+    { k:'tool', who:'Edit', txt:'billing/report.py به‌روزرسانی شد · ۱ خط جایگزین شد', dur:1700, focus:12 },
+    { k:'asst', who:'THOUGHT', txt:'حالا تست مربوط به همین تابع را اجرا می‌کنم.', tool:'Bash', dur:1600 },
+    { k:'tool', who:'Bash', txt:'$ pytest -q tests/test_report.py\nF  test_full_discount\nE   TypeError: unsupported format string passed to NoneType.__format__\n1 failed', dur:2200, err:true, focus:12,
+      note:'نقطهٔ اصلی: تست قرمز شد و هارنس متوقف نشد. خطا به‌عنوان «مشاهده» به مدل برگشت.' },
+    { k:'asst', who:'THOUGHT', txt:'تست قدیمی انتظار قیمت پایه را دارد؛ شرط تست را با رفتار جدید هماهنگ می‌کنم.', dur:1800 },
+    { k:'asst', who:'ACTION', txt:'ویرایش تست: انتظار «۰ تومان» برای تخفیف کامل.', tool:'Edit', dur:1700 },
+    { k:'tool', who:'Bash', txt:'$ pytest -q tests/test_report.py\n1 passed in 0.42s', dur:2200, focus:12 },
+    { k:'asst', who:'DONE', txt:'باگ رفع شد. خلاصه: ۱ فایل تغییر کرد، ۱ تست به‌روزرسانی شد، تست‌ها سبزند.', dur:2000,
+      note:'جمع‌بندی اجرا: ۷ فراخوانی ابزار، ۱ خطا، ۲ اصلاح. همین «بعد از خطا ادامه دادن» تفاوت ایجنت و یک پرامپت است.' }
+  ];
+  const rpLog = $('#rpLog'), rpCode = $('#rpCode'), rpNote = $('#rpNote'),
+        rpFill = $('#rpFill'), rpTime = $('#rpTime'), rpFileState = $('#rpFileState'),
+        rpPlay = $('#rpPlay'), rpSpeed = $('#rpSpeed');
+  let rpIdx = -1, rpTimer = null, rpSpeedVal = 1, rpLines = [];
+
+  function rpReset(){
+    rpIdx = -1;
+    rpLines = RP_FILE.map(t => ({ t:t, c:'' }));
+    rpLog.innerHTML = '<div class="rp-msg" style="background:rgba(56,189,248,.05);border-color:var(--line-soft);color:var(--muted)">'
+      + '▶ برای دیدن اجرای کامل، دکمهٔ پخش را بزنید. ۷ فراخوانی ابزار، ۱ خطا و ۲ اصلاح در انتظار شماست.</div>';
+    renderRPCode();
+    rpNote.innerHTML = '<b>چرا این کار؟</b> — روی «پخش» بزنید تا گام‌ها یکی‌یکی اجرا شوند.';
+    rpFileState.textContent = 'idle';
+    rpFill.style.width = '0%';
+    rpTime.textContent = '00:00 / 01:40';
+    rpPlay.textContent = '▶';
+  }
+  function renderRPCode(){
+    rpCode.innerHTML = rpLines.map((l, i) =>
+      '<span class="ln ' + l.c + '" data-n="' + (i + 1) + '">' + (l.t || ' ') + '</span>').join('');
+  }
+  function rpStep(){
+    if (rpIdx >= RP_EVENTS.length - 1){ rpStop(); return; }
+    rpIdx++;
+    const e = RP_EVENTS[rpIdx];
+
+    const d = document.createElement('div');
+    d.className = 'rp-msg ' + e.k + (e.err ? ' err' : '');
+    d.innerHTML = '<span class="who">' + e.who + (e.tool ? ' · ' + e.tool : '') + '</span>' +
+                  (e.k === 'tool' ? '<span class="code">' + e.txt + '</span>' : e.txt);
+    rpLog.appendChild(d);
+    rpLog.scrollTop = rpLog.scrollHeight;
+
+    if (e.patch) e.patch.forEach(p => {
+      if (p.op === 'del'){ if (rpLines[p.line - 1]){ rpLines[p.line - 1].c = 'del'; } }
+      else { rpLines.splice(p.line, 0, { t:p.txt, c:'add' }); }
+    });
+    rpLines.forEach((l, i) => { if (l.c !== 'del' && l.c !== 'add') l.c = ''; });
+    renderRPCode();
+    if (e.focus){
+      const idx = rpLines.findIndex(l => l.c === '' || l.c === 'add');
+      $$('.rp-code .ln').forEach(el => el.classList.remove('hot'));
+      const target = $$('.rp-code .ln')[e.focus - 1];
+      if (target) target.classList.add('hot');
+    }
+    rpNote.innerHTML = '<b>چرا این کار؟</b> — ' + (e.note || 'این گام بخشی از مسیر عادی اجراست.');
+    rpFileState.textContent = e.k === 'tool' ? (e.who + ' ✓') : e.who.toLowerCase();
+    rpFill.style.width = ((rpIdx + 1) / RP_EVENTS.length * 100) + '%';
+    rpTime.textContent = fmt(rpIdx * 6) + ' / 01:40';
+  }
+  function rpStop(){ if (rpTimer){ clearTimeout(rpTimer); rpTimer = null; } rpPlay.textContent = '▶'; }
+  function rpPlayNext(){
+    rpStop();
+    let i = rpIdx + 1;
+    const tick = () => {
+      if (i > RP_EVENTS.length - 1){ rpStop(); return; }
+      rpStep();
+      i++;
+      rpTimer = setTimeout(tick, RP_EVENTS[rpIdx].dur / rpSpeedVal);
+    };
+    rpTimer = setTimeout(tick, 200);
+  }
+  on(rpPlay, 'click', () => { if (rpTimer) rpStop(); else rpPlayNext(); });
+  on($('#rpNext'), 'click', () => { rpStop(); rpStep(); });
+  on($('#rpPrev'), 'click', () => { rpStop(); if (rpIdx > 0){ rpIdx -= 2; rpStep(); } });
+  on(rpSpeed, 'click', () => {
+    rpSpeedVal = rpSpeedVal === 1 ? 2 : rpSpeedVal === 2 ? 4 : 1;
+    rpSpeed.textContent = rpSpeedVal + '×';
+  });
+
+  /* ==========================================================
+     SLIDE 12 — playground
+     ========================================================== */
+  const PG_GOALS = {
+    bug:   { t:'رفع خطای گزارش فروش',       f:'billing/report.py',   l:'۴۸ خط' },
+    test:  { t:'افزودن تست برای قیمت‌گذاری', f:'tests/test_pricing.py', l:'۱۲ خط' },
+    clean: { t:'پاک‌سازی تابع تکراری',       f:'billing/utils.py',     l:'۹۰ خط' }
+  };
+  const pg = { goal:'bug', tools:['read','grep','bash','edit','test'], guards:{ allow:true, budget:true, human:true } };
+  const pgLog = $('#pgLog'), pgRunBtn = $('#pgRun'), pgReset = $('#pgReset'),
+        pgStep = $('#pgStep'), pgTok = $('#pgTok'), pgTools = $('#pgTools'),
+        pgCost = $('#pgCost'), pgState = $('#pgState');
+  let pgBusy = false;
+
+  $$('.pg-goal').forEach(b => on(b, 'click', () => {
+    $$('.pg-goal').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); pg.goal = b.dataset.goal;
+  }));
+  $$('.pg-tool').forEach(b => on(b, 'click', () => {
+    const t = b.dataset.tool;
+    if (pg.tools.includes(t)){ if (pg.tools.length > 1){ pg.tools = pg.tools.filter(x => x !== t); b.classList.remove('on'); } }
+    else { pg.tools.push(t); b.classList.add('on'); }
+  }));
+  $$('.pg-guards input').forEach(i => on(i, 'change', () => { pg.guards[i.dataset.guard] = i.checked; }));
+
+  function pgLine(tag, msg){
+    const d = document.createElement('div');
+    d.className = 'log ' + tag;
+    d.innerHTML = '<span class="tag">[' + tag + ']</span><span class="msg"></span>';
+    pgLog.appendChild(d);
+    pgLog.scrollTop = pgLog.scrollHeight;
+    const m = d.querySelector('.msg');
+    return new Promise(async res => {
+      if (tag === 'THOUGHT' || tag === 'ERROR'){
+        for (const ch of Array.from(msg)){ m.textContent += ch; if (pgLog.scrollHeight) pgLog.scrollTop = pgLog.scrollHeight; await sleep(7); }
+      } else m.textContent = msg;
+      res();
+    });
+  }
+  function pgScript(){
+    const g = PG_GOALS[pg.goal], T = pg.tools, G = pg.guards, L = [];
+    L.push(['SYSTEM', 'harness booted · tools: ' + (T.join(' ') || 'none') + ' · limits: ' + (G.budget ? '8 steps / 32k tokens' : 'NO LIMIT')]);
+    L.push(['THOUGHT', 'هدف: ' + g.t]);
+    if (T.includes('read')) L.push(['TOOL', 'read(' + g.f + ') → ' + g.l + ' خوانده شد']);
+    if (T.includes('grep')) L.push(['TOOL', 'grep("price") → ۳ تطابق']);
+    L.push([G.allow ? 'GUARD' : 'SYSTEM',
+      G.allow ? 'policy: allow-list → read/grep/bash/edit/test مجاز' : 'policy: OFF → هر ابزاری بدون بررسی اجرا می‌شود']);
+    if (T.includes('bash')){
+      L.push(['THOUGHT', 'برای اطمینان، تست‌ها را اجرا می‌کنم.']);
+      L.push(['TOOL', 'bash("pytest -q") → ۱ failed']);
+      L.push(['ERROR', 'تست شکست خورد → رویداد ثبت شد، بازگشت به حلقه (تلاش مجدد ۱/۳)']);
+    }
+    if (T.includes('edit')){
+      L.push(['THOUGHT', 'یک خط را اصلاح می‌کنم.']);
+      if (G.human) L.push(['GUARD', 'action=edit(..., destructive=true) → منتظر تأیید انسان']);
+      L.push(['TOOL', 'edit(' + g.f + ') → ۱ خط جایگزین شد']);
+    }
+    if (!G.budget){
+      L.push(['GUARD', 'budget: OFF → سقف گام و توکن فعال نیست']);
+      for (let i = 1; i <= 3; i++) L.push(['ERROR', 'حلقه تکرار شد (' + i + '/۳) — هزینه و زمان بالا می‌رود']);
+      L.push(['ERROR', 'هزینه از سقف هشدار گذشت → هارنس مجبور به توقف شد']);
+    } else {
+      L.push(['GUARD', 'budget: ۸ گام / ۳۲k توکن → در محدوده']);
+      L.push(['MEMORY', 'رویدادها در حافظهٔ کوتاه‌مدت ذخیره شد']);
+      L.push(['TOOL', T.includes('test') ? 'test → ۱ passed ✓' : 'test در دسترس نیست → کیفیت نامعلوم']);
+      L.push(['DONE', 'پاسخ نهایی آماده شد']);
+    }
+    return L;
+  }
+  async function pgExecute(){
+    if (pgBusy) return;
+    pgBusy = true; pgRunBtn.disabled = true; pgLog.innerHTML = '';
+    pgStep.textContent = '0/8'; pgTok.textContent = '0/32,000'; pgTools.textContent = '0'; pgCost.textContent = '$0.00';
+    pgState.textContent = 'running';
+    let steps = 0, tokens = 0, tools = 0, cost = 0;
+    for (const [tag, msg] of pgScript()){
+      await pgLine(tag, msg);
+      if (tag === 'THOUGHT'){ steps++; pgStep.textContent = steps + '/8'; tokens += 1100; }
+      if (tag === 'TOOL'){ tools++; pgTools.textContent = String(tools); tokens += 620; }
+      if (tag === 'ERROR'){ tokens += 900; steps++; }
+      if (!pg.guards.budget) tokens += 24000;      // هزینهٔ runaway
+      cost = tokens * 0.00008 + steps * 0.012;
+      pgTok.textContent = Math.round(tokens).toLocaleString('en-US') + (pg.guards.budget ? '/32,000' : ' (بدون سقف)');
+      pgCost.textContent = '$' + cost.toFixed(2);
+      if (!pg.guards.budget) pgCost.style.color = 'var(--rose)'; else pgCost.style.color = '';
+      await sleep(tag === 'THOUGHT' || tag === 'ERROR' ? 320 : 220);
+    }
+    pgState.textContent = pg.guards.budget ? 'done' : 'killed';
+    pgRunBtn.disabled = false; pgBusy = false;
+  }
+  on(pgRunBtn, 'click', pgExecute);
+  pgLog.innerHTML = '<div class="log SYSTEM"><span class="tag">[idle]</span><span class="msg">'
+    + '▶ «اجرای هارنس» را بزنید. برای دیدن خطر، گاردیل «سقف بودجه» را بردارید.</span></div>';
+  on(pgReset, 'click', () => {
+    pgLog.innerHTML = ''; pgStep.textContent = '0/8'; pgTok.textContent = '0/32,000';
+    pgTools.textContent = '0'; pgCost.textContent = '$0.00'; pgState.textContent = 'idle';
+  });
+
+  /* ==========================================================
+     SLIDE 13 — code in motion
+     ========================================================== */
+  const HARNESS_CODE = [
+'<span class="c-c">"""Reference architecture of an agent harness."""</span>',
+'<span class="c-k">from</span> dataclasses <span class="c-k">import</span> dataclass, field',
+'',
+'<span class="c-k">@dataclass</span>',
+'<span class="c-k">class</span> <span class="c-t">Guard</span>:',
+'    allow: <span class="c-p">set</span> = field(default_factory=set)',
+'    <span class="c-k">def</span> <span class="c-f">check</span>(self, action: dict) <span class="c-k">-&gt;</span> <span class="c-k">None</span>:',
+'        <span class="c-k">if</span> action[<span class="c-s">"tool"</span>] <span class="c-k">not in</span> self.allow:',
+'            <span class="c-k">raise</span> <span class="c-t">PermissionError</span>(action[<span class="c-s">"tool"</span>])',
+'        <span class="c-k">if</span> action.get(<span class="c-s">"destructive"</span>):',
+'            <span class="c-k">raise</span> <span class="c-t">PermissionError</span>(<span class="c-s">"human approval"</span>)',
+'',
+'<span class="c-k">@dataclass</span>',
+'<span class="c-k">class</span> <span class="c-t">Harness</span>:',
+'    llm: <span class="c-p">Any</span>',
+'    tools: <span class="c-p">dict</span>',
+'    memory: <span class="c-p">list</span> = field(default_factory=list)',
+'    limits: <span class="c-p">dict</span> = field(default_factory=<span class="c-k">lambda</span>: {<span class="c-s">"steps"</span>: <span class="c-n">8</span>, <span class="c-s">"tokens"</span>: <span class="c-n">32_000</span>})',
+'    guard: <span class="c-t">Guard</span> = field(default_factory=<span class="c-t">Guard</span>)',
+'    <span class="c-k">def</span> <span class="c-f">run</span>(self, task: <span class="c-p">str</span>) <span class="c-p">str</span>:',
+'        <span class="c-k">for</span> step <span class="c-k">in</span> <span class="c-p">range</span>(self.limits[<span class="c-s">"steps"</span>]):',
+'            thought = self.llm.<span class="c-f">think</span>(task, self.memory)   <span class="c-c"># ۱ · فکر</span>',
+'            action  = self.<span class="c-f">parse</span>(thought)        <span class="c-c"># ۲ · JSON</span>',
+'            self.guard.<span class="c-f">check</span>(action)           <span class="c-c"># ۳ · گاردیل</span>',
+'            <span class="c-k">try</span>:',
+'                obs = self.<span class="c-f">dispatch</span>(action)     <span class="c-c"># ۴ · sandbox</span>',
+'            <span class="c-k">except</span> <span class="c-t">ToolError</span> <span class="c-k">as</span> exc:',
+'                obs = {<span class="c-s">"error"</span>: <span class="c-p">str</span>(exc)}    <span class="c-c"># ۵ · بازیابی</span>',
+'            self.memory.<span class="c-f">append</span>({<span class="c-s">"step"</span>: step, <span class="c-s">"obs"</span>: obs})  <span class="c-c"># ۶ · حافظه</span>',
+'        <span class="c-k">return</span> self.llm.<span class="c-f">summarize</span>(self.memory)  <span class="c-c"># ۷ · پاسخ</span>'
+  ];
+  const PHASES = [
+    { t:'تفکر', l:[22], d:'مدل روی حافظه و فهرست ابزارها طرح‌وارهٔ عمل را می‌نویسد. هارنس هنوز هیچ چیزی اجرا نکرده است.' },
+    { t:'اعتبارسنجی خروجی', l:[23], d:'خروجی مدل باید JSON معتبر باشد. اگر نبود، هارنس آن را به خطا تبدیل می‌کند و از مدل می‌خواهد دوباره بنویسد.' },
+    { t:'گاردیل', l:[24], d:'تنها جایی که هارنس می‌تواند «نه» بگوید: ابزار مجاز است؟ عمل مخرب است؟ بودجه کافی است؟' },
+    { t:'اجرای ایزوله', l:[26], d:'عمل داخل sandbox اجرا می‌شود. مدل هیچ دسترسی مستقیمی به سیستم ندارد — فقط از راه هارنس.' },
+    { t:'بازیابی خطا', l:[27,28], d:'خطا استثنا نیست، داده است. هارنس آن را می‌گیرد، به حافظه می‌سپارد و به مدل می‌دهد تا راه دیگری امتحان کند.' },
+    { t:'ثبت در حافظه', l:[29], d:'مشاهده در حافظهٔ کوتاه‌مدت ذخیره می‌شود تا گام بعدی زمینه داشته باشد و لازم نباشد همه‌چیز را دوباره بخواند.' },
+    { t:'جمع‌بندی', l:[30], d:'پس از پایان حلقه (یا سقف گام)، مدل از روی حافظه پاسخ نهایی را می‌سازد.' }
+  ];
+  const codeEl = $('#harnessCode');
+  if (codeEl) codeEl.innerHTML = HARNESS_CODE.map((l, i) =>
+    '<span class="cl" data-l="' + (i + 1) + '">' + (l || ' ') + '</span>').join('');
+  const phaseEls = $$('.phase');
+  let phIdx = 0, phTimer = null;
+  function paintPhase(i){
+    phIdx = (i + PHASES.length) % PHASES.length;
+    const p = PHASES[phIdx];
+    phaseEls.forEach((e, k) => e.classList.toggle('on', k === phIdx));
+    $$('.cl').forEach(el => el.classList.remove('hot'));
+    p.l.forEach(n => { const el = $('.cl[data-l="' + n + '"]'); if (el) el.classList.add('hot'); });
+    $('#phaseTitle').textContent = p.t;
+    $('#phaseText').textContent = p.d;
+    $('#phaseState').textContent = 'گام ' + (phIdx + 1) + ' / ' + PHASES.length;
+  }
+  on($('#phasePlay'), 'click', () => {
+    if (phTimer){ clearInterval(phTimer); phTimer = null; return; }
+    phTimer = setInterval(() => paintPhase(phIdx + 1), 2400);
+  });
+  phaseEls.forEach((e, k) => on(e, 'click', () => { clearInterval(phTimer); phTimer = null; paintPhase(k); }));
+  paintPhase(0);
+
+  /* ==========================================================
+     SLIDE 15 — context window animation
+     ========================================================== */
+  const CTX_STEPS = [
+    { c:'system prompt', t:1200 }, { c:'tools schema (۵ ابزار)', t:2400 },
+    { c:'task کاربر', t:120 }, { c:'read: report.py', t:900 },
+    { c:'grep: price', t:600 }, { c:'edit diff', t:400 },
+    { c:'test output (fail)', t:1100 }, { c:'iteration 2', t:2200 },
+    { c:'iteration 3', t:2600 }
+  ];
+  const ctxBar = $('#ctxBar'), ctxUsed = $('#ctxUsed'), ctxState = $('#ctxState');
+  let ctxTimer = null, ctxUsed_ = 0;
+  function ctxRender(chunks, used, state){
+    ctxBar.innerHTML = chunks.map(c => '<div class="ctx-chunk ' + c.cl + '">' + c.t + '</div>').join('');
+    ctxUsed.textContent = used.toLocaleString('en-US') + ' / 32,000 توکن';
+    ctxState.textContent = state;
+  }
+  function ctxReset(){
+    ctxUsed_ = 3600;
+    ctxRender([{t:'system prompt', cl:''}, {t:'tools schema (۵ ابزار)', cl:''}], 3600, 'آمادهٔ شروع');
+  }
+  function ctxPlay(){
+    if (ctxTimer){ clearInterval(ctxTimer); ctxTimer = null; return; }
+    const chunks = [];
+    let i = 0;
+    const tick = () => {
+      if (i >= CTX_STEPS.length){
+        // compaction
+        const old = chunks.splice(0, 5);
+        const freed = old.reduce((a, c) => a + c.t, 0);
+        chunks.unshift({ t:'خلاصهٔ ۵ رویداد قبلی (' + freed + ' توکن آزاد شد)', cl:'summary' });
+        ctxUsed_ = Math.max(0, ctxUsed_ - freed);
+        ctxRender(chunks, ctxUsed_, 'فشرده‌سازی انجام شد');
+        clearInterval(ctxTimer); ctxTimer = null;
+        return;
+      }
+      const s = CTX_STEPS[i++];
+      chunks.push({ t:s.c, cl: i > 5 ? 'old' : '' });
+      ctxUsed_ += s.t;
+      if (ctxUsed_ > 26000){
+        ctxRender(chunks, ctxUsed_, 'نزدیک سقف');
+        chunks.splice(0, 5);
+        const freed = 5200;
+        chunks.unshift({ t:'خلاصهٔ حلقهٔ قبل (' + freed + ' توکن آزاد شد)', cl:'summary' });
+        ctxUsed_ = Math.max(0, ctxUsed_ - freed);
+      }
+      ctxRender(chunks, ctxUsed_, ctxUsed_ > 22000 ? 'نزدیک سقف' : 'در حال پر شدن');
+    };
+    ctxTimer = setInterval(tick, 700);
+  }
+  on($('#ctxPlay'), 'click', ctxPlay);
+  on($('#ctxReset'), 'click', ctxReset);
+  ctxReset();
+
+  /* ==========================================================
+     SLIDE 17 — video slot
+     ========================================================== */
+  const VIDEO_SRC = '';   // ← اگر ویدئو دارید: داده‌ی base64 را اینجا بگذارید
+  const demoVideo = $('#demoVideo');
+  if (demoVideo && VIDEO_SRC){ demoVideo.src = VIDEO_SRC; demoVideo.classList.add('on'); $('#vidFallback').style.display = 'none'; }
+
+  /* ==========================================================
+     SLIDE HOOK
+     ========================================================== */
+  window.__slideEnter = function(slide){
+    if (!slide) return;
+    if (slide.id === 'fundSlide')   playFund();
+    if (slide.id === 'anatSlide')   paintAnat('loop');
+    if (slide.id === 'replaySlide') rpAutoplay();
+    if (slide.id === 'div3Slide')   teaserStart();
+    if (slide.id === 'liveSlide')   termStart();
+    if (slide.id === 'toolsSlide')  ctxReset();
+  };
+
+  document.addEventListener('deck:slide', e => {
+    currentIndex = e.detail.index;
+    renderNotes(currentIndex);
+    paintTimer();
+  });
+  document.addEventListener('deck:goto', e => {
+    const t = e.detail.index;
+    const ev = new KeyboardEvent('keydown', { key:'Home' });
+    document.dispatchEvent(new CustomEvent('deck:jump', { detail:{ index:t } }));
+  });
+
+  /* ==========================================================
+     13-SLIDE EDITION
+     timeline · anatomy live-demo · replay preload/autoplay
+     playground preset · teaser · terminal reel · help overlay
+     ========================================================== */
+
+  /* ---------- 1. timeline (agenda): fill + "you are here" ---------- */
+  const tlHere = $('#tlHere'), tlFill = $('#tlFill');
+  const tlSegs = $$('.tl-seg');
+  function sectionStart(i){
+    let acc = 0;
+    for (const s of SECTIONS){
+      if (i >= s.from && i <= s.to) return acc;
+      acc += s.min * 60;
+    }
+    return acc;
+  }
+  function paintTimeline(){
+    if (!tlHere) return;
+    const p = Math.max(0, Math.min(1, tSec / (TOTAL || 1)));
+    tlHere.style.right = (p * 100).toFixed(2) + '%';
+    if (tlFill) tlFill.style.width = (p * 100).toFixed(2) + '%';
+    const s = sectionOf(currentIndex);
+    const over = tSec > sectionStart(currentIndex) + s.min * 60;
+    tlHere.classList.toggle('over', over);
+    if (hudTimer) hudTimer.classList.toggle('over', over);
+  }
+  const _paintTimer0 = paintTimer;
+  paintTimer = function(){ _paintTimer0(); paintTimeline(); };
+  tlSegs.forEach(seg => on(seg, 'click', () => {
+    document.dispatchEvent(new CustomEvent('deck:goto', { detail:{ index: +seg.dataset.goto } }));
+  }));
+
+  /* ---------- 2. anatomy: live mini-demo per part ---------- */
+  const AD_LINES = {
+    loop:   ['loop: step = policy.decide(state)', 'loop: budget.check(step) → allow', 'loop: step 3/8 → continue'],
+    tools:  ['registry: 7 tools loaded', 'registry: read_file(path) → schema ok', 'tool: dispatching inside sandbox'],
+    memory: ['memory: append(observation)', 'memory: short-term = 12 events', 'memory: long-term → facts[]'],
+    guard:  ['guard: action = shell(rm -rf /)', 'guard: policy = deny → BLOCKED', 'guard: human approval → not needed'],
+    budget: ['budget: steps 3/8 · tokens 4.9k/32k', 'budget: cost $0.43 → within cap', 'budget: cap 32k → keep going'],
+    context:['context: tokens 8,220/32,000', 'context: compaction @80% → summary', 'context: window refreshed'],
+    log:    ['log: append(event, step, tokens)', 'log: trace_id = run-7f3a', 'log: every step replayable']
+  };
+  const adLog = $('#anatDemo'), adState = $('#adState');
+  let adTimer = null;
+  function adShow(part){
+    if (!adLog) return;
+    const lines = AD_LINES[part] || [];
+    if (adState) adState.textContent = String(part || '').toUpperCase();
+    clearInterval(adTimer);
+    let li = 0, ci = 0;
+    adLog.textContent = '';
+    adTimer = setInterval(() => {
+      if (li >= lines.length){ clearInterval(adTimer); adTimer = null; return; }
+      if (ci === 0) adLog.textContent += (li ? '\n' : '') + '$ ';
+      const line = lines[li];
+      if (ci < line.length) adLog.textContent += line[ci++];
+      else { li++; ci = 0; }
+      adLog.scrollTop = adLog.scrollHeight;
+    }, 16);
+  }
+  const _paintAnat0 = paintAnat;
+  paintAnat = function(part){ _paintAnat0(part); adShow(part); };
+
+  /* ---------- 3. ReAct: live phase in the middle of the ring ---------- */
+  const PHASE_LIVE = [
+    { k:'فکر',    s:'THOUGHT',    c:'#a78bfa' },
+    { k:'عمل',    s:'ACTION',     c:'#38bdf8' },
+    { k:'مشاهده', s:'OBSERVATION', c:'#10b981' },
+    { k:'حافظه',  s:'MEMORY',     c:'#f59e0b' }
+  ];
+  const loopLive = $('#loopLive');
+  function loopLiveSet(i){
+    if (!loopLive) return;
+    const p = PHASE_LIVE[Math.max(0, Math.min(3, i))];
+    loopLive.innerHTML = '<b>' + p.k + '</b><span>' + p.s + '</span>';
+    loopLive.style.setProperty('--c', p.c);
+  }
+  const reactState = document.getElementById('reactState');
+  if (reactState && window.MutationObserver){
+    new MutationObserver(() => {
+      const m = /(\d+)\s*\/\s*(\d+)/.exec(reactState.textContent || '');
+      loopLiveSet(m ? (+m[1]) - 1 : 0);
+    }).observe(reactState, { childList:true, characterData:true, subtree:true });
+    loopLiveSet(0);
+  }
+
+  /* ---------- 4. replay: preload transcript + autoplay + tool chip ---------- */
+  RP_EVENTS.forEach(e => { e.dur = e.k === 'user' ? 900 : Math.max(1200, Math.min(1800, e.dur || 1400)); });
+  const rpGhost = $('#rpGhost'), rpTool = $('#rpTool');
+  function rpGhostRender(){
+    if (!rpGhost) return;
+    rpGhost.innerHTML = RP_EVENTS.slice(rpIdx + 1).map(e =>
+      '<div class="rp-msg rp-ghost ' + e.k + (e.err ? ' err' : '') + '">' +
+      '<span class="who">' + e.who + (e.tool ? ' · ' + e.tool : '') + '</span>' +
+      (e.k === 'tool' ? '<span class="code">' + e.txt + '</span>' : e.txt) + '</div>').join('');
+  }
+  const _rpStep0 = rpStep;
+  rpStep = function(){
+    _rpStep0();
+    const e = RP_EVENTS[rpIdx];
+    if (rpTool) rpTool.textContent = e ? (e.tool || e.who) : '—';
+    rpGhostRender();
+  };
+  const _rpReset0 = rpReset;
+  rpReset = function(){
+    _rpReset0();
+    const first = rpLog && rpLog.querySelector('.rp-msg');
+    if (first) first.innerHTML = '▶ اجرای خودکار شروع می‌شود — ۷ فراخوانی ابزار، ۱ خطای واقعی و ۲ اصلاح در این جلسه.';
+    if (rpTool) rpTool.textContent = '—';
+    rpGhostRender();
+  };
+  function rpAutoplay(){
+    rpReset();
+    setTimeout(() => { if (!rpTimer) rpPlayNext(); }, 1100);
+  }
+
+  /* ---------- 5. playground: one-click preset ---------- */
+  const pgSample = $('#pgSample');
+  on(pgSample, 'click', () => {
+    $$('.pg-goal').forEach(g => { if (g.dataset.goal === 'bug' && !g.classList.contains('on')) g.click(); });
+    $$('.pg-tool').forEach(t => { if (!t.classList.contains('on')) t.click(); });
+    $$('.pg-guard input').forEach(i => { if (!i.checked){ i.checked = true; i.dispatchEvent(new Event('change')); } });
+    const run = $('#pgRun'); if (run) run.click();
+  });
+
+  /* ---------- 6. divider teaser: typing loop ---------- */
+  const TEASER = [
+    'user › fix the failing billing test',
+    'harness › read_file(billing/report.py)',
+    'tool  › 128 lines · 2 suspicious',
+    'tool  › shell(pytest -q) → exit 1',
+    'harness › line 42 → ZeroDivisionError',
+    'tool  › edit(+2 −1)',
+    'tool  › shell(pytest -q) → exit 0  ✓'
+  ];
+  const teaserLog = $('#teaserLog');
+  let teaserTimer = null, teaserLi = 0, teaserCi = 0, teaserHold = 0, teaserClear = false;
+  function teaserTick(){
+    if (!teaserLog) return;
+    if (teaserClear){ teaserLog.textContent = ''; teaserClear = false; }
+    if (teaserHold > 0){ teaserHold--; return; }
+    if (teaserCi === 0 && teaserLi > 0) teaserLog.textContent += '\n';
+    const line = TEASER[teaserLi % TEASER.length];
+    if (teaserCi < line.length) teaserLog.textContent += line[teaserCi++];
+    else {
+      teaserCi = 0; teaserLi++;
+      if (teaserLi % TEASER.length === 0){ teaserHold = 30; teaserClear = true; teaserLi = 0; }
+    }
+    teaserLog.scrollTop = teaserLog.scrollHeight;
+  }
+  function teaserStart(){ if (!teaserTimer) teaserTimer = setInterval(teaserTick, 16); }
+
+  /* ---------- 7. live-demo terminal reel ---------- */
+  const TERM = [
+    '$ claude "fix the failing billing test"',
+    '▸ reading billing/report.py … 128 lines',
+    '▸ running pytest -q … 1 failed',
+    '▸ ZeroDivisionError at report.py:42',
+    '▸ patching line 42 … +2 −1',
+    '▸ running pytest -q … all green ✓',
+    '$ _'
+  ];
+  const termReel = $('#termReel');
+  let termTimer = null, termLi = 0, termCi = 0, termHold = 0, termClear = false;
+  function termTick(){
+    if (!termReel) return;
+    if (termClear){ termReel.textContent = ''; termClear = false; }
+    if (termHold > 0){ termHold--; return; }
+    if (termCi === 0 && termLi > 0) termReel.textContent += '\n';
+    const line = TERM[termLi % TERM.length];
+    if (termCi < line.length) termReel.textContent += line[termCi++];
+    else {
+      termCi = 0; termLi++;
+      if (termLi % TERM.length === 0){ termHold = 35; termClear = true; termLi = 0; }
+    }
+    termReel.scrollTop = termReel.scrollHeight;
+  }
+  function termStart(){ if (!termTimer) termTimer = setInterval(termTick, 18); }
+
+  /* ---------- 8. help overlay (?) ---------- */
+  const helpEl = document.createElement('div');
+  helpEl.className = 'help-overlay';
+  helpEl.innerHTML = '<div class="help-card"><h3>کلیدهای ارائه</h3><ul>' +
+    '<li><kbd>←</kbd><kbd>→</kbd><kbd>Space</kbd> جابه‌جایی بین اسلایدها</li>' +
+    '<li><kbd>F</kbd> تمام‌صفحه</li>' +
+    '<li><kbd>S</kbd> یادداشت‌های ارائه‌دهنده</li>' +
+    '<li><kbd>T</kbd> تایمر ۳۰ دقیقه <em>(Shift+T بازنشانی)</em></li>' +
+    '<li><kbd>C</kbd> حالت تمیز (پنهان‌کردن رابط)</li>' +
+    '<li><kbd>?</kbd> بستن همین راهنما</li></ul></div>';
+  document.body.appendChild(helpEl);
+  on(helpEl, 'click', () => helpEl.classList.remove('on'));
+  document.addEventListener('keydown', e => {
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    if (e.key === '?' || (e.key === '/' && e.shiftKey)){
+      e.preventDefault();
+      helpEl.classList.toggle('on');
+    }
+  });
+
+  /* ---------- 8b. fund slide: the four layers drive a live readout ---------- */
+  const FUND_EQ = [
+    'model = f(prompt) → text',
+    'model + tools = one action, one answer',
+    'agent = model + tools + loop',
+    'harness = prompt + tools + loop + policy + memory + log'
+  ];
+  const FUND_NOTE = [
+    'مدل تنها: خطا یعنی از صفر شروع کن؛ بین دو فراخوانی هیچ حافظه‌ای نیست.',
+    'مدل + ابزار: می‌تواند بخواند و اجرا کند، اما گام بعدی را شما انتخاب می‌کنید.',
+    'مدل + ابزار + حلقه: حلقه مالکِ جریان است — همین‌جا «ایجنت» متولد می‌شود.',
+    'هارنس: حلقه + سیاست + بودجه + حافظه + لاگ — رفتارِ قابل‌اتکا در تولید.'
+  ];
+  const FUND_C = ['#8497b1','#38bdf8','#10b981','#f59e0b'];
+  const FUND_N = ['۰۱','۰۲','۰۳','۰۴'];
+  const fundDetEl = document.getElementById('fundDetail');
+  let fundLock = false;
+  function fundApply(i){
+    if (!fundDetEl) return;
+    const k = i % 4;
+    fundDetEl.style.setProperty('--c', FUND_C[k]);
+    fundDetEl.innerHTML = '<b>لایهٔ ' + FUND_N[k] + '</b> <code>' + FUND_EQ[k] + '</code> — ' + FUND_NOTE[k];
+  }
+  const _paintFund0 = paintFund;
+  paintFund = function(i){
+    if (fundLock) return;          // auto-build stops once the presenter picks a layer
+    _paintFund0(i);
+    fundApply(i);
+  };
+  fundRows.forEach((r, k) => on(r, 'click', () => { fundLock = true; fundApply(k); }));
+
+  /* ---------- 9. per-slide react (nav hiding, timeline, teasers) ---------- */
+  document.addEventListener('deck:slide', e => {
+    const slide = document.querySelector('.slide.active');
+    const id = slide ? slide.id : '';
+    fundLock = false;
+    document.body.classList.toggle('hide-nav', id === 'replaySlide');
+    tlSegs.forEach((seg, k) => {
+      const s = SECTIONS[k];
+      seg.classList.toggle('on', !!s && currentIndex >= s.from && currentIndex <= s.to);
+    });
+    paintTimeline();
+  });
+
+  /* ---------- 9b. keyboard + screen-reader support ---------- */
+  // divs that behave like buttons (mouse-only until now)
+  ['.ag-row', '.fund-row'].forEach(sel => {
+    $$(sel).forEach(el => {
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); e.stopPropagation(); el.click(); }
+      });
+    });
+  });
+  // live regions for the readouts that change while you talk
+  ['fundDetail', 'anatTitle', 'anatText', 'adState', 'pgState', 'ctxUsed'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('aria-live', 'polite');
+  });
+
+  /* ---------- 9c. fit the stage: scale the deck down on short screens ---------- */
+  // the deck is laid out for ~1440×900; on a 720p projector (or a window that is
+  // not full screen) the stage is scaled down instead of letting content spill
+  // under the HUD. Narrow screens keep their own one-column layout.
+  const deckEl = document.getElementById('deck');
+  function fitDeck(){
+    const s = innerWidth >= 1000 ? Math.min(1, innerWidth / 1280, innerHeight / 720) : 1;
+    deckEl.style.zoom = s === 1 ? '' : s;
+  }
+  fitDeck();
+  addEventListener('resize', fitDeck);
+
+  teaserStart();
+  termStart();
+  paintTimeline();
+
+  /* initial paint */
+  renderNotes(0);
+  paintTimer();
+  rpReset();
+  teaserStart();
+  termStart();
+  paintTimeline();
+})();
+
+</script>
+</body>
+</html>

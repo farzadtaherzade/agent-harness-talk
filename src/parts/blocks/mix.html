@@ -1,0 +1,93 @@
+  <!-- ==========================================================
+       SLIDE 11 — TOOLS + MCP + MEMORY (merged)
+       ========================================================== -->
+  <section class="slide s-mix" id="toolsSlide" data-label="ابزار، MCP و حافظه">
+    <div class="ghost">11</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">11</span> — tools · mcp · memory</span>
+      <h2 class="s-title rv" style="--d:.12s">ابزار، <em>MCP</em> و حافظه: سه سازوکار یک هارنس</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        مدل فقط «درخواست» می‌دهد؛ هارنس آن را به فراخوانی واقعی تبدیل می‌کند، با MCP به همهٔ ابزارها
+        وصل می‌شود، و با حافظه/کانتکست می‌داند چه چیزی را نگه دارد.
+      </p>
+    </header>
+
+    <div class="mix-grid">
+      <!-- ===== ابزار و MCP ===== -->
+      <div class="card mix-card rv-r" style="--d:.26s">
+        <h3><span class="ix">۱</span> ابزار: یک فراخوانی، سه پیام</h3>
+        <div class="io-flow">
+          <div class="io-step"><b>درخواست به مدل</b><code>{"tools":[{"name":"read_file",<br>  "description":"خواندن فایل"}]}</code></div>
+          <div class="io-step"><b>پاسخ مدل</b><code>{"tool_call":{"name":"read_file",<br>  "arguments":{"path":"billing/report.py"}}}</code></div>
+          <div class="io-step"><b>نتیجهٔ ابزار</b><code>{"ok":true,"content":"...","error":null}</code></div>
+        </div>
+        <ul class="rules">
+          <li><i>◂</i><span>نام ابزار کوتاه و فعلی باشد؛ شرح دقیق، بخشی از پرامپت است.</span></li>
+          <li><i>◂</i><span>پیام خطای قابل‌فهم برگردانید — پیام خطا ورودی مدل است، نه فقط لاگ سیستم.</span></li>
+        </ul>
+
+        <h3 class="mt"><span class="ix">۲</span> MCP: سوکت استاندارد ابزارها</h3>
+        <svg class="mcp-svg mix-mcp" viewBox="0 0 440 210" role="img" aria-label="معماری MCP">
+          <line class="mcp-link" x1="310" y1="105" x2="272" y2="105"/>
+          <line class="mcp-link" x1="176" y1="95" x2="140" y2="72"/>
+          <line class="mcp-link" x1="176" y1="115" x2="140" y2="150"/>
+          <rect class="mcp-node" x="310" y="75" width="110" height="60" rx="10"/>
+          <text class="mcp-lbl" x="365" y="100">هارنس / ایجنت</text>
+          <text class="mcp-sub" x="365" y="118">HOST</text>
+          <rect class="mcp-node" x="176" y="75" width="96" height="60" rx="10"/>
+          <text class="mcp-lbl" x="224" y="100">کلاینت MCP</text>
+          <text class="mcp-sub" x="224" y="118">CLIENT</text>
+          <rect class="mcp-node" x="20" y="44" width="120" height="52" rx="10"/>
+          <text class="mcp-lbl" x="80" y="66">سرور فایل‌ها</text>
+          <text class="mcp-sub" x="80" y="84">FILES</text>
+          <rect class="mcp-node" x="20" y="126" width="120" height="52" rx="10"/>
+          <text class="mcp-lbl" x="80" y="148">سرور دیتابیس</text>
+          <text class="mcp-sub" x="80" y="166">DB</text>
+          <circle class="mcp-pkt" r="4"><animateMotion dur="2.4s" repeatCount="indefinite" path="M365,105 L224,105"/></circle>
+          <circle class="mcp-pkt em" r="4"><animateMotion dur="2.4s" begin=".8s" repeatCount="indefinite" path="M224,105 L365,105"/></circle>
+          <circle class="mcp-pkt" r="4"><animateMotion dur="2.2s" begin="1.2s" repeatCount="indefinite" path="M224,95 L80,70"/></circle>
+          <circle class="mcp-pkt em" r="4"><animateMotion dur="2.2s" begin="1.9s" repeatCount="indefinite" path="M80,152 L224,115"/></circle>
+          <text class="mcp-sub" x="288" y="95">tools/list</text>
+          <text class="mcp-sub" x="152" y="88">call</text>
+        </svg>
+        <ul class="rules">
+          <li><i>◂</i><span><b>کشف</b>: هارنس می‌پرسد چه ابزارهایی موجود است — بدون کدنویسی.</span></li>
+          <li><i>◂</i><span><b>تعویض‌پذیری</b>: عوض‌کردن یک سرور، هارنس را تغییر نمی‌دهد.</span></li>
+        </ul>
+      </div>
+
+      <!-- ===== حافظه و کانتکست ===== -->
+      <div class="card mix-card rv-r" style="--d:.34s">
+        <h3><span class="ix">۳</span> حافظه و اقتصاد کانتکست</h3>
+        <div class="ctx-card">
+          <div class="ctx-bar" id="ctxBar"></div>
+          <div class="ctx-foot"><span id="ctxUsed">0 / 32,000 توکن</span><span id="ctxState">خالی</span></div>
+          <div class="ctx-ctl">
+            <button class="btn" id="ctxPlay">▶ پر شدن و فشرده‌سازی</button>
+            <button class="btn ghost-btn" id="ctxReset">بازنشانی</button>
+          </div>
+        </div>
+
+        <div class="mem-row">
+          <div class="mem-card">
+            <h4>حافظهٔ کوتاه‌مدت</h4>
+            <p>رویدادهای همین اجرا: هر فکر، عمل و مشاهده — چیزی که مدل «همین حالا» می‌بیند.</p>
+          </div>
+          <div class="mem-card">
+            <h4>حافظهٔ بلندمدت</h4>
+            <p>دانش ماندگار پروژه: قوانین، تصمیم‌های گذشته، نتایج یادگیری — با بازیابی معنایی.</p>
+          </div>
+        </div>
+
+        <div class="warn-card">
+          <h4>پوسیدگی کانتکست (context rot)</h4>
+          <ul>
+            <li>دستور اولیه در انبوهِ پیام‌ها گم می‌شود.</li>
+            <li>مدل به قدیمی‌ترین پیام‌ها بیشتر اعتماد می‌کند.</li>
+            <li>هزینه و تأخیر هر گام بالا می‌رود.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>

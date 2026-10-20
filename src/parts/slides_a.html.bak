@@ -1,0 +1,276 @@
+
+  <!-- ==========================================================
+       SLIDE 2 — AGENDA / ROADMAP
+       ========================================================== -->
+  <section class="slide s-agenda" id="agendaSlide" data-label="نقشهٔ راه">
+    <div class="ghost">02</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">02</span> — roadmap</span>
+      <h2 class="s-title rv" style="--d:.12s">نقشهٔ راه <em>۳۰ دقیقه</em>‌ای</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        پنج بخش، چهار دموی تعاملی. روی هر ردیف بزنید تا مستقیم به آن اسلاید بروید؛
+        زمان‌ها سقف پیشنهادی هر بخش‌اند.
+      </p>
+    </header>
+
+    <div class="agenda-list">
+      <button class="ag-row rv-r" style="--d:.26s" data-goto="2">
+        <span class="ag-num">۰۱</span>
+        <span><span class="ag-t">از مدل تا ایجنت</span><span class="ag-d">مدل چه چیزی کم دارد؟ ایجنت در برابر ورک‌فلو · آناتومی یک فراخوانی ابزار</span></span>
+        <span class="ag-min">۵′</span>
+      </button>
+      <button class="ag-row rv-r" style="--d:.33s" data-goto="5">
+        <span class="ag-num">۰۲</span>
+        <span><span class="ag-t">مهندسی هارنس</span><span class="ag-d">تشبیه خودرو · نقشهٔ قطعات هارنس · حلقهٔ ReAct</span></span>
+        <span class="ag-min">۷′</span>
+      </button>
+      <button class="ag-row rv-r" style="--d:.4s" data-goto="9">
+        <span class="ag-num">۰۳</span>
+        <span><span class="ag-t">در عمل: تماشای یک هارنس</span><span class="ag-d">پخش یک جلسهٔ واقعی · سکوی آزمایش · کد در حرکت</span></span>
+        <span class="ag-min">۱۰′</span>
+      </button>
+      <button class="ag-row rv-r" style="--d:.47s" data-goto="13">
+        <span class="ag-num">۰۴</span>
+        <span><span class="ag-t">ابزار، حافظه و نمونه‌های واقعی</span><span class="ag-d">مکانیزم فراخوانی و MCP · اقتصاد کانتکست · هارنس‌های شناخته‌شده</span></span>
+        <span class="ag-min">۶′</span>
+      </button>
+      <button class="ag-row rv-r" style="--d:.54s" data-goto="16">
+        <span class="ag-num">۰۵</span>
+        <span><span class="ag-t">دموی زنده و جمع‌بندی</span><span class="ag-d">اجرای واقعی روی صحنه · چک‌لیست تولید · پرسش و پاسخ</span></span>
+        <span class="ag-min">۲′ + دمو</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 3 — SECTION 01
+       ========================================================== -->
+  <section class="slide s-div" id="div1Slide" data-label="بخش ۰۱ — مبانی">
+    <div class="ghost">03</div>
+    <div class="div-wrap">
+      <span class="div-tag rv" style="--d:.05s">section 01 — fundamentals</span>
+      <div class="div-num rv-b" style="--d:.12s">01</div>
+      <h2 class="div-title rv" style="--d:.2s">از مدل تا ایجنت</h2>
+      <p class="div-sub rv" style="--d:.28s">
+        ایجنت «مدلی که حرف می‌زند» نیست. ایجنت مدلی است که در یک حلقه،
+        با ابزار و اختیار مشخص، کار می‌کند.
+      </p>
+      <div class="div-chips rv" style="--d:.36s">
+        <span class="chip cy"><span class="dot"></span>تعریف دقیق ایجنت</span>
+        <span class="chip em"><span class="dot"></span>ایجنت در برابر ورک‌فلو</span>
+        <span class="chip am"><span class="dot"></span>آناتومی فراخوانی ابزار</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 4 — FROM LLM TO AGENT
+       ========================================================== -->
+  <section class="slide s-fund" id="fundSlide" data-label="از مدل تا ایجنت">
+    <div class="ghost">04</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">04</span> — fundamentals</span>
+      <h2 class="s-title rv" style="--d:.12s">سه لایه که یک مدل را به <em>ایجنت</em> تبدیل می‌کند</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        هر لایه یک محدودیت را برمی‌دارد: نخست «فقط متن»، سپس «فقط یک‌بار»، و در پایان «بدون کنترل».
+      </p>
+    </header>
+
+    <div class="fund-grid">
+      <div class="fund-build">
+        <div class="fund-row" data-i="0" style="--c:#8497b1">
+          <div class="ft"><i>۰۱</i> مدل تنها</div>
+          <div class="fd">یک پرامپت، یک پاسخ. نه دسترسی به جهان، نه امکان خطایابی، نه امکان ادامه‌دادن.</div>
+        </div>
+        <div class="fund-row" data-i="1" style="--c:#38bdf8">
+          <div class="ft"><i>۰۲</i> مدل + ابزار</div>
+          <div class="fd">حالا می‌تواند بخواند، اجرا کند و بپرسد. اما هنوز فقط یک‌بار: یک عمل، یک پاسخ، پایان.</div>
+        </div>
+        <div class="fund-row" data-i="2" style="--c:#10b981">
+          <div class="ft"><i>۰۳</i> مدل + ابزار + حلقه</div>
+          <div class="fd">نتیجهٔ هر عمل دوباره به مدل برمی‌گردد. حالا می‌تواند اشتباه کند — و اشتباهش را اصلاح کند.</div>
+        </div>
+        <div class="fund-row" data-i="3" style="--c:#f59e0b">
+          <div class="ft"><i>۰۴</i> هارنس</div>
+          <div class="fd">حلقه + سیاست + حافظه + بودجه. اینجاست که یک ایجنتِ آزمایشی به ایجنتِ قابل‌اتکا تبدیل می‌شود.</div>
+        </div>
+      </div>
+
+      <div class="fund-right">
+        <div class="card def-card rv-r" style="--d:.3s">
+          <h3>تعریف عملی</h3>
+          <p>ایجنت یعنی: مدل تصمیم می‌گیرد، هارنس تصمیم را <b>مجاز</b> می‌کند، دنیا جواب می‌دهد، حافظه نگه می‌دارد، و حلقه ادامه پیدا می‌کند.</p>
+          <div class="eq">agent = model + tools + loop + policy + memory</div>
+        </div>
+
+        <div class="vs-grid">
+          <div class="vs-col flow rv-r" style="--d:.36s">
+            <h4>ورک‌فلو <em>WORKFLOW</em></h4>
+            <p>مسیر از پیش نوشته شده. مدل فقط گاهی یک گام را پر می‌کند. خطا = شکست کل مسیر.</p>
+          </div>
+          <div class="vs-col agent rv-r" style="--d:.42s">
+            <h4>ایجنت <em>AGENT</em></h4>
+            <p>مسیر را مدل در هر لحظه انتخاب می‌کند. خطا = یک گام دیگر در حلقه، با امکان بازگشت.</p>
+          </div>
+        </div>
+
+        <div class="cmp-note rv" style="--d:.48s">
+          <span class="chip em"><span class="dot"></span>نکته</span>
+          <span>هر جا که مسیر قابل پیش‌بینی است، ورک‌فلو ارزان‌تر و قابل‌اعتمادتر است. ایجنت را جایی بگذارید که مسیر را <b>نمی‌دانید</b>.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 5 — ACTION A: ANATOMY OF A TOOL CALL
+       ========================================================== -->
+  <section class="slide s-tc" id="tcSlide" data-label="آناتومی فراخوانی ابزار">
+    <div class="ghost">05</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">05</span> — action</span>
+      <h2 class="s-title rv" style="--d:.12s">آناتومی یک <em>فراخوانی ابزار</em></h2>
+      <p class="s-sub rv" style="--d:.2s">
+        روی هر گام بزنید یا «گام بعد» را بزنید. نکتهٔ کلیدی: مدل هیچ‌وقت خودش ابزار را اجرا نمی‌کند —
+        فقط <b>نقشهٔ</b> عمل را می‌نویسد.
+      </p>
+    </header>
+
+    <div class="tc-grid">
+      <div class="tc-flow">
+        <button class="tc-node" data-i="0" style="--c:#38bdf8"><span class="n">۱</span><span class="t">کاربر</span><span class="s">USER</span></button>
+        <button class="tc-node" data-i="1" style="--c:#a78bfa"><span class="t">هارنس</span><span class="s">HARNESS</span><span class="n">۲</span></button>
+        <button class="tc-node" data-i="2" style="--c:#f43f5e"><span class="n">۳</span><span class="t">مدل</span><span class="s">LLM</span></button>
+        <button class="tc-node" data-i="3" style="--c:#f59e0b"><span class="n">۴</span><span class="t">ابزار</span><span class="s">TOOL</span></button>
+        <button class="tc-node" data-i="4" style="--c:#10b981"><span class="n">۵</span><span class="t">نتیجه</span><span class="s">RESULT</span></button>
+      </div>
+
+      <div class="tc-pane">
+        <div class="tc-json rv-r" style="--d:.3s"><pre id="tcJson"></pre></div>
+        <div class="tc-cap rv-r" style="--d:.36s" id="tcCap"></div>
+      </div>
+    </div>
+
+    <div class="tc-ctl rv" style="--d:.44s">
+      <button class="btn" id="tcNext">▶ گام بعد</button>
+      <button class="btn ghost-btn" id="tcAuto">▶ پخش خودکار</button>
+      <button class="btn ghost-btn" id="tcReset">بازنشانی</button>
+      <span class="mini-note" id="tcState">گام ۱ / ۵</span>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 6 — SECTION 02
+       ========================================================== -->
+  <section class="slide s-div" id="div2Slide" data-label="بخش ۰۲ — هارنس">
+    <div class="ghost">06</div>
+    <div class="div-wrap">
+      <span class="div-tag rv" style="--d:.05s">section 02 — the harness</span>
+      <div class="div-num rv-b" style="--d:.12s">02</div>
+      <h2 class="div-title rv" style="--d:.2s">مهندسی هارنس</h2>
+      <p class="div-sub rv" style="--d:.28s">
+        هارنس همان چیزی است که بین «یک مدل» و «یک کارِ انجام‌شده» فاصله می‌گذارد.
+        بیایید قطعه‌به‌قطعه ببینیم از چه چیزی ساخته شده است.
+      </p>
+      <div class="div-chips rv" style="--d:.36s">
+        <span class="chip cy"><span class="dot"></span>خودروی سه‌بعدی</span>
+        <span class="chip em"><span class="dot"></span>نقشهٔ هارنس</span>
+        <span class="chip am"><span class="dot"></span>حلقهٔ ReAct</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SLIDE 8 — HARNESS ANATOMY (interactive schematic)
+       ========================================================== -->
+  <section class="slide s-anat" id="anatSlide" data-label="نقشهٔ هارنس">
+    <div class="ghost">08</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">08</span> — architecture</span>
+      <h2 class="s-title rv" style="--d:.12s">نقشهٔ هارنس: <em>هفت قطعه</em> که همیشه هستند</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        روی هر قطعه کلیک کنید (یا چیپش را بزنید) تا نقشش را ببینید. هر هارنسی که در پروژه دیدید، ترکیبی از همین‌هاست.
+      </p>
+    </header>
+
+    <div class="anat-grid">
+      <div class="anat-svg-wrap rv-s" style="--d:.28s">
+        <svg class="anat-svg" viewBox="0 0 520 420" role="img" aria-label="نقشهٔ قطعات هارنس">
+          <g class="anat-link">
+            <line x1="260" y1="205" x2="135" y2="80"/>
+            <line x1="260" y1="205" x2="385" y2="80"/>
+            <line x1="260" y1="205" x2="90" y2="255"/>
+            <line x1="260" y1="205" x2="430" y2="255"/>
+            <line x1="260" y1="205" x2="150" y2="348"/>
+            <line x1="260" y1="205" x2="370" y2="348"/>
+          </g>
+
+          <g class="anat-part" data-part="loop" style="--c:#38bdf8">
+            <circle class="pb" cx="260" cy="205" r="58"/>
+            <text class="pl" x="260" y="200" style="font-size:13px;font-weight:700">حلقهٔ کنترل</text>
+            <text class="pe" x="260" y="218">CONTROL LOOP</text>
+            <text class="pe" x="260" y="240">fthink · act · observe</text>
+          </g>
+
+          <g class="anat-part" data-part="tools" style="--c:#38bdf8">
+            <rect class="pb" x="70" y="53" width="130" height="54" rx="10"/>
+            <text class="pl" x="135" y="75">رجیستری ابزار</text>
+            <text class="pe" x="135" y="93">TOOL REGISTRY</text>
+          </g>
+
+          <g class="anat-part" data-part="memory" style="--c:#a78bfa">
+            <rect class="pb" x="320" y="53" width="130" height="54" rx="10"/>
+            <text class="pl" x="385" y="75">موتور حافظه</text>
+            <text class="pe" x="385" y="93">MEMORY</text>
+          </g>
+
+          <g class="anat-part" data-part="guard" style="--c:#f59e0b">
+            <rect class="pb" x="25" y="228" width="130" height="54" rx="10"/>
+            <text class="pl" x="90" y="250">گاردیل</text>
+            <text class="pe" x="90" y="268">GUARDRAILS</text>
+          </g>
+
+          <g class="anat-part" data-part="budget" style="--c:#f43f5e">
+            <rect class="pb" x="365" y="228" width="130" height="54" rx="10"/>
+            <text class="pl" x="430" y="250">بودجه و سقف‌ها</text>
+            <text class="pe" x="430" y="268">LIMITS</text>
+          </g>
+
+          <g class="anat-part" data-part="context" style="--c:#10b981">
+            <rect class="pb" x="85" y="321" width="130" height="54" rx="10"/>
+            <text class="pl" x="150" y="343">مهندس کانتکست</text>
+            <text class="pe" x="150" y="361">CONTEXT ENGINE</text>
+          </g>
+
+          <g class="anat-part" data-part="log" style="--c:#38bdf8">
+            <rect class="pb" x="305" y="321" width="130" height="54" rx="10"/>
+            <text class="pl" x="370" y="343">دنبالهٔ لاگ</text>
+            <text class="pe" x="370" y="361">TRACE / REPLAY</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="anat-side">
+        <div class="anat-chips rv-r" style="--d:.34s">
+          <button class="chip cy anat-chip" data-part="loop" style="--c:#38bdf8"><span class="dot"></span>حلقهٔ کنترل</button>
+          <button class="chip cy anat-chip" data-part="tools" style="--c:#38bdf8"><span class="dot"></span>رجیستری ابزار</button>
+          <button class="chip cy anat-chip" data-part="memory" style="--c:#a78bfa"><span class="dot"></span>موتور حافظه</button>
+          <button class="chip cy anat-chip" data-part="guard" style="--c:#f59e0b"><span class="dot"></span>گاردیل</button>
+          <button class="chip cy anat-chip" data-part="budget" style="--c:#f43f5e"><span class="dot"></span>بودجه و سقف‌ها</button>
+          <button class="chip cy anat-chip" data-part="context" style="--c:#10b981"><span class="dot"></span>مهندس کانتکست</button>
+          <button class="chip cy anat-chip" data-part="log" style="--c:#38bdf8"><span class="dot"></span>دنبالهٔ لاگ</button>
+        </div>
+
+        <div class="card anat-desc rv-r" style="--d:.4s">
+          <h3 id="anatTitle">حلقهٔ کنترل</h3>
+          <span class="k" id="anatKey">CONTROL LOOP</span>
+          <p id="anatText">قلب هارنس. تصمیم می‌گیرد گام بعدی چیست، چند گام مجاز است و کِی باید متوقف شود. بدون این حلقه، مدل فقط یک‌بار حرف می‌زند.</p>
+          <p class="aq" id="anatQ"><b>سؤال این قطعه:</b> «الان باید چه کاری انجام دهم — و کِی کافی است؟»</p>
+        </div>
+      </div>
+    </div>
+  </section>
