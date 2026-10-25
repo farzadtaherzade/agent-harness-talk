@@ -191,9 +191,9 @@
 
     <header>
       <span class="kicker rv" style="--d:.05s"><span class="n">08</span> — architecture</span>
-      <h2 class="s-title rv" style="--d:.12s">نقشهٔ هارنس: <em>هفت قطعه</em> که همیشه هستند</h2>
+      <h2 class="s-title rv" style="--d:.12s">نقشهٔ هارنس: <em>هفت قطعهٔ رایج</em></h2>
       <p class="s-sub rv" style="--d:.2s">
-        روی هر قطعه کلیک کنید (یا چیپش را بزنید) تا نقشش را ببینید. هر هارنسی که در پروژه دیدید، ترکیبی از همین‌هاست.
+        روی هر قطعه کلیک کنید (یا چیپش را بزنید) تا نقشش را ببینید. ترکیبی از همین‌هاست — با وزن متفاوت.
       </p>
     </header>
 
@@ -230,7 +230,7 @@
 
           <g class="anat-part" data-part="guard" style="--c:#f59e0b">
             <rect class="pb" x="25" y="228" width="130" height="54" rx="10"/>
-            <text class="pl" x="90" y="250">گاردیل</text>
+            <text class="pl" x="90" y="250">گاردریل</text>
             <text class="pe" x="90" y="268">GUARDRAILS</text>
           </g>
 
@@ -259,7 +259,7 @@
           <button class="chip cy anat-chip" data-part="loop" style="--c:#38bdf8"><span class="dot"></span>حلقهٔ کنترل</button>
           <button class="chip cy anat-chip" data-part="tools" style="--c:#38bdf8"><span class="dot"></span>رجیستری ابزار</button>
           <button class="chip cy anat-chip" data-part="memory" style="--c:#a78bfa"><span class="dot"></span>موتور حافظه</button>
-          <button class="chip cy anat-chip" data-part="guard" style="--c:#f59e0b"><span class="dot"></span>گاردیل</button>
+          <button class="chip cy anat-chip" data-part="guard" style="--c:#f59e0b"><span class="dot"></span>گاردریل</button>
           <button class="chip cy anat-chip" data-part="budget" style="--c:#f43f5e"><span class="dot"></span>بودجه و سقف‌ها</button>
           <button class="chip cy anat-chip" data-part="context" style="--c:#10b981"><span class="dot"></span>مهندس کانتکست</button>
           <button class="chip cy anat-chip" data-part="log" style="--c:#38bdf8"><span class="dot"></span>دنبالهٔ لاگ</button>

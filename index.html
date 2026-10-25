@@ -109,7 +109,8 @@ body::selection{ background: rgba(56,189,248,.3); }
 #deck{ position:relative; z-index:1; width:100%; height:100vh; height:100dvh; overflow:hidden; }
 .slide{
   position:absolute; inset:0;
-  padding: calc(var(--pad) + 26px) var(--pad) calc(var(--pad) + 54px);
+  /* پایین: به‌اندازهٔ ارتفاع دکمه‌های قبلی/بعدی (گوشهٔ چپ) + نوار HUD فضا بگذار */
+  padding: calc(var(--pad) + 26px) var(--pad) calc(var(--pad) + 92px);
   display:flex; flex-direction:column; gap: var(--gap);
   opacity:0; visibility:hidden;
   transform: translateX(var(--x, 0)) scale(.988);
@@ -417,10 +418,11 @@ body::selection{ background: rgba(56,189,248,.3); }
 .code-bar .fname{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
 pre.code{
   margin:0; padding: clamp(9px, 1.1vw, 20px); overflow:auto; direction:ltr; text-align:left;
-  font-family: var(--mono); font-size: clamp(8.5px, min(.6vw, 1.02vh), 12px); line-height:1.52;
+  font-family: var(--mono); font-size: clamp(10.5px, min(.62vw,1.42vh), 13px); line-height:1.3;
   color: var(--text-2); flex:1; min-height:0;
   unicode-bidi: isolate;
 }
+@media (max-height:700px){ pre.code{ font-size:9px; line-height:1.22; } }
 pre.code::-webkit-scrollbar{ width:8px; height:8px; }
 pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radius:8px; }
 .c-k{ color: #c084fc; } .c-f{ color: #7dd3fc; } .c-s{ color: #86efac; } .c-c{ color: #5c6b82; font-style:italic; }
@@ -532,7 +534,10 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
    ============================================================ */
 @media (max-width: 1000px){
   .s2-body, .s3-body, .s4-body, .s5-body{ grid-template-columns: 1fr; }
-  .s3-body{ grid-template-rows: .9fr 1.1fr; }
+  .s3-body{ grid-template-rows: none; }
+  /* حالت اسکرول: بلوک‌ها قد طبیعی خودشان را بگیرند. ردیف‌های «auto 1fr» صحنه
+     و گریدهای تودرتو در انتهای new13.css به قدِ محتوایی برگردانده می‌شوند */
+  .slide > *{ flex-shrink: 0; }
   .car-stage{ min-height: clamp(220px, 38vh, 360px); }
   .loop-box{ min-height: 190px; }
   .hud .keys{ display:none; }
@@ -541,7 +546,8 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
 }
 @media (max-width: 700px){
   :root{ --pad: 16px; }
-  .slide{ padding: calc(var(--pad) + 34px) var(--pad) calc(var(--pad) + 62px); }
+  /* بالا: جای دکمه‌های قبلی/بعدی که به گوشهٔ بالا-چپ منتقل می‌شوند */
+  .slide{ padding: calc(var(--pad) + 44px) var(--pad) calc(var(--pad) + 62px); }
   .s1 h1{ max-width:none; }
   .s1-meta{ gap:8px; }
   .meta-card{ min-width:0; flex:1 1 46%; }
@@ -1056,7 +1062,8 @@ body.hide-nav .nav-arrows{ display:none; }
     --gap:  clamp(8px, 1.05vw, 16px);
     --fs-h2: clamp(19px, 2.2vw, 34px);
   }
-  .slide{ padding: calc(var(--pad) + 12px) var(--pad) calc(var(--pad) + 40px); }
+  /* پایین: دکمه‌های قبلی/بعدی تا ~۹۸px از لبهٔ پایین بالا می‌آیند */
+  .slide{ padding: calc(var(--pad) + 12px) var(--pad) calc(var(--pad) + 78px); }
   .s-sub{ font-size: var(--fs-micro); line-height:1.6; }
   .card{ padding: clamp(9px, 1vw, 16px); }
 
@@ -1089,8 +1096,9 @@ body.hide-nav .nav-arrows{ display:none; }
 
 }
 
-/* ---- breathing room: the HUD is ~60px tall, the slide reserved more ---- */
-.slide{ padding-bottom: calc(var(--pad) + 38px); gap: clamp(9px, 1.2vw, 20px); }
+/* ---- breathing room: bottom padding must clear the قبلی/بعدی buttons
+       (گوشهٔ پایین-چپ، تا ~۹۸px از لبهٔ پایین) به‌علاوهٔ نوار HUD ---- */
+.slide{ padding-bottom: calc(var(--pad) + 88px); gap: clamp(9px, 1.2vw, 20px); }
 
 /* ---- slide 06: four ReAct steps, tighter cards ---- */
 .step{ padding: clamp(8px, 1vw, 16px); }
@@ -1131,26 +1139,82 @@ body.hide-nav .nav-arrows{ display:none; }
 
 /* ---- print / PDF backup: one slide per page, no HUD ---- */
 @media print{
-  html{ zoom:.7; }
+  @page{ size:13.333in 7.62in; margin:0; }
+  html{ zoom:1; }
+  body, html{ margin:0 !important; padding:0 !important; }
   .hud, .notes, .help, .nojs, .keys, .nav-arrows{ display:none !important; }
-  #deck{ height:auto !important; overflow:visible !important; }
+  #deck{ height:auto !important; overflow:hidden !important; display:block !important; gap:0 !important; margin:0 !important; padding:0 !important; }
   .slide{
     position:static !important; opacity:1 !important; visibility:visible !important;
-    transform:none !important; page-break-after:always; break-after:page;
-    height:auto; min-height:0; padding:12mm 10mm;
+    transform:none !important; page-break-after:always; break-after:page; break-inside:avoid;
+    width:1280px; height:720px; max-height:720px; min-height:0; overflow:hidden; margin:0 !important;
   }
+  .slide:last-of-type{ page-break-after:auto !important; break-after:auto !important; }
 }
 
 /* ---- very short windows (a 720p screen with browser chrome) ---- */
 @media (max-height: 700px){
   .slide{ padding: calc(var(--pad) + 6px) var(--pad) calc(var(--pad) + 30px); }
-  .code{ font-size:.86em; line-height:1.42; }
+  .metric b{ font-size: clamp(22px, 2.6vw, 44px); }
+  .s5-body{ gap:8px; }
   .s5-body .check{ grid-template-columns:1fr 1fr 1fr; }
   .steps .snip{ display:none; }
 }
 .nojs{
   position:fixed; inset:auto 0 0 0; z-index:99; padding:14px 18px;
   background:#b91c1c; color:#fff; font-family:system-ui,sans-serif; text-align:center; font-size:15px;
+}
+
+
+/* ---------- round 2: labels for simulated numbers + offline note ---------- */
+.sim-tag{
+  font-family:var(--mono); font-size:9px; letter-spacing:.04em;
+  color:var(--muted); border:1px dashed var(--line-soft); border-radius:999px;
+  padding:1px 7px; white-space:nowrap;
+}
+.sim-note{ font-size:var(--fs-micro); color:var(--muted); margin:.1em 0 .45em; line-height:1.7; }
+.fallback-note{
+  font-size:var(--fs-micro); color:var(--muted); margin:.7em auto 0; max-width:36em;
+  text-align:center; line-height:1.8;
+}
+
+
+/* ============================================================
+   حالت اسکرول (≤1000px): اسلاید هم‌قد صحنه می‌ماند و اسکرول می‌خورد؛
+   پس ردیف‌های «auto 1fr» صحنه و زنجیره‌های fr/flex تودرتو باید
+   قدِ محتوا بگیرند، وگرنه بدنه به فضای باقی‌مانده فشرده و محتوا
+   داخل کارت‌ها می‌بُرد. (بعد از تعریف اسلایدهاست تا در کسکد برنده شود)
+   ============================================================ */
+@media (max-width:1000px){
+  /* auto-rows:auto در ظرف scroll با ارتفاع معین به‌جای قدِ محتوا کشیده می‌شود
+     (رفتار Chromium) → ردیف‌های صحنه باید min-content باشند */
+  .slide{ grid-template-rows:none; grid-auto-rows:min-content; }
+  .s3 .steps{ grid-template-rows:none; grid-auto-rows:min-content; }
+  .cmp{ grid-template-rows:none; grid-auto-rows:min-content; }
+  pre.code{ flex:0 0 auto; }
+}
+
+/* ============================================================
+   ارتفاع کوتاه (پروژکتور 720p و لپ‌تاپ): دکمه‌های قبلی/بعدی کوچک‌تر
+   و چسبیده‌تر به HUD، کف محتوا فقط تا بالای آن‌ها؛ کد و جمع‌بندی
+   کمی فشرده‌تر تا در ارتفاع باقی‌مانده جا شوند.
+   (بعد از قاعدهٔ padding اسلاید، تا در کسکد برنده شود)
+   ============================================================ */
+@media (max-height:860px){
+  .nav-arrows{ bottom:46px; }
+  .nav-arrows button.nav-lbl{ height:28px; min-width:66px; }
+  .slide{ padding-bottom: calc(var(--pad) + 80px); }
+  .code{ font-size:.9em; line-height:1.45; }
+  .s5-body{ gap:8px; }
+  .rm-table td{ padding:.3rem .5rem; }
+}
+
+/* 720p پروژکتور: با zoom ملایم، چیدمان در ارتفاع مؤثرِ بالاتری انجام می‌شود
+   و اسلایدهای متراکم (کد/جمع‌بندی/آناتومی) بدون بریدگی جا می‌شوند؛
+   HUD و دکمه‌ها بیرون #deck هستند و به اندازهٔ عادی می‌مانند. */
+@media (max-height:1000px) and (min-width:701px){
+  /* ارتفاع مشخص‌شده باید 1/zoom باشد تا بعد از zoom کل صفحه را پر کند */
+  #deck{ zoom:.92; height:calc(100dvh / .92); }
 }
 
 </style>
@@ -1192,11 +1256,11 @@ body.hide-nav .nav-arrows{ display:none; }
     <p class="lede rv" style="--d:.24s">
       مدل زبانی فقط <b>موتور</b> است؛ آنچه یک ایجنت را قابل‌استفاده می‌کند،
       <span class="em">هارنس</span> است: لایه‌ای که قدرت خام LLM را به
-      <b>ابزار</b>، <b>حافظه</b> و <b>گاردیل</b> تبدیل می‌کند.
+      <b>ابزار</b>، <b>حافظه</b> و <b>گاردریل</b> تبدیل می‌کند.
     </p>
 
     <div class="s1-meta">
-      <!-- EDIT: نام / نقش / تاریخ ارائه‌دهنده -->
+      <!-- EDIT: نام، نقش و تاریخ ارائه را همین‌جا به‌روز کنید (تاریخ هنوز خالی است). -->
       <div class="meta-card rv-r" style="--d:.34s">
         <div class="ico">👤</div>
         <div><div class="k">ارائه‌دهنده</div><div class="v">فرزاد — مهندس هوش مصنوعی</div></div>
@@ -1223,10 +1287,10 @@ body.hide-nav .nav-arrows{ display:none; }
        SLIDE 2 — TIMELINE AGENDA (30-minute axis)
        ========================================================== -->
   <section class="slide s-agenda" id="agendaSlide" data-label="نقشهٔ راه">
-    <div class="ghost">02</div>
+    <div class="ghost">2</div>
 
     <header>
-      <span class="kicker rv" style="--d:.05s"><span class="n">02</span> — roadmap</span>
+      <span class="kicker rv" style="--d:.05s"><span class="n">2</span> — roadmap</span>
       <h2 class="s-title rv" style="--d:.12s">نقشهٔ راه: <em>۳۰ دقیقه</em> روی یک محور</h2>
       <p class="s-sub rv" style="--d:.2s">
         محور زمان از راست به چپ است. روی هر بخش بزنید تا مستقیم به آن بروید؛
@@ -1239,17 +1303,14 @@ body.hide-nav .nav-arrows{ display:none; }
         <button class="tl-seg s-intro" data-goto="0" style="--w:5%">
           <span class="tl-s-t">مقدمه</span><span class="tl-s-m">۱٫۵′</span>
         </button>
-        <button class="tl-seg" data-goto="2" style="--w:36.7%">
-          <span class="tl-s-n">۰۱</span><span class="tl-s-t">مبانی و هارنس</span><span class="tl-s-m">۱۱′</span>
+        <button class="tl-seg" data-goto="2" style="--w:50%">
+          <span class="tl-s-n">بخش ۰۱</span><span class="tl-s-t">مبانی و هارنس</span><span class="tl-s-m">۱۵′</span>
         </button>
-        <button class="tl-seg" data-goto="6" style="--w:33.3%">
-          <span class="tl-s-n">۰۲</span><span class="tl-s-t">در عمل — سه دمو</span><span class="tl-s-m">۱۰′</span>
-        </button>
-        <button class="tl-seg" data-goto="10" style="--w:13.3%">
-          <span class="tl-s-n">۰۳</span><span class="tl-s-t">ابزار و حافظه</span><span class="tl-s-m">۴′</span>
+        <button class="tl-seg" data-goto="7" style="--w:33.3%">
+          <span class="tl-s-n">بخش ۰۲</span><span class="tl-s-t">در عمل — سه دمو</span><span class="tl-s-m">۱۰′</span>
         </button>
         <button class="tl-seg" data-goto="11" style="--w:11.7%">
-          <span class="tl-s-n">۰۴</span><span class="tl-s-t">دمو و جمع‌بندی</span><span class="tl-s-m">۳٫۵′</span>
+          <span class="tl-s-n">بخش ۰۳</span><span class="tl-s-t">دمو و جمع‌بندی</span><span class="tl-s-m">۳٫۵′</span>
         </button>
         <div class="tl-fill" id="tlFill"></div>
         <div class="tl-here" id="tlHere"><i></i><span>شما اینجایید</span></div>
@@ -1262,19 +1323,19 @@ body.hide-nav .nav-arrows{ display:none; }
 
     <div class="tl-cards">
       <div class="card tl-card rv-r" style="--d:.34s">
-        <b>۰۱ · مبانی</b>
-        <p>مدل چه چیزی کم دارد؟ خودروی سه‌بعدی، نقشهٔ قطعات هارنس و حلقهٔ ReAct.</p>
-        <span class="tl-c-min">۱۱ دقیقه · اسلاید ۰۳ تا ۰۶</span>
+        <b>بخش ۰۱ · مبانی</b>
+        <p>مدل چه چیزی کم دارد؟ خودروی سه‌بعدی، نقشهٔ قطعات هارنس، حلقهٔ ReAct و ابزار، MCP و حافظه.</p>
+        <span class="tl-c-min">۱۵ دقیقه · اسلاید ۰۳ تا ۰۷</span>
       </div>
       <div class="card tl-card rv-r" style="--d:.4s">
-        <b>۰۲ · در عمل</b>
-        <p>تماشای یک جلسهٔ واقعی، خاموش‌کردن گاردیل در سکوی آزمایش، و خواندن کد در حرکت.</p>
-        <span class="tl-c-min">۱۰ دقیقه · اسلاید ۰۷ تا ۱۰</span>
+        <b>بخش ۰۲ · در عمل</b>
+        <p>تماشای یک جلسهٔ واقعی، خاموش‌کردن گاردریل در سکوی آزمایش، و خواندن کد در حرکت.</p>
+        <span class="tl-c-min">۱۰ دقیقه · اسلاید ۰۸ تا ۱۱</span>
       </div>
       <div class="card tl-card rv-r" style="--d:.46s">
-        <b>۰۳ · ابزار و حافظه</b>
-        <p>مکانیزم فراخوانی، استاندارد MCP، و اینکه کانتکست چطور پر و فشرده می‌شود.</p>
-        <span class="tl-c-min">۴ دقیقه · اسلاید ۱۱</span>
+        <b>بخش ۰۳ · دمو و جمع‌بندی</b>
+        <p>اجرای واقعی جلوی جمع و جمع‌بندی: چه چیزی یک هارنس را قابل‌اتکا می‌کند.</p>
+        <span class="tl-c-min">۳٫۵ دقیقه · اسلاید ۱۲ تا ۱۳</span>
       </div>
     </div>
   </section>
@@ -1283,10 +1344,10 @@ body.hide-nav .nav-arrows{ display:none; }
        SLIDE 4 — FROM LLM TO AGENT
        ========================================================== -->
   <section class="slide s-fund" id="fundSlide" data-label="از مدل تا ایجنت">
-    <div class="ghost">03</div>
+    <div class="ghost">3</div>
 
     <header>
-      <span class="kicker rv" style="--d:.05s"><span class="n">03</span> — fundamentals</span>
+      <span class="kicker rv" style="--d:.05s"><span class="n">3</span> — fundamentals</span>
       <h2 class="s-title rv" style="--d:.12s">سه لایه که یک مدل را به <em>ایجنت</em> تبدیل می‌کند</h2>
       <p class="s-sub rv" style="--d:.2s">
         مدل موتور است، هارنس شاسی و ECU و پدال. ایجنت آن چیزی است که وقتی این دو کنار هم کار می‌کنند اتفاق می‌افتد — <b>نه یک قطعه، یک رفتار</b>.
@@ -1327,7 +1388,7 @@ body.hide-nav .nav-arrows{ display:none; }
           <h3>ایجنت چیست؟</h3>
           <p class="def-line" style="--c:#8497b1"><b>مدل</b> = تابعی بی‌حافظه: متن در، متن بیرون. نه دست دارد، نه حافظه، نه ساعت.</p>
           <p class="def-line" style="--c:#38bdf8"><b>ایجنت</b> = رفتار: دنبال یک هدف، در چند گام. گام بعدی را خودش انتخاب می‌کند و خودش هم متوقف می‌شود.</p>
-          <p class="def-line" style="--c:#10b981"><b>هارنس</b> = کدی که این رفتار را ممکن می‌کند: پرامپت، ابزار، حلقه، گاردیل، بودجه، حافظه، لاگ.</p>
+          <p class="def-line" style="--c:#10b981"><b>هارنس</b> = کدی که این رفتار را ممکن می‌کند: پرامپت، ابزار، حلقه، گاردریل، بودجه، حافظه، لاگ.</p>
           <div class="eq">harness = prompt + tools + loop + policy + memory + log</div>
         <p class="def-caveat"><b>این یک مدل ذهنی است، نه یک مرز جهانی:</b> در بعضی پیاده‌سازی‌ها ابزار و حلقه داخل خودِ API مدل جای دارند و «هارنس» به بخشی از محصول تبدیل می‌شود. پس مرز میان مدل، ایجنت و هارنس را هر پروژه خودش می‌کشد.</p>
         </div>
@@ -1355,13 +1416,13 @@ body.hide-nav .nav-arrows{ display:none; }
        SLIDE 2 — CAR ANALOGY (3D)
        ========================================================== -->
   <section class="slide s2" id="carSlide" data-label="استعارهٔ خودرو">
-    <div class="ghost">04</div>
+    <div class="ghost">4</div>
 
     <header>
-      <span class="kicker rv" style="--d:.05s"><span class="n">04</span> — analogy</span>
+      <span class="kicker rv" style="--d:.05s"><span class="n">4</span> — analogy</span>
       <h2 class="s-title rv" style="--d:.12s">تشبیه خودرو: <em>موتور</em>، <em>ECU</em> و <em>دستهٔ سیم</em></h2>
       <p class="s-sub rv" style="--d:.2s">
-        LLM توان تولید نیرو دارد، اما بدون هارنس، خودرو حرکت نمی‌کند. مدل تعاملی را بکشید تا چرخش دهید و با اسکرول زوم کنید.
+        LLM توان تولید نیرو دارد، اما بدون هارنس، خودرو حرکت نمی‌کند. مدل تعاملی را بکشید تا بچرخد و با اسکرول زوم کنید.
       </p>
     </header>
 
@@ -1375,7 +1436,7 @@ body.hide-nav .nav-arrows{ display:none; }
         <canvas id="carCanvas"></canvas>
 
         <span class="lbl" id="lblEngine" style="--c:#f43f5e">موتور — هستهٔ LLM</span>
-        <span class="lbl" id="lblEcu" style="--c:#38bdf8">ECU — هارنس</span>
+        <span class="lbl" id="lblEcu" style="--c:#38bdf8">ECU — قلب هارنس</span>
         <span class="lbl" id="lblLidar" style="--c:#f59e0b">LiDAR — ابزارها</span>
         <span class="lbl" id="lblWiring" style="--c:#10b981">دستهٔ سیم — مسیر فراخوانی</span>
         <span class="lbl" id="lblMemory" style="--c:#a78bfa">حافظه و وضعیت</span>
@@ -1445,7 +1506,7 @@ body.hide-nav .nav-arrows{ display:none; }
             <hr class="rule">
             <ul>
               <li><i>◂</i><span>تبدیل خروجی مدل به فراخوانی ابزار امن</span></li>
-              <li><i>◂</i><span>گاردیل: سیاست، مجوز، بودجه و سقف مرحله</span></li>
+              <li><i>◂</i><span>گاردریل: سیاست، مجوز، بودجه و سقف مرحله</span></li>
               <li><i>◂</i><span>حافظهٔ کوتاه‌مدت و بلندمدت + بازیابی</span></li>
               <li><i>◂</i><span>رهگیری خطا، تلاش مجدد و ثبت کامل لاگ</span></li>
             </ul>
@@ -1460,7 +1521,7 @@ body.hide-nav .nav-arrows{ display:none; }
 
         <div class="cmp-note rv" style="--d:.56s">
           <span class="chip em"><span class="dot"></span>نتیجه</span>
-          <span>قدرت خام LLM با <b>هارنس</b> ضرب می‌شود: ابزار + حافظه + گاردیل = ایجنت قابل‌اتکا.</span>
+          <span>قدرت خام LLM با <b>هارنس</b> ضرب می‌شود: ابزار + حافظه + گاردریل = ایجنت قابل‌اتکا.</span>
         </div>
       </div>
     </div>
@@ -1470,13 +1531,13 @@ body.hide-nav .nav-arrows{ display:none; }
        SLIDE 8 — HARNESS ANATOMY (interactive schematic)
        ========================================================== -->
   <section class="slide s-anat" id="anatSlide" data-label="نقشهٔ هارنس">
-    <div class="ghost">05</div>
+    <div class="ghost">5</div>
 
     <header>
-      <span class="kicker rv" style="--d:.05s"><span class="n">05</span> — architecture</span>
-      <h2 class="s-title rv" style="--d:.12s">نقشهٔ هارنس: <em>هفت قطعه</em> که همیشه هستند</h2>
+      <span class="kicker rv" style="--d:.05s"><span class="n">5</span> — architecture</span>
+      <h2 class="s-title rv" style="--d:.12s">نقشهٔ هارنس: <em>هفت قطعهٔ رایج</em></h2>
       <p class="s-sub rv" style="--d:.2s">
-        روی هر قطعه کلیک کنید (یا چیپش را بزنید) تا نقشش را ببینید. هر هارنسی که در پروژه دیدید، ترکیبی از همین‌هاست.
+        روی هر قطعه کلیک کنید (یا چیپش را بزنید) تا نقشش را ببینید. ترکیبی از همین‌هاست — با وزن متفاوت.
       </p>
     </header>
 
@@ -1513,7 +1574,7 @@ body.hide-nav .nav-arrows{ display:none; }
 
           <g class="anat-part" data-part="guard" style="--c:#f59e0b">
             <rect class="pb" x="25" y="228" width="130" height="54" rx="10"/>
-            <text class="pl" x="90" y="250">گاردیل</text>
+            <text class="pl" x="90" y="250">گاردریل</text>
             <text class="pe" x="90" y="268">GUARDRAILS</text>
           </g>
 
@@ -1542,7 +1603,7 @@ body.hide-nav .nav-arrows{ display:none; }
           <button class="chip cy anat-chip" data-part="loop" style="--c:#38bdf8"><span class="dot"></span>حلقهٔ کنترل</button>
           <button class="chip cy anat-chip" data-part="tools" style="--c:#38bdf8"><span class="dot"></span>رجیستری ابزار</button>
           <button class="chip cy anat-chip" data-part="memory" style="--c:#a78bfa"><span class="dot"></span>موتور حافظه</button>
-          <button class="chip cy anat-chip" data-part="guard" style="--c:#f59e0b"><span class="dot"></span>گاردیل</button>
+          <button class="chip cy anat-chip" data-part="guard" style="--c:#f59e0b"><span class="dot"></span>گاردریل</button>
           <button class="chip cy anat-chip" data-part="budget" style="--c:#f43f5e"><span class="dot"></span>بودجه و سقف‌ها</button>
           <button class="chip cy anat-chip" data-part="context" style="--c:#10b981"><span class="dot"></span>مهندس کانتکست</button>
           <button class="chip cy anat-chip" data-part="log" style="--c:#38bdf8"><span class="dot"></span>دنبالهٔ لاگ</button>
@@ -1570,13 +1631,13 @@ body.hide-nav .nav-arrows{ display:none; }
        SLIDE 3 — ReAct LOOP
        ========================================================== -->
   <section class="slide s3" id="reactSlide" data-label="حلقهٔ ReAct">
-    <div class="ghost">06</div>
+    <div class="ghost">6</div>
 
     <header>
-      <span class="kicker rv" style="--d:.05s"><span class="n">06</span> — theory</span>
+      <span class="kicker rv" style="--d:.05s"><span class="n">6</span> — theory</span>
       <h2 class="s-title rv" style="--d:.12s">حلقهٔ <em>ReAct</em>: فکر ← عمل ← مشاهده ← حافظه</h2>
       <p class="s-sub rv" style="--d:.2s">
-        هارنس این حلقه را اجرا می‌کند: هر «عمل» پیش از اجرا از فیلتر گاردیل عبور می‌کند و نتیجهٔ آن به حافظه بازمی‌گردد.
+        هارنس این حلقه را اجرا می‌کند: هر «عمل» پیش از اجرا از فیلتر گاردریل عبور می‌کند و نتیجهٔ آن به حافظه بازمی‌گردد.
       </p>
     </header>
 
@@ -1670,16 +1731,110 @@ body.hide-nav .nav-arrows{ display:none; }
   </section>
 
   <!-- ==========================================================
+       SLIDE 11 — TOOLS + MCP + MEMORY (merged)
+       ========================================================== -->
+  <section class="slide s-mix" id="toolsSlide" data-label="ابزار، MCP و حافظه">
+    <div class="ghost">7</div>
+
+    <header>
+      <span class="kicker rv" style="--d:.05s"><span class="n">7</span> — tools · mcp · memory</span>
+      <h2 class="s-title rv" style="--d:.12s">ابزار، <em>MCP</em> و حافظه: سه سازوکار یک هارنس</h2>
+      <p class="s-sub rv" style="--d:.2s">
+        مدل فقط «درخواست» می‌دهد؛ هارنس آن را به فراخوانی واقعی تبدیل می‌کند، با MCP به همهٔ ابزارها
+        وصل می‌شود، و با حافظه/کانتکست می‌داند چه چیزی را نگه دارد.
+      </p>
+    </header>
+
+    <div class="mix-grid">
+      <!-- ===== ابزار و MCP ===== -->
+      <div class="card mix-card rv-r" style="--d:.26s">
+        <h3><span class="ix">۱</span> ابزار: یک فراخوانی، سه پیام</h3>
+        <div class="io-flow">
+          <div class="io-step"><b>درخواست به مدل</b><code>{"tools":[{"name":"read_file",<br>  "description":"خواندن فایل"}]}</code></div>
+          <div class="io-step"><b>پاسخ مدل</b><code>{"tool_call":{"name":"read_file",<br>  "arguments":{"path":"billing/report.py"}}}</code></div>
+          <div class="io-step"><b>نتیجهٔ ابزار</b><code>{"ok":true,"content":"...","error":null}</code></div>
+        </div>
+        <ul class="rules">
+          <li><i>◂</i><span>نام ابزار کوتاه و فعلی باشد؛ شرح دقیق، بخشی از پرامپت است.</span></li>
+          <li><i>◂</i><span>پیام خطای قابل‌فهم برگردانید — پیام خطا ورودی مدل است، نه فقط لاگ سیستم.</span></li>
+        </ul>
+
+        <h3 class="mt"><span class="ix">۲</span> MCP: پروتکل استانداردِ اتصال مدل به ابزار و داده</h3>
+        <svg class="mcp-svg mix-mcp" viewBox="0 0 480 210" role="img" aria-label="معماری MCP">
+          <line class="mcp-link" x1="340" y1="105" x2="272" y2="105"/>
+          <line class="mcp-link" x1="176" y1="95" x2="140" y2="72"/>
+          <line class="mcp-link" x1="176" y1="115" x2="140" y2="150"/>
+          <rect class="mcp-node" x="340" y="75" width="108" height="60" rx="10"/>
+          <text class="mcp-lbl" x="394" y="100">هارنس / ایجنت</text>
+          <text class="mcp-sub" x="394" y="118">HOST</text>
+          <rect class="mcp-node" x="176" y="75" width="96" height="60" rx="10"/>
+          <text class="mcp-lbl" x="224" y="100">کلاینت MCP</text>
+          <text class="mcp-sub" x="224" y="118">CLIENT</text>
+          <rect class="mcp-node" x="20" y="44" width="120" height="52" rx="10"/>
+          <text class="mcp-lbl" x="80" y="66">سرور فایل‌ها</text>
+          <text class="mcp-sub" x="80" y="84">FILES</text>
+          <rect class="mcp-node" x="20" y="126" width="120" height="52" rx="10"/>
+          <text class="mcp-lbl" x="80" y="148">سرور دیتابیس</text>
+          <text class="mcp-sub" x="80" y="166">DB</text>
+          <circle class="mcp-pkt" r="4"><animateMotion dur="2.4s" repeatCount="indefinite" path="M394,105 L224,105"/></circle>
+          <circle class="mcp-pkt em" r="4"><animateMotion dur="2.4s" begin=".8s" repeatCount="indefinite" path="M224,105 L394,105"/></circle>
+          <circle class="mcp-pkt" r="4"><animateMotion dur="2.2s" begin="1.2s" repeatCount="indefinite" path="M224,95 L80,70"/></circle>
+          <circle class="mcp-pkt em" r="4"><animateMotion dur="2.2s" begin="1.9s" repeatCount="indefinite" path="M80,152 L224,115"/></circle>
+          <text class="mcp-sub" x="306" y="96">tools/list</text>
+          <text class="mcp-sub" x="150" y="62">call</text>
+        </svg>
+        <ul class="rules">
+          <li><i>◂</i><span><b>کشف</b>: هارنس می‌پرسد چه ابزارهایی موجود است — بدون کدنویسی.</span></li>
+          <li><i>◂</i><span><b>تعویض‌پذیری</b>: عوض‌کردن یک سرور، هارنس را تغییر نمی‌دهد.</span></li>
+        </ul>
+      </div>
+
+      <!-- ===== حافظه و کانتکست ===== -->
+      <div class="card mix-card rv-r" style="--d:.34s">
+        <h3><span class="ix">۳</span> حافظه و اقتصاد کانتکست</h3>
+        <div class="ctx-card">
+          <div class="ctx-bar" id="ctxBar"></div>
+          <div class="ctx-foot"><span class="sim-tag">شبیه‌سازی</span><span id="ctxUsed">0 / 32,000 توکن</span><span id="ctxState">خالی</span></div>
+          <div class="ctx-ctl">
+            <button class="btn" id="ctxPlay">▶ پر شدن و فشرده‌سازی</button>
+            <button class="btn ghost-btn" id="ctxReset">بازنشانی</button>
+          </div>
+        </div>
+
+        <div class="mem-row">
+          <div class="mem-card">
+            <h4>حافظهٔ کوتاه‌مدت</h4>
+            <p>رویدادهای همین اجرا: هر فکر، عمل و مشاهده — چیزی که مدل «همین حالا» می‌بیند.</p>
+          </div>
+          <div class="mem-card">
+            <h4>حافظهٔ بلندمدت</h4>
+            <p>دانش ماندگار پروژه: قوانین، تصمیم‌های گذشته، نتایج یادگیری — با بازیابی معنایی.</p>
+          </div>
+        </div>
+
+        <div class="warn-card">
+          <h4>پوسیدگی کانتکست (context rot)</h4>
+          <ul>
+            <li>دستور اولیه در انبوهِ پیام‌ها گم می‌شود.</li>
+            <li>مدل به قدیمی‌ترین پیام‌ها بیشتر اعتماد می‌کند.</li>
+            <li>هزینه و تأخیر هر گام بالا می‌رود.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
        SLIDE 10 — SECTION 03
        ========================================================== -->
   <section class="slide s-div" id="div3Slide" data-label="بخش ۰۳ — در عمل">
-    <div class="ghost">07</div>
+    <div class="ghost">8</div>
     <div class="div-wrap">
       <span class="div-tag rv" style="--d:.05s">section 03 — hands on</span>
       <div class="div-num rv-b" style="--d:.12s">03</div>
       <h2 class="div-title rv" style="--d:.2s">در عمل</h2>
       <p class="div-sub rv" style="--d:.28s">
-        سه دمو: یک جلسهٔ واقعی را تماشا می‌کنیم، روی سکوی آزمایش گاردیل‌ها را خاموش و روشن می‌کنیم،
+        سه دمو: یک جلسهٔ واقعی را تماشا می‌کنیم، روی سکوی آزمایش گاردریل‌ها را خاموش و روشن می‌کنیم،
         و کد هارنس را گام‌به‌گام می‌خوانیم.
       </p>
       <div class="div-chips rv" style="--d:.36s">
@@ -1702,13 +1857,13 @@ body.hide-nav .nav-arrows{ display:none; }
        SLIDE 11 — ACTION B: SESSION REPLAY
        ========================================================== -->
   <section class="slide s-replay" id="replaySlide" data-label="تماشای یک جلسهٔ واقعی">
-    <div class="ghost">08</div>
+    <div class="ghost">9</div>
 
     <header>
-      <span class="kicker rv" style="--d:.05s"><span class="n">08</span> — action · replay</span>
+      <span class="kicker rv" style="--d:.05s"><span class="n">9</span> — action · replay</span>
       <h2 class="s-title rv" style="--d:.12s">یک جلسهٔ واقعی: از «باگ گزارش» تا <em>تست سبز</em></h2>
       <p class="s-sub rv" style="--d:.2s">
-        پخش گام‌به‌گام یک اجرای واقعی هارنس روی پروژهٔ نمونه. دقت کنید: خطا وسط کار می‌آید
+        <b>نمونهٔ شبیه‌سازی‌شده:</b> پخش گام‌به‌گام یک اجرای هارنس روی پروژهٔ نمونه. دقت کنید: خطا وسط کار می‌آید
         و ایجنت <b>متوقف نمی‌شود</b> — خودش مسیر تازه را امتحان می‌کند.
       </p>
     </header>
@@ -1745,13 +1900,13 @@ body.hide-nav .nav-arrows{ display:none; }
        SLIDE 12 — ACTION C: PLAYGROUND
        ========================================================== -->
   <section class="slide s-play" id="playSlide" data-label="سکوی آزمایش هارنس">
-    <div class="ghost">09</div>
+    <div class="ghost">10</div>
 
     <header>
-      <span class="kicker rv" style="--d:.05s"><span class="n">09</span> — action · playground</span>
-      <h2 class="s-title rv" style="--d:.12s">سکوی آزمایش: <em>گاردیل را خاموش کنید</em> و ببینید چه می‌شود</h2>
+      <span class="kicker rv" style="--d:.05s"><span class="n">10</span> — action · playground</span>
+      <h2 class="s-title rv" style="--d:.12s">سکوی آزمایش: <em>گاردریل را خاموش کنید</em> و ببینید چه می‌شود</h2>
       <p class="s-sub rv" style="--d:.2s">
-        هدف، ابزارها و گاردیل‌ها را انتخاب کنید و هارنس را اجرا کنید. گاردیل را بردارید و
+        هدف، ابزارها و گاردریل‌ها را انتخاب کنید و هارنس را اجرا کنید. گاردریل را بردارید و
         حلقهٔ بی‌پایان و هزینهٔ سرسام‌آور را ببینید.
       </p>
     </header>
@@ -1779,7 +1934,7 @@ body.hide-nav .nav-arrows{ display:none; }
         </div>
 
         <div>
-          <div class="pg-lbl">گاردیل‌ها</div>
+          <div class="pg-lbl">گاردریل‌ها</div>
           <div class="pg-guards">
             <label class="pg-guard"><input type="checkbox" checked data-guard="allow"><span>فهرست مجاز ابزار</span></label>
             <label class="pg-guard"><input type="checkbox" checked data-guard="budget"><span>سقف بودجه و گام</span></label>
@@ -1800,7 +1955,7 @@ body.hide-nav .nav-arrows{ display:none; }
           <span class="chip" id="pgState" style="margin-inline-start:auto"><span class="dot"></span>idle</span>
         </div>
         <div class="con-log" id="pgLog"></div>
-        <div class="sim-metrics">
+        <div class="sim-metrics"><span class="sim-tag">شبیه‌سازی</span>
           <span class="m">step <b id="pgStep">0/8</b></span>
           <span class="m">tokens <b id="pgTok">0/32,000</b></span>
           <span class="m">tools <b id="pgTools">0</b></span>
@@ -1814,14 +1969,13 @@ body.hide-nav .nav-arrows{ display:none; }
        SLIDE 13 — ACTION D: CODE IN MOTION
        ========================================================== -->
   <section class="slide s-code" id="codeSlide" data-label="کد هارنس در حرکت">
-    <div class="ghost">10</div>
+    <div class="ghost">11</div>
 
     <header>
-      <span class="kicker rv" style="--d:.05s"><span class="n">10</span> — action · code</span>
+      <span class="kicker rv" style="--d:.05s"><span class="n">11</span> — action · code</span>
       <h2 class="s-title rv" style="--d:.12s">کد هارنس <em>در حرکت</em></h2>
       <p class="s-sub rv" style="--d:.2s">
-        همان معماری مرجع، این‌بار خط‌به‌خط. «اجرای گام‌به‌گام» را بزنید تا ببینید در هر لحظه کدام خط از کد زنده است.
-      </p>
+        همان معماری مرجع، این‌بار خط‌به‌خط. «اجرای گام‌به‌گام» را بزنید تا ببینید در هر لحظه کدام خط از کد زنده است.<br>همان چرخهٔ چهارمرحله‌ای — این‌جا با گام‌های کنترلی باز شده.</p>
     </header>
 
     <div class="s4-body">
@@ -1838,7 +1992,7 @@ body.hide-nav .nav-arrows{ display:none; }
         <div class="phase-list" id="phaseList">
           <div class="phase" data-p="0"><span class="pn">۰۱</span>تفکر</div>
           <div class="phase" data-p="1"><span class="pn">۰۲</span>اعتبارسنجی خروجی</div>
-          <div class="phase" data-p="2"><span class="pn">۰۳</span>گاردیل</div>
+          <div class="phase" data-p="2"><span class="pn">۰۳</span>گاردریل</div>
           <div class="phase" data-p="3"><span class="pn">۰۴</span>اجرای ایزوله</div>
           <div class="phase" data-p="4"><span class="pn">۰۵</span>بازیابی خطا</div>
           <div class="phase" data-p="5"><span class="pn">۰۶</span>ثبت در حافظه</div>
@@ -1851,100 +2005,6 @@ body.hide-nav .nav-arrows{ display:none; }
         <div class="phase-ctl" style="display:flex;gap:.5em;align-items:center;flex-wrap:wrap">
           <button class="btn" id="phasePlay">▶ اجرای گام‌به‌گام</button>
           <span class="mini-note" id="phaseState">گام ۱ / ۷</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ==========================================================
-       SLIDE 11 — TOOLS + MCP + MEMORY (merged)
-       ========================================================== -->
-  <section class="slide s-mix" id="toolsSlide" data-label="ابزار، MCP و حافظه">
-    <div class="ghost">11</div>
-
-    <header>
-      <span class="kicker rv" style="--d:.05s"><span class="n">11</span> — tools · mcp · memory</span>
-      <h2 class="s-title rv" style="--d:.12s">ابزار، <em>MCP</em> و حافظه: سه سازوکار یک هارنس</h2>
-      <p class="s-sub rv" style="--d:.2s">
-        مدل فقط «درخواست» می‌دهد؛ هارنس آن را به فراخوانی واقعی تبدیل می‌کند، با MCP به همهٔ ابزارها
-        وصل می‌شود، و با حافظه/کانتکست می‌داند چه چیزی را نگه دارد.
-      </p>
-    </header>
-
-    <div class="mix-grid">
-      <!-- ===== ابزار و MCP ===== -->
-      <div class="card mix-card rv-r" style="--d:.26s">
-        <h3><span class="ix">۱</span> ابزار: یک فراخوانی، سه پیام</h3>
-        <div class="io-flow">
-          <div class="io-step"><b>درخواست به مدل</b><code>{"tools":[{"name":"read_file",<br>  "description":"خواندن فایل"}]}</code></div>
-          <div class="io-step"><b>پاسخ مدل</b><code>{"tool_call":{"name":"read_file",<br>  "arguments":{"path":"billing/report.py"}}}</code></div>
-          <div class="io-step"><b>نتیجهٔ ابزار</b><code>{"ok":true,"content":"...","error":null}</code></div>
-        </div>
-        <ul class="rules">
-          <li><i>◂</i><span>نام ابزار کوتاه و فعلی باشد؛ شرح دقیق، بخشی از پرامپت است.</span></li>
-          <li><i>◂</i><span>پیام خطای قابل‌فهم برگردانید — پیام خطا ورودی مدل است، نه فقط لاگ سیستم.</span></li>
-        </ul>
-
-        <h3 class="mt"><span class="ix">۲</span> MCP: سوکت استاندارد ابزارها</h3>
-        <svg class="mcp-svg mix-mcp" viewBox="0 0 440 210" role="img" aria-label="معماری MCP">
-          <line class="mcp-link" x1="310" y1="105" x2="272" y2="105"/>
-          <line class="mcp-link" x1="176" y1="95" x2="140" y2="72"/>
-          <line class="mcp-link" x1="176" y1="115" x2="140" y2="150"/>
-          <rect class="mcp-node" x="310" y="75" width="110" height="60" rx="10"/>
-          <text class="mcp-lbl" x="365" y="100">هارنس / ایجنت</text>
-          <text class="mcp-sub" x="365" y="118">HOST</text>
-          <rect class="mcp-node" x="176" y="75" width="96" height="60" rx="10"/>
-          <text class="mcp-lbl" x="224" y="100">کلاینت MCP</text>
-          <text class="mcp-sub" x="224" y="118">CLIENT</text>
-          <rect class="mcp-node" x="20" y="44" width="120" height="52" rx="10"/>
-          <text class="mcp-lbl" x="80" y="66">سرور فایل‌ها</text>
-          <text class="mcp-sub" x="80" y="84">FILES</text>
-          <rect class="mcp-node" x="20" y="126" width="120" height="52" rx="10"/>
-          <text class="mcp-lbl" x="80" y="148">سرور دیتابیس</text>
-          <text class="mcp-sub" x="80" y="166">DB</text>
-          <circle class="mcp-pkt" r="4"><animateMotion dur="2.4s" repeatCount="indefinite" path="M365,105 L224,105"/></circle>
-          <circle class="mcp-pkt em" r="4"><animateMotion dur="2.4s" begin=".8s" repeatCount="indefinite" path="M224,105 L365,105"/></circle>
-          <circle class="mcp-pkt" r="4"><animateMotion dur="2.2s" begin="1.2s" repeatCount="indefinite" path="M224,95 L80,70"/></circle>
-          <circle class="mcp-pkt em" r="4"><animateMotion dur="2.2s" begin="1.9s" repeatCount="indefinite" path="M80,152 L224,115"/></circle>
-          <text class="mcp-sub" x="288" y="95">tools/list</text>
-          <text class="mcp-sub" x="152" y="88">call</text>
-        </svg>
-        <ul class="rules">
-          <li><i>◂</i><span><b>کشف</b>: هارنس می‌پرسد چه ابزارهایی موجود است — بدون کدنویسی.</span></li>
-          <li><i>◂</i><span><b>تعویض‌پذیری</b>: عوض‌کردن یک سرور، هارنس را تغییر نمی‌دهد.</span></li>
-        </ul>
-      </div>
-
-      <!-- ===== حافظه و کانتکست ===== -->
-      <div class="card mix-card rv-r" style="--d:.34s">
-        <h3><span class="ix">۳</span> حافظه و اقتصاد کانتکست</h3>
-        <div class="ctx-card">
-          <div class="ctx-bar" id="ctxBar"></div>
-          <div class="ctx-foot"><span id="ctxUsed">0 / 32,000 توکن</span><span id="ctxState">خالی</span></div>
-          <div class="ctx-ctl">
-            <button class="btn" id="ctxPlay">▶ پر شدن و فشرده‌سازی</button>
-            <button class="btn ghost-btn" id="ctxReset">بازنشانی</button>
-          </div>
-        </div>
-
-        <div class="mem-row">
-          <div class="mem-card">
-            <h4>حافظهٔ کوتاه‌مدت</h4>
-            <p>رویدادهای همین اجرا: هر فکر، عمل و مشاهده — چیزی که مدل «همین حالا» می‌بیند.</p>
-          </div>
-          <div class="mem-card">
-            <h4>حافظهٔ بلندمدت</h4>
-            <p>دانش ماندگار پروژه: قوانین، تصمیم‌های گذشته، نتایج یادگیری — با بازیابی معنایی.</p>
-          </div>
-        </div>
-
-        <div class="warn-card">
-          <h4>پوسیدگی کانتکست (context rot)</h4>
-          <ul>
-            <li>دستور اولیه در انبوهِ پیام‌ها گم می‌شود.</li>
-            <li>مدل به قدیمی‌ترین پیام‌ها بیشتر اعتماد می‌کند.</li>
-            <li>هزینه و تأخیر هر گام بالا می‌رود.</li>
-          </ul>
         </div>
       </div>
     </div>
@@ -1967,7 +2027,7 @@ body.hide-nav .nav-arrows{ display:none; }
             <li><span class="no">۱</span><span>ترمینال را باز کنید و به پوشهٔ پروژهٔ نمونه بروید.</span></li>
             <li><span class="no">۲</span><span>دستور: <code>claude</code> یا <code>python harness.py --task "fix report bug"</code></span></li>
             <li><span class="no">۳</span><span>یک اجرای واقعی: خطا → اصلاح → تست سبز.</span></li>
-            <li><span class="no">۴</span><span>اگر اینترنت نبود: همین شبیه‌سازِ داخل فایل را اجرا کنید (اسلاید ۱۲).</span></li>
+            <li><span class="no">۴</span><span>اگر اینترنت نبود: همین شبیه‌سازِ داخل فایل را اجرا کنید (اسلاید ۱۰).</span></li>
           </ol>
         </div>
 
@@ -2011,13 +2071,13 @@ body.hide-nav .nav-arrows{ display:none; }
         </div>
         <div class="card metric rv-s" style="--d:.3s;--c:#f59e0b">
           <b data-count="3">0</b>
-          <span>لایهٔ گاردیل</span>
+          <span>لایهٔ گاردریل</span>
           <small>سیاست · مجوز و تأیید انسانی · بودجه</small>
         </div>
         <div class="card metric rv-s" style="--d:.36s;--c:#10b981">
           <b data-count="6">0</b>
           <span>گام در یک چرخهٔ ReAct</span>
-          <small>فکر · عمل · مشاهده · بازخور</small>
+          <small>فکر · عمل · مشاهده · بازخورد</small>
         </div>
         <div class="card metric rv-s" style="--d:.42s;--c:#a78bfa">
           <b data-count="100" data-suffix="٪">0</b>
@@ -2027,7 +2087,7 @@ body.hide-nav .nav-arrows{ display:none; }
       </div>
 
       <ul class="check">
-        <li class="rv-r" style="--d:.3s"><span class="ck">✓</span><span class="tx"><b>گاردیل چندلایه</b><span>هر عمل پیش از اجرا از فیلتر سیاست، مجوز و بودجه عبور می‌کند.</span></span></li>
+        <li class="rv-r" style="--d:.3s"><span class="ck">✓</span><span class="tx"><b>گاردریل چندلایه</b><span>هر عمل پیش از اجرا از فیلتر سیاست، مجوز و بودجه عبور می‌کند.</span></span></li>
         <li class="rv-r" style="--d:.36s"><span class="ck">✓</span><span class="tx"><b>محدودیت‌های سخت</b><span>سقف مرحله، سقف توکن و timeout تا ایجنت نتواند در حلقه گیر کند.</span></span></li>
         <li class="rv-r" style="--d:.42s"><span class="ck">✓</span><span class="tx"><b>ایزوله‌سازی اجرا</b><span>اجرای کد ابزار در sandbox، بدون دسترسی مستقیم به سیستم.</span></span></li>
         <li class="rv-r" style="--d:.48s"><span class="ck">✓</span><span class="tx"><b>حافظهٔ دو لایه</b><span>حافظهٔ کوتاه‌مدت برای حلقه، حافظهٔ بلندمدت با بازیابی معنایی.</span></span></li>
@@ -2041,7 +2101,7 @@ body.hide-nav .nav-arrows{ display:none; }
           <span class="rm-cap">هارنس‌های واقعی — هر سه از همان هفت قطعه ساخته شده‌اند</span>
           <table class="rm-table">
             <thead>
-              <tr><th>هارنس</th><th>ابزارها</th><th>حافظه</th><th>گاردیل</th><th>درس</th></tr>
+              <tr><th>هارنس</th><th>ابزارها</th><th>حافظه</th><th>گاردریل</th><th>درس</th></tr>
             </thead>
             <tbody>
               <tr>
@@ -2071,6 +2131,7 @@ body.hide-nav .nav-arrows{ display:none; }
 
     <div class="closing rv" style="--d:.7s">
       <div class="q">مدل، <b>موتور</b> است. هارنس، <b>خودرو</b> است. بدون هارنس، شما فقط یک قطعهٔ گران‌قیمت دارید.</div>
+      <div class="q">ایجنت، رفتاری است که هارنس ممکنش می‌کند؛ و هر قطعه یک اهرم است: هرچه ابزار، دسترسی یا بودجه بازتر، <b>استقلال</b> بیشتر و ریسک بیشتر.</div>
       <span class="chip cy"><span class="dot"></span>پایان · پرسش و پاسخ</span>
     </div>
   </section>
@@ -2104,6 +2165,7 @@ body.hide-nav .nav-arrows{ display:none; }
   const canvas = document.getElementById('carCanvas');
   const fallback = document.getElementById('carFallback');
   const fpsEl = document.getElementById('carFps');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const labels = {
     engine:  document.getElementById('lblEngine'),
     ecu:     document.getElementById('lblEcu'),
@@ -2116,16 +2178,23 @@ body.hide-nav .nav-arrows{ display:none; }
   window.__carTick  = null;   // called by the deck controller when slide 2 is active
 
   function showFallback(){
+    if (fallback.classList.contains('on')) return;
     fallback.classList.add('on');
-    stage.querySelector('.car-hint').textContent = '2D FALLBACK · THREE.JS UNAVAILABLE';
+    fpsEl.textContent = '—';
+    stage.querySelector('.car-hint').textContent = 'نمای دوبعدی · Three.js در دسترس نیست';
+    fallback.insertAdjacentHTML('beforeend', '<p class="fallback-note">نمای سه‌بعدی به اینترنت نیاز دارد؛ همین بخش را اینجا به‌صورت دوبعدی می‌بینید.</p>');
   }
+
+  // بدون شبکه، import ماژول CDN ممکن است خیلی طول بکشد؛ پس از ۶ ثانیه تسلیم شو
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('module load timeout')), ms))]);
 
   async function init(){
     if (!canvas) return;
-    let THREE, OrbitControls;
+    let THREE, OrbitControls, renderer;
     try {
-      THREE = await import('three');
-      ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+      THREE = await withTimeout(import('three'), 6000);
+      ({ OrbitControls } = await withTimeout(import('three/addons/controls/OrbitControls.js'), 6000));
+      renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
     } catch (e) {
       console.warn('Three.js could not be loaded:', e);
       showFallback();
@@ -2135,7 +2204,6 @@ body.hide-nav .nav-arrows{ display:none; }
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x090d16, 0.035);
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -2429,7 +2497,7 @@ body.hide-nav .nav-arrows{ display:none; }
 
       frames++; fpsTimer += 0.016;
       if (fpsTimer >= 1){ fpsEl.textContent = frames + ' FPS'; frames = 0; fpsTimer = 0; }
-      rafId = requestAnimationFrame(frame);
+      if (!reduceMotion) rafId = requestAnimationFrame(frame);
     }
 
     let rafId = null;
@@ -2618,55 +2686,59 @@ body.hide-nav .nav-arrows{ display:none; }
   const NOTES = [
     { t:'معماری ایجنت‌ها و هارنس', m:'۱ دقیقه', b:[
       'خودتان را معرفی کنید و بگویید امروز دو چیز را با هم می‌بینیم: ایجنت چیست و هارنس چه چیزی به آن اضافه می‌کند.',
-      'قرارداد جلسه: ۳۰ دقیقه، ۵ بخش، و یک دموی زنده در انتها.' ] },
+      'قرارداد جلسه: ۳۰ دقیقه، ۳ بخش، و یک دموی زنده در انتها.' ] },
     { t:'نقشهٔ راه', m:'۳۰ ثانیه', b:[
-      'محور زمان را نشان دهید: ۱.۵ دقیقه مقدمه، ۱۱ دقیقه مبانی و هارنس، ۱۰ دقیقه در عمل، ۴ دقیقه ابزار و حافظه، ۳.۵ دقیقه دمو و جمع‌بندی.',
-      'قول بدهید: تا دقیقهٔ ۲۰ همه‌چیز روی کاغذ است، بعدش همه‌چیز در حال اجراست.' ] },
+      'محور زمان را نشان دهید: ۱.۵ دقیقه مقدمه، ۱۵ دقیقه مبانی و هارنس (شامل ابزار، MCP و حافظه)، ۱۰ دقیقه در عمل، ۳.۵ دقیقه دمو و جمع‌بندی.',
+      'قول بدهید: تا حوالی دقیقهٔ ۱۷ همه‌چیز روی کاغذ است، بعدش همه‌چیز در حال اجراست.' ] },
     { t:'از مدل تا ایجنت', m:'۳ دقیقه', b:[
       'مدل تنها یک‌بار حرف می‌زند؛ ایجنت در حلقه، با ابزار و اختیار مشخص کار می‌کند.',
       'تعریف را صریح بگویید: مدل = تابع بی‌حافظه (متن در، متن بیرون) · ایجنت = رفتارِ چندگامه‌ای که خودش گام بعدی را انتخاب می‌کند · هارنس = کدی که آن رفتار را ممکن می‌کند.',
       'مرزها را مطلق نگیرید (این مدل ذهنی است): در بعضی پیاده‌سازی‌ها ابزار و حلقه داخل SDK مدل‌اند و «هارنس» به بخشی از محصول تبدیل می‌شود. اگر کسی «ایجنت» را جایی دیگر تعریف کرد، بحث را باز کنید.',
+      'این معادله یک مدل ذهنی برای توضیح است، نه یک استاندارد؛ مرز میان مدل، ایجنت و هارنس در هر پروژه جای دیگری کشیده می‌شود.',
       'روی چهار لایه کلیک کنید: هر لایه معادله و جملهٔ کلیدی خودش را نشان می‌دهد و پخش خودکار متوقف می‌شود.',
       'سه ضد-مثال را سریع رد کنید: جواب تک‌مرحله‌ای چت، ورک‌فلو/RAG با مسیر ثابت، و یک پرامپت بزرگ — هیچ‌کدام ایجنت نیستند.',
-      'فرمول: ابزار بدون حلقه = یک‌بارمصرف؛ حلقه بدون ابزار = حرف؛ ابزار + حلقه + گاردیل = ایجنت.',
+      'فرمول: ابزار بدون حلقه = یک‌بارمصرف؛ حلقه بدون ابزار = حرف؛ ابزار + حلقه + گاردریل = ایجنت.',
       'مثال: «قیمت سهام» در برابر «قیمت سهام ۳۰ روزه را تحلیل کن و فایل بساز».' ] },
-    { t:'استعارهٔ خودرو', m:'۲.۵ دقیقه', b:[
+    { t:'استعارهٔ خودرو', m:'۳ دقیقه', b:[
       'بگذارید مخاطب خودش بچرخاند: دراگ برای چرخش، اسکرول برای زوم.',
       'موتور = LLM (توان و گشتاور، اما بدون فرمان)؛ هارنس = ECU و دسته‌سیم (فرمان، ایمنی، حافظه).',
       'نکته: هیچ خودرویی بدون ECU حرکت نمی‌کند؛ هیچ ایجنتی بدون هارنس کار نمی‌کند.' ] },
-    { t:'نقشهٔ هارنس', m:'۲ دقیقه', b:[
-      'هفت قطعه را یکی‌یکی بزنید: حلقه، ابزارها، حافظه، گاردیل، بودجه، کانتکست، لاگ.',
+    { t:'نقشهٔ هارنس', m:'۲.۵ دقیقه', b:[
+      'هفت قطعه را یکی‌یکی بزنید: حلقه، ابزارها، حافظه، گاردریل، بودجه، کانتکست، لاگ.',
       'حلقه را با «شرط پایان» توضیح دهید: پاسخ نهایی، سقف بودجه، خطای مکرر یا تأیید انسان — بدون شرط پایان، حلقه یعنی اجرای بی‌پایان.',
       'هر بار که روی یک چیپ می‌زنید، پنجرهٔ «نمونهٔ زنده» همان قطعه را در عمل نشان می‌دهد.' ] },
     { t:'حلقهٔ ReAct', m:'۲ دقیقه', b:[
       'چهار فاز: فکر، عمل، مشاهده، حافظه. حافظه فاز چهارم است، نه یک ویژگی جانبی.',
       'روی «پخش دوبارهٔ حلقه» بزنید و بگذارید حلقه یک دور کامل بچرخد.' ] },
-    { t:'در عمل', m:'۲۰ ثانیه', b:[
+    { t:'ابزار، MCP و حافظه', m:'۴.۵ دقیقه', b:[
+      'ابزار: مدل فقط درخواست می‌دهد؛ اجرا با هارنس است.',
+      'MCP: پروتکل استاندارد (JSON-RPC روی stdio/HTTP)؛ کشف ابزار بدون کدنویسی.',
+      'حافظه: کوتاه‌مدت (رویدادهای همین اجرا) و بلندمدت (دانش پروژه).',
+      'پنجرهٔ کانتکست را پر و فشرده کنید تا ببینند چه اتفاقی می‌افتد.' ] },
+    { t:'در عمل', m:'۳۰ ثانیه', b:[
       'فاصلهٔ کوتاه: از تئوری به اجرای واقعی.',
       'سه چیز در عمل می‌بینیم: یک جلسهٔ واقعی، یک سکوی آزمایش، و کد در حال حرکت.' ] },
     { t:'تماشای یک جلسهٔ واقعی', m:'۴ دقیقه', b:[
-      'پخش خودکار: ۱۷ رویداد، یک خطای واقعی وسط کار و دو اصلاح.',
-      'هر ابزار قبل از اجرا از گاردیل رد می‌شود — به خط «چرا این کار؟» اشاره کنید.',
+      'پخش خودکار: ۱۶ رویداد، یک خطای واقعی وسط کار و دو اصلاح.',
+      'هر ابزار قبل از اجرا از گاردریل رد می‌شود — به خط «چرا این کار؟» اشاره کنید.',
       'نکتهٔ کلیدی: خطا باعث توقف نمی‌شود؛ ایجنت مسیر تازه را امتحان می‌کند.' ] },
     { t:'سکوی آزمایش هارنس', m:'۳ دقیقه', b:[
-      '«اجرای نمونه» را بزنید: یک اجرای سالم با همهٔ گاردیل‌ها.',
+      '«اجرای نمونه» را بزنید: یک اجرای سالم با همهٔ گاردریل‌ها.',
       'بعد «سقف بودجه» را خاموش کنید و دوباره اجرا کنید: حلقهٔ سرکش، ۷۹ هزار توکن و ۶ دلار هزینه.',
-      'پیام: گاردیل تنها چیزی است که جلوی این را می‌گیرد.' ] },
-    { t:'کد هارنس در حرکت', m:'۲ دقیقه', b:[
+      'پیام: گاردریل تنها چیزی است که جلوی این را می‌گیرد.' ] },
+    { t:'کد هارنس در حرکت', m:'۲.۵ دقیقه', b:[
       '۳۰ خط پایتون: همان هارنسی که در جلسهٔ قبل دیدیم.',
-      'هر فاز خطوط خودش را هایلایت می‌کند: حلقه، ابزار، گاردیل، بودجه، لاگ.' ] },
-    { t:'ابزار، MCP و حافظه', m:'۴ دقیقه', b:[
-      'ابزار: مدل فقط درخواست می‌دهد؛ اجرا با هارنس است.',
-      'MCP: سوکت استاندارد؛ کشف ابزار بدون کدنویسی.',
-      'حافظه: کوتاه‌مدت (رویدادهای همین اجرا) و بلندمدت (دانش پروژه).',
-      'پنجرهٔ کانتکست را پر و فشرده کنید تا ببینند چه اتفاقی می‌افتد.' ] },
-    { t:'دموی زنده', m:'۵ دقیقه', b:[
+      'هر فاز خطوط خودش را هایلایت می‌کند: حلقه، ابزار، گاردریل، بودجه، لاگ.' ] },
+
+    { t:'دموی زنده', m:'۱.۵ دقیقه', b:[
       'اگر اینترنت و کلید دارید: ترمینال را باز کنید و یک تسک واقعی بدهید.',
-      'اگر ندارید: همین شبیه‌ساز داخل فایل (اسلاید ۹) جایگزین است.',
+      'اگر ندارید: همین شبیه‌ساز داخل فایل (اسلاید ۱۰) جایگزین است.',
       'ترمینال را از قبل باز و آماده نگه دارید؛ ریسک را از روی صحنه بردارید.' ] },
     { t:'جمع‌بندی', m:'۲ دقیقه', b:[
-      'چهار چیز: حلقه، ابزار، حافظه، گاردیل — اگر این‌ها نباشند، ایجنتی در کار نیست.',
+      'این اعداد شمارشِ همین دمو در همین ارائه‌اند — نه اندازه‌گیریِ عمومی؛ نرخ توکن و هزینه در سکوی آزمایش هم شبیه‌سازی است.',
+      'چهار چیز: حلقه، ابزار، حافظه، گاردریل — اگر این‌ها نباشند، ایجنتی در کار نیست.',
       'جدول هارنس‌های واقعی را مرور کنید: از هرکدام چه چیزی قابل الگوبرداری است.',
+      'این جدول وضعیت ابزارها در زمان همین ارائه را نشان می‌دهد و ممکن است بعداً تغییر کند.',
       'پرسش و پاسخ.' ] }
   ];
 
@@ -2687,10 +2759,9 @@ body.hide-nav .nav-arrows{ display:none; }
 
   const SECTIONS = [
     { name:'مقدمه',              from:0,  to:1,  min:1.5 },
-    { name:'۰۱ مبانی و هارنس',   from:2,  to:5,  min:11  },
-    { name:'۰۲ در عمل',          from:6,  to:9,  min:10  },
-    { name:'۰۳ ابزار و حافظه',   from:10, to:10, min:4   },
-    { name:'۰۴ دمو و جمع‌بندی',   from:11, to:12, min:3.5 }
+    { name:'۰۱ مبانی و هارنس',   from:2,  to:6,  min:15  },
+    { name:'۰۲ در عمل',          from:7,  to:10, min:10  },
+    { name:'۰۳ دمو و جمع‌بندی',   from:11, to:12, min:3.5 }
   ];
   const TOTAL = 30 * 60;
   let tSec = 0, tRunning = false, tTimer = null, currentIndex = 0;
@@ -2738,14 +2809,6 @@ body.hide-nav .nav-arrows{ display:none; }
   });
 
   /* ==========================================================
-     AGENDA — jump to section
-     ========================================================== */
-  $$('.ag-row').forEach(row => on(row, 'click', () => {
-    const target = parseInt(row.dataset.goto, 10);
-    if (!isNaN(target)) document.dispatchEvent(new CustomEvent('deck:goto', { detail:{ index:target } }));
-  }));
-
-  /* ==========================================================
      SLIDE 4 — build-up animation
      ========================================================== */
   const fundRows = $$('.fund-row');
@@ -2765,7 +2828,7 @@ body.hide-nav .nav-arrows{ display:none; }
     loop:    { k:'CONTROL LOOP',   t:'حلقهٔ کنترل', d:'قلب هارنس. تصمیم می‌گیرد گام بعدی چیست، چند گام مجاز است و کِی باید متوقف شود. بدون این حلقه، مدل فقط یک‌بار حرف می‌زند.' },
     tools:   { k:'TOOL REGISTRY',  t:'رجیستری ابزار', d:'نام، شرح و اسکیمای ورودی هر ابزار. مدل فقط همین فهرست را می‌بیند؛ هر ابزاری که اینجا نباشد، قابل اجرا نیست.' },
     memory:  { k:'MEMORY',         t:'موتور حافظه', d:'حافظهٔ کوتاه‌مدت (رویدادهای همین اجرا) و حافظهٔ بلندمدت (دانش پروژه). بدون آن، ایجنت هر بار از صفر شروع می‌کند.' },
-    guard:   { k:'GUARDRAILS',     t:'گاردیل', d:'پیش از اجرا تصمیم می‌گیرد: این ابزار مجاز است؟ این عمل مخرب است؟ آیا انسان باید تأیید کند؟ تنها جایی که هارنس می‌تواند «نه» بگوید.' },
+    guard:   { k:'GUARDRAILS',     t:'گاردریل', d:'پیش از اجرا تصمیم می‌گیرد: این ابزار مجاز است؟ این عمل مخرب است؟ آیا انسان باید تأیید کند؟ تنها جایی که هارنس می‌تواند «نه» بگوید.' },
     budget:  { k:'LIMITS',         t:'بودجه و سقف‌ها', d:'حداکثر گام، توکن، زمان و هزینه. سقف‌ها تضمین می‌کنند یک ایجنتِ خراب، جیب و زمان شما را بی‌نهایت نخورد.' },
     context: { k:'CONTEXT ENGINE', t:'مهندس کانتکست', d:'تعیین می‌کند چه چیزی در پنجرهٔ کانتکست بماند، چه چیزی خلاصه شود و چه چیزی دور ریخته شود. قلب اقتصاد کانتکست.', q:'«چه چیزی را نگه دارم و چه چیزی را دور بریزم؟»' },
     log:     { k:'TRACE / REPLAY', t:'دنبالهٔ لاگ', d:'هر فراخوانی با ورودی، خروجی و زمان ثبت می‌شود. همین لاگ است که بعداً ارزیابی، بازپخش و اشکال‌زدایی را ممکن می‌کند.' }
@@ -2837,6 +2900,8 @@ body.hide-nav .nav-arrows{ display:none; }
     { k:'asst', who:'DONE', txt:'باگ رفع شد. خلاصه: ۱ فایل تغییر کرد، ۱ تست به‌روزرسانی شد، تست‌ها سبزند.', dur:2000,
       note:'جمع‌بندی اجرا: ۷ فراخوانی ابزار، ۱ خطا، ۲ اصلاح. همین «بعد از خطا ادامه دادن» تفاوت ایجنت و یک پرامپت است.' }
   ];
+  const RP_TOTAL_MS = RP_EVENTS.reduce((a, e) => a + e.dur, 0);
+  const rpElapsed = () => RP_EVENTS.slice(0, rpIdx + 1).reduce((a, e) => a + e.dur, 0);
   const rpLog = $('#rpLog'), rpCode = $('#rpCode'), rpNote = $('#rpNote'),
         rpFill = $('#rpFill'), rpTime = $('#rpTime'), rpFileState = $('#rpFileState'),
         rpPlay = $('#rpPlay'), rpSpeed = $('#rpSpeed');
@@ -2851,7 +2916,7 @@ body.hide-nav .nav-arrows{ display:none; }
     rpNote.innerHTML = '<b>چرا این کار؟</b> — روی «پخش» بزنید تا گام‌ها یکی‌یکی اجرا شوند.';
     rpFileState.textContent = 'idle';
     rpFill.style.width = '0%';
-    rpTime.textContent = '00:00 / 01:40';
+    rpTime.textContent = '00:00 / ' + fmt(RP_TOTAL_MS / 1000);
     rpPlay.textContent = '▶';
   }
   function renderRPCode(){
@@ -2885,7 +2950,7 @@ body.hide-nav .nav-arrows{ display:none; }
     rpNote.innerHTML = '<b>چرا این کار؟</b> — ' + (e.note || 'این گام بخشی از مسیر عادی اجراست.');
     rpFileState.textContent = e.k === 'tool' ? (e.who + ' ✓') : e.who.toLowerCase();
     rpFill.style.width = ((rpIdx + 1) / RP_EVENTS.length * 100) + '%';
-    rpTime.textContent = fmt(rpIdx * 6) + ' / 01:40';
+    rpTime.textContent = fmt(rpElapsed() / 1000) + ' / ' + fmt(RP_TOTAL_MS / 1000);
   }
   function rpStop(){ if (rpTimer){ clearTimeout(rpTimer); rpTimer = null; } rpPlay.textContent = '▶'; }
   function rpPlayNext(){
@@ -2999,7 +3064,7 @@ body.hide-nav .nav-arrows{ display:none; }
   }
   on(pgRunBtn, 'click', pgExecute);
   pgLog.innerHTML = '<div class="log SYSTEM"><span class="tag">[idle]</span><span class="msg">'
-    + '▶ «اجرای هارنس» را بزنید. برای دیدن خطر، گاردیل «سقف بودجه» را بردارید.</span></div>';
+    + '▶ «اجرای هارنس» را بزنید. برای دیدن خطر، گاردریل «سقف بودجه» را بردارید.</span></div>';
   on(pgReset, 'click', () => {
     pgLog.innerHTML = ''; pgStep.textContent = '0/8'; pgTok.textContent = '0/32,000';
     pgTools.textContent = '0'; pgCost.textContent = '$0.00'; pgState.textContent = 'idle';
@@ -3032,7 +3097,7 @@ body.hide-nav .nav-arrows{ display:none; }
 '        <span class="c-k">for</span> step <span class="c-k">in</span> <span class="c-p">range</span>(self.limits[<span class="c-s">"steps"</span>]):',
 '            thought = self.llm.<span class="c-f">think</span>(task, self.memory)   <span class="c-c"># ۱ · فکر</span>',
 '            action  = self.<span class="c-f">parse</span>(thought)        <span class="c-c"># ۲ · JSON</span>',
-'            self.guard.<span class="c-f">check</span>(action)           <span class="c-c"># ۳ · گاردیل</span>',
+'            self.guard.<span class="c-f">check</span>(action)           <span class="c-c"># ۳ · گاردریل</span>',
 '            <span class="c-k">try</span>:',
 '                obs = self.<span class="c-f">dispatch</span>(action)     <span class="c-c"># ۴ · sandbox</span>',
 '            <span class="c-k">except</span> <span class="c-t">ToolError</span> <span class="c-k">as</span> exc:',
@@ -3043,7 +3108,7 @@ body.hide-nav .nav-arrows{ display:none; }
   const PHASES = [
     { t:'تفکر', l:[22], d:'مدل روی حافظه و فهرست ابزارها طرح‌وارهٔ عمل را می‌نویسد. هارنس هنوز هیچ چیزی اجرا نکرده است.' },
     { t:'اعتبارسنجی خروجی', l:[23], d:'خروجی مدل باید JSON معتبر باشد. اگر نبود، هارنس آن را به خطا تبدیل می‌کند و از مدل می‌خواهد دوباره بنویسد.' },
-    { t:'گاردیل', l:[24], d:'تنها جایی که هارنس می‌تواند «نه» بگوید: ابزار مجاز است؟ عمل مخرب است؟ بودجه کافی است؟' },
+    { t:'گاردریل', l:[24], d:'تنها جایی که هارنس می‌تواند «نه» بگوید: ابزار مجاز است؟ عمل مخرب است؟ بودجه کافی است؟' },
     { t:'اجرای ایزوله', l:[26], d:'عمل داخل sandbox اجرا می‌شود. مدل هیچ دسترسی مستقیمی به سیستم ندارد — فقط از راه هارنس.' },
     { t:'بازیابی خطا', l:[27,28], d:'خطا استثنا نیست، داده است. هارنس آن را می‌گیرد، به حافظه می‌سپارد و به مدل می‌دهد تا راه دیگری امتحان کند.' },
     { t:'ثبت در حافظه', l:[29], d:'مشاهده در حافظهٔ کوتاه‌مدت ذخیره می‌شود تا گام بعدی زمینه داشته باشد و لازم نباشد همه‌چیز را دوباره بخواند.' },
@@ -3403,12 +3468,13 @@ body.hide-nav .nav-arrows{ display:none; }
 
   /* ---------- 9b. keyboard + screen-reader support ---------- */
   // divs that behave like buttons (mouse-only until now)
-  ['.ag-row', '.fund-row'].forEach(sel => {
+  ['.fund-row', '.phase', '.anat-part'].forEach(sel => {
     $$(sel).forEach(el => {
       el.setAttribute('role', 'button');
       el.setAttribute('tabindex', '0');
       el.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); e.stopPropagation(); el.click(); }
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); e.stopPropagation();
+          if (el.click) el.click(); else el.dispatchEvent(new MouseEvent('click', { bubbles:true })); }
       });
     });
   });

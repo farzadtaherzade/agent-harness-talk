@@ -246,12 +246,13 @@
 
   /* ---------- 9b. keyboard + screen-reader support ---------- */
   // divs that behave like buttons (mouse-only until now)
-  ['.ag-row', '.fund-row'].forEach(sel => {
+  ['.fund-row', '.phase', '.anat-part'].forEach(sel => {
     $$(sel).forEach(el => {
       el.setAttribute('role', 'button');
       el.setAttribute('tabindex', '0');
       el.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); e.stopPropagation(); el.click(); }
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); e.stopPropagation();
+          if (el.click) el.click(); else el.dispatchEvent(new MouseEvent('click', { bubbles:true })); }
       });
     });
   });

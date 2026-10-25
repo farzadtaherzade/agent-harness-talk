@@ -41,15 +41,15 @@ python3 -m http.server 8000  # → http://localhost:8000
 | ۰۱ | عنوان و قرارداد جلسه | ۱′ |
 | ۰۲ | نقشهٔ راه: ۳۰ دقیقه روی یک محور | ۳۰″ |
 | ۰۳ | سه لایه که یک مدل را به ایجنت تبدیل می‌کند (مدل / ایجنت / هارنس + ضد-مثال‌ها) | ۳′ |
-| ۰۴ | تشبیه خودرو: موتور، ECU و دستهٔ سیم (مدل سه‌بعدی تعاملی) | ۲.۵′ |
-| ۰۵ | نقشهٔ هارنس: هفت قطعه + نمونهٔ زنده | ۲′ |
+| ۰۴ | تشبیه خودرو: موتور، ECU و دستهٔ سیم (مدل سه‌بعدی تعاملی) | ۳′ |
+| ۰۵ | نقشهٔ هارنس: هفت قطعه + نمونهٔ زنده | ۲.۵′ |
 | ۰۶ | حلقهٔ ReAct: فکر ← عمل ← مشاهده ← حافظه | ۲′ |
-| ۰۷ | در عمل (جداکننده) | ۲۰″ |
-| ۰۸ | یک جلسهٔ واقعی: از «باگ گزارش» تا تست سبز (پخش گام‌به‌گام) | ۴′ |
-| ۰۹ | سکوی آزمایش: گاردیل را خاموش کنید | ۳′ |
-| ۱۰ | کد هارنس در حرکت | ۲′ |
-| ۱۱ | ابزار، MCP و حافظه | ۴′ |
-| ۱۲ | دموی زنده | ۵′ |
+| ۰۷ | ابزار، MCP و حافظه | ۴.۵′ |
+| ۰۸ | در عمل (جداکننده) | ۳۰″ |
+| ۰۹ | یک جلسهٔ واقعی: از «باگ گزارش» تا تست سبز (پخش گام‌به‌گام) | ۴′ |
+| ۱۰ | سکوی آزمایش: گاردریل را خاموش کنید | ۳′ |
+| ۱۱ | کد هارنس در حرکت | ۲.۵′ |
+| ۱۲ | دموی زنده | ۱٫۵′ |
 | ۱۳ | جمع‌بندی: چه چیزی یک هارنس را تولیدی می‌کند | ۲′ |
 
 > دموها **شبیه‌سازیِ قطعی** داخل همین فایل‌اند: هر بار یکسان اجرا می‌شوند و به اینترنت، کلید API یا شبکه نیاز ندارند.
@@ -120,3 +120,36 @@ reliability, security, observability and cost.
 - **Rebuild it**: `python3 src/patch_js.py && python3 src/make_slides.py && python3 src/build.py`
 - **Test it**: `node src/tools/itest.mjs` (all slides + demos) and `node src/tools/fit.mjs` (layout fit per viewport).
 - **License**: MIT (see `LICENSE`). Bundled font: Vazirmatn, SIL OFL 1.1.
+
+## ساخت، انتشار و نکات نگهداری — Build, release & maintenance
+
+### گردش کار ساخت (Build pipeline)
+سه فایل پایتون، به‌ترتیب اجرا می‌شوند و `index.html` را می‌سازند:
+
+```bash
+python3 src/patch_js.py      # parts/new.js  (اسکریپت ارائه + notes + features)
+python3 src/make_slides.py   # parts/slides_a.html و slides_b.html (۱۳ اسلاید)
+python3 src/build.py         # index.html
+```
+
+سه فایل تولیدشده (`src/parts/new.js`، `src/parts/slides_a.html`، `src/parts/slides_b.html`) در `.gitignore` هستند؛
+نسخهٔ اصلی آن‌ها (`.bak` و `parts/blocks/*`) در مخزن نگه‌داری می‌شود. بیلد باید **byte-identical** تکرارپذیر باشد.
+
+### انتشار (Release)
+```bash
+git add -A && git commit -m "…" && git push origin main
+```
+`index.html`، تنها خروجی قابل ارائه است؛ آن را می‌توانید مستقیم باز کنید یا در یک پوشهٔ ثابت (مثلاً
+`https://<user>.github.io/agent-harness-talk/`) میزبانی کنید تا آفلاین هم کار کند.
+
+### قلاب ویدئوی دمو (VIDEO_SRC hook)
+اسلاید «دموی زنده» یک قاب ویدئو دارد. اگر ویدئوی آماده دارید، مقدار `const VIDEO_SRC = ''` را در انتهای
+اسکریپت ارائه با داده‌ی base64 پر کنید؛ در غیر این صورت همان قاب، متن راهنما را نشان می‌دهد.
+
+### ابزارهای تست (Test tools)
+```bash
+node src/tools/itest.mjs                 # همهٔ ۱۳ اسلاید و دموها + بررسی خطای کنسول
+node src/tools/fit.mjs index.html 1280x720 1920x1080   # گزارش سرریز/خروج از کادر
+node src/tools/shot.mjs index.html 2 out.png            # اسکرین‌شات (WS=1280,720 برای اندازهٔ دلخواه)
+node src/tools/probe.mjs index.html "<js-expression>"   # اجرای یک عبارت در صفحه و چاپ JSON
+```

@@ -111,7 +111,8 @@ body::selection{ background: rgba(56,189,248,.3); }
 #deck{ position:relative; z-index:1; width:100%; height:100vh; height:100dvh; overflow:hidden; }
 .slide{
   position:absolute; inset:0;
-  padding: calc(var(--pad) + 26px) var(--pad) calc(var(--pad) + 54px);
+  /* پایین: به‌اندازهٔ ارتفاع دکمه‌های قبلی/بعدی (گوشهٔ چپ) + نوار HUD فضا بگذار */
+  padding: calc(var(--pad) + 26px) var(--pad) calc(var(--pad) + 92px);
   display:flex; flex-direction:column; gap: var(--gap);
   opacity:0; visibility:hidden;
   transform: translateX(var(--x, 0)) scale(.988);
@@ -419,10 +420,11 @@ body::selection{ background: rgba(56,189,248,.3); }
 .code-bar .fname{ font-family:var(--mono); font-size: var(--fs-micro); color: var(--muted); direction:ltr; }
 pre.code{
   margin:0; padding: clamp(9px, 1.1vw, 20px); overflow:auto; direction:ltr; text-align:left;
-  font-family: var(--mono); font-size: clamp(8.5px, min(.6vw, 1.02vh), 12px); line-height:1.52;
+  font-family: var(--mono); font-size: clamp(10.5px, min(.62vw,1.42vh), 13px); line-height:1.3;
   color: var(--text-2); flex:1; min-height:0;
   unicode-bidi: isolate;
 }
+@media (max-height:700px){ pre.code{ font-size:9px; line-height:1.22; } }
 pre.code::-webkit-scrollbar{ width:8px; height:8px; }
 pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radius:8px; }
 .c-k{ color: #c084fc; } .c-f{ color: #7dd3fc; } .c-s{ color: #86efac; } .c-c{ color: #5c6b82; font-style:italic; }
@@ -534,7 +536,10 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
    ============================================================ */
 @media (max-width: 1000px){
   .s2-body, .s3-body, .s4-body, .s5-body{ grid-template-columns: 1fr; }
-  .s3-body{ grid-template-rows: .9fr 1.1fr; }
+  .s3-body{ grid-template-rows: none; }
+  /* حالت اسکرول: بلوک‌ها قد طبیعی خودشان را بگیرند. ردیف‌های «auto 1fr» صحنه
+     و گریدهای تودرتو در انتهای new13.css به قدِ محتوایی برگردانده می‌شوند */
+  .slide > *{ flex-shrink: 0; }
   .car-stage{ min-height: clamp(220px, 38vh, 360px); }
   .loop-box{ min-height: 190px; }
   .hud .keys{ display:none; }
@@ -543,7 +548,8 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
 }
 @media (max-width: 700px){
   :root{ --pad: 16px; }
-  .slide{ padding: calc(var(--pad) + 34px) var(--pad) calc(var(--pad) + 62px); }
+  /* بالا: جای دکمه‌های قبلی/بعدی که به گوشهٔ بالا-چپ منتقل می‌شوند */
+  .slide{ padding: calc(var(--pad) + 44px) var(--pad) calc(var(--pad) + 62px); }
   .s1 h1{ max-width:none; }
   .s1-meta{ gap:8px; }
   .meta-card{ min-width:0; flex:1 1 46%; }
@@ -603,11 +609,11 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
     <p class="lede rv" style="--d:.24s">
       مدل زبانی فقط <b>موتور</b> است؛ آنچه یک ایجنت را قابل‌استفاده می‌کند،
       <span class="em">هارنس</span> است: لایه‌ای که قدرت خام LLM را به
-      <b>ابزار</b>، <b>حافظه</b> و <b>گاردیل</b> تبدیل می‌کند.
+      <b>ابزار</b>، <b>حافظه</b> و <b>گاردریل</b> تبدیل می‌کند.
     </p>
 
     <div class="s1-meta">
-      <!-- EDIT: نام / نقش / تاریخ ارائه‌دهنده -->
+      <!-- EDIT: نام، نقش و تاریخ ارائه را همین‌جا به‌روز کنید (تاریخ هنوز خالی است). -->
       <div class="meta-card rv-r" style="--d:.34s">
         <div class="ico">👤</div>
         <div><div class="k">ارائه‌دهنده</div><div class="v">فرزاد — مهندس هوش مصنوعی</div></div>
@@ -640,7 +646,7 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
       <span class="kicker rv" style="--d:.05s"><span class="n">02</span> — analogy</span>
       <h2 class="s-title rv" style="--d:.12s">تشبیه خودرو: <em>موتور</em>، <em>ECU</em> و <em>دستهٔ سیم</em></h2>
       <p class="s-sub rv" style="--d:.2s">
-        LLM توان تولید نیرو دارد، اما بدون هارنس، خودرو حرکت نمی‌کند. مدل تعاملی را بکشید تا چرخش دهید و با اسکرول زوم کنید.
+        LLM توان تولید نیرو دارد، اما بدون هارنس، خودرو حرکت نمی‌کند. مدل تعاملی را بکشید تا بچرخد و با اسکرول زوم کنید.
       </p>
     </header>
 
@@ -654,7 +660,7 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
         <canvas id="carCanvas"></canvas>
 
         <span class="lbl" id="lblEngine" style="--c:#f43f5e">موتور — هستهٔ LLM</span>
-        <span class="lbl" id="lblEcu" style="--c:#38bdf8">ECU — هارنس</span>
+        <span class="lbl" id="lblEcu" style="--c:#38bdf8">ECU — قلب هارنس</span>
         <span class="lbl" id="lblLidar" style="--c:#f59e0b">LiDAR — ابزارها</span>
         <span class="lbl" id="lblWiring" style="--c:#10b981">دستهٔ سیم — مسیر فراخوانی</span>
         <span class="lbl" id="lblMemory" style="--c:#a78bfa">حافظه و وضعیت</span>
@@ -724,7 +730,7 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
             <hr class="rule">
             <ul>
               <li><i>◂</i><span>تبدیل خروجی مدل به فراخوانی ابزار امن</span></li>
-              <li><i>◂</i><span>گاردیل: سیاست، مجوز، بودجه و سقف مرحله</span></li>
+              <li><i>◂</i><span>گاردریل: سیاست، مجوز، بودجه و سقف مرحله</span></li>
               <li><i>◂</i><span>حافظهٔ کوتاه‌مدت و بلندمدت + بازیابی</span></li>
               <li><i>◂</i><span>رهگیری خطا، تلاش مجدد و ثبت کامل لاگ</span></li>
             </ul>
@@ -739,7 +745,7 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
 
         <div class="cmp-note rv" style="--d:.56s">
           <span class="chip em"><span class="dot"></span>نتیجه</span>
-          <span>قدرت خام LLM با <b>هارنس</b> ضرب می‌شود: ابزار + حافظه + گاردیل = ایجنت قابل‌اتکا.</span>
+          <span>قدرت خام LLM با <b>هارنس</b> ضرب می‌شود: ابزار + حافظه + گاردریل = ایجنت قابل‌اتکا.</span>
         </div>
       </div>
     </div>
@@ -755,7 +761,7 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
       <span class="kicker rv" style="--d:.05s"><span class="n">03</span> — theory</span>
       <h2 class="s-title rv" style="--d:.12s">حلقهٔ <em>ReAct</em>: فکر ← عمل ← مشاهده</h2>
       <p class="s-sub rv" style="--d:.2s">
-        هارنس این حلقه را اجرا می‌کند: هر «عمل» پیش از اجرا از فیلتر گاردیل عبور می‌کند و نتیجهٔ آن به حافظه بازمی‌گردد.
+        هارنس این حلقه را اجرا می‌کند: هر «عمل» پیش از اجرا از فیلتر گاردریل عبور می‌کند و نتیجهٔ آن به حافظه بازمی‌گردد.
       </p>
     </header>
 
@@ -932,13 +938,13 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
         </div>
         <div class="card metric rv-s" style="--d:.3s;--c:#f59e0b">
           <b data-count="3">0</b>
-          <span>لایهٔ گاردیل</span>
+          <span>لایهٔ گاردریل</span>
           <small>سیاست · مجوز و تأیید انسانی · بودجه</small>
         </div>
         <div class="card metric rv-s" style="--d:.36s;--c:#10b981">
           <b data-count="6">0</b>
           <span>گام در یک چرخهٔ ReAct</span>
-          <small>فکر · عمل · مشاهده · بازخور</small>
+          <small>فکر · عمل · مشاهده · بازخورد</small>
         </div>
         <div class="card metric rv-s" style="--d:.42s;--c:#a78bfa">
           <b data-count="100" data-suffix="٪">0</b>
@@ -948,7 +954,7 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
       </div>
 
       <ul class="check">
-        <li class="rv-r" style="--d:.3s"><span class="ck">✓</span><span class="tx"><b>گاردیل چندلایه</b><span>هر عمل پیش از اجرا از فیلتر سیاست، مجوز و بودجه عبور می‌کند.</span></span></li>
+        <li class="rv-r" style="--d:.3s"><span class="ck">✓</span><span class="tx"><b>گاردریل چندلایه</b><span>هر عمل پیش از اجرا از فیلتر سیاست، مجوز و بودجه عبور می‌کند.</span></span></li>
         <li class="rv-r" style="--d:.36s"><span class="ck">✓</span><span class="tx"><b>محدودیت‌های سخت</b><span>سقف مرحله، سقف توکن و timeout تا ایجنت نتواند در حلقه گیر کند.</span></span></li>
         <li class="rv-r" style="--d:.42s"><span class="ck">✓</span><span class="tx"><b>ایزوله‌سازی اجرا</b><span>اجرای کد ابزار در sandbox، بدون دسترسی مستقیم به سیستم.</span></span></li>
         <li class="rv-r" style="--d:.48s"><span class="ck">✓</span><span class="tx"><b>حافظهٔ دو لایه</b><span>حافظهٔ کوتاه‌مدت برای حلقه، حافظهٔ بلندمدت با بازیابی معنایی.</span></span></li>
@@ -959,6 +965,7 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
 
     <div class="closing rv" style="--d:.7s">
       <div class="q">مدل، <b>موتور</b> است. هارنس، <b>خودرو</b> است. بدون هارنس، شما فقط یک قطعهٔ گران‌قیمت دارید.</div>
+      <div class="q">ایجنت، رفتاری است که هارنس ممکنش می‌کند؛ و هر قطعه یک اهرم است: هرچه ابزار، دسترسی یا بودجه بازتر، <b>استقلال</b> بیشتر و ریسک بیشتر.</div>
       <span class="chip cy"><span class="dot"></span>پایان · پرسش و پاسخ</span>
     </div>
   </section>
@@ -991,6 +998,7 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
   const canvas = document.getElementById('carCanvas');
   const fallback = document.getElementById('carFallback');
   const fpsEl = document.getElementById('carFps');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const labels = {
     engine:  document.getElementById('lblEngine'),
     ecu:     document.getElementById('lblEcu'),
@@ -1003,16 +1011,23 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
   window.__carTick  = null;   // called by the deck controller when slide 2 is active
 
   function showFallback(){
+    if (fallback.classList.contains('on')) return;
     fallback.classList.add('on');
-    stage.querySelector('.car-hint').textContent = '2D FALLBACK · THREE.JS UNAVAILABLE';
+    fpsEl.textContent = '—';
+    stage.querySelector('.car-hint').textContent = 'نمای دوبعدی · Three.js در دسترس نیست';
+    fallback.insertAdjacentHTML('beforeend', '<p class="fallback-note">نمای سه‌بعدی به اینترنت نیاز دارد؛ همین بخش را اینجا به‌صورت دوبعدی می‌بینید.</p>');
   }
+
+  // بدون شبکه، import ماژول CDN ممکن است خیلی طول بکشد؛ پس از ۶ ثانیه تسلیم شو
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('module load timeout')), ms))]);
 
   async function init(){
     if (!canvas) return;
-    let THREE, OrbitControls;
+    let THREE, OrbitControls, renderer;
     try {
-      THREE = await import('three');
-      ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+      THREE = await withTimeout(import('three'), 6000);
+      ({ OrbitControls } = await withTimeout(import('three/addons/controls/OrbitControls.js'), 6000));
+      renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
     } catch (e) {
       console.warn('Three.js could not be loaded:', e);
       showFallback();
@@ -1022,7 +1037,6 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x090d16, 0.035);
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -1316,7 +1330,7 @@ pre.code::-webkit-scrollbar-thumb{ background: rgba(56,189,248,.25); border-radi
 
       frames++; fpsTimer += 0.016;
       if (fpsTimer >= 1){ fpsEl.textContent = frames + ' FPS'; frames = 0; fpsTimer = 0; }
-      rafId = requestAnimationFrame(frame);
+      if (!reduceMotion) rafId = requestAnimationFrame(frame);
     }
 
     let rafId = null;

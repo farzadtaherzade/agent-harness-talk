@@ -187,6 +187,19 @@ i = tail.rindex('</script>')
 tail = tail[:i] + '\n' + new_js + '\n' + tail[i:]
 
 # ---------- assemble ----------
+
+# ---------- final slide order: tools/MCP/memory now comes BEFORE the "in action" divider ----
+FINAL_ORDER = [0, 1, 2, 3, 4, 5, 10, 6, 7, 8, 9, 11, 12]
+order = [order[i] for i in FINAL_ORDER]
+
+# ---------- renumber the visible slide numbers (ghost badge + kicker) ----------
+def renum(s, n):
+    s = re.sub(r'(class="ghost"[^>]*>)(\d+)(<)', lambda m: m.group(1) + str(n) + m.group(3), s, count=1)
+    s = re.sub(r'(<span class="n">)(\d+)(</span>)', lambda m: m.group(1) + str(n) + m.group(3), s, count=1)
+    return s
+for _i, _s in enumerate(order):
+    order[_i] = renum(_s, _i + 1)
+
 deck = lead + '\n' + '\n\n'.join(order) + '\n</main>\n\n'
 out = head + deck + tail
 open(OUT, 'w', encoding='utf-8').write(out)

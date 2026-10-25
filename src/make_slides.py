@@ -55,6 +55,7 @@ a = split_blocks(read(A)); b = split_blocks(read(B))
 assert len(a) == 6 and len(b) == 8, (len(a), len(b))
 fund, anat = a[2], a[5]
 div3, replay, play, code, live = b[0], b[1], b[2], b[3], b[7]
+play = sub1(play, '<div class="sim-metrics">', '<div class="sim-metrics"><span class="sim-tag">شبیه‌سازی</span>')
 
 # ---------- fund: ghost/kicker 04 -> 03 ----------
 fund = sub1(fund, '<div class="ghost">04</div>', '<div class="ghost">03</div>')

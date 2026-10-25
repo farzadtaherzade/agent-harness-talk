@@ -3,9 +3,10 @@ import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 const [htmlArg, expr, idx] = process.argv.slice(2);
 const html = resolve(htmlArg || new URL('../../index.html', import.meta.url).pathname);
+const [W, H] = (process.env.WS || '1600,1000').split(',').map(Number);
 const PORT = 9700 + Math.floor(Math.random() * 200);
 const chrome = spawn('/usr/bin/google-chrome', ['--headless=new','--disable-gpu','--no-sandbox',
-  '--hide-scrollbars','--disable-dev-shm-usage','--window-size=1600,1000',
+  '--hide-scrollbars','--disable-dev-shm-usage',`--window-size=${W},${H}`,
   `--remote-debugging-port=${PORT}`,'file://'+html], { stdio:'ignore' });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let wsUrl;

@@ -9,7 +9,7 @@
       <div class="div-num rv-b" style="--d:.12s">03</div>
       <h2 class="div-title rv" style="--d:.2s">در عمل</h2>
       <p class="div-sub rv" style="--d:.28s">
-        سه دمو: یک جلسهٔ واقعی را تماشا می‌کنیم، روی سکوی آزمایش گاردیل‌ها را خاموش و روشن می‌کنیم،
+        سه دمو: یک جلسهٔ واقعی را تماشا می‌کنیم، روی سکوی آزمایش گاردریل‌ها را خاموش و روشن می‌کنیم،
         و کد هارنس را گام‌به‌گام می‌خوانیم.
       </p>
       <div class="div-chips rv" style="--d:.36s">
@@ -30,7 +30,7 @@
       <span class="kicker rv" style="--d:.05s"><span class="n">11</span> — action · replay</span>
       <h2 class="s-title rv" style="--d:.12s">یک جلسهٔ واقعی: از «باگ گزارش» تا <em>تست سبز</em></h2>
       <p class="s-sub rv" style="--d:.2s">
-        پخش گام‌به‌گام یک اجرای واقعی هارنس روی پروژهٔ نمونه. دقت کنید: خطا وسط کار می‌آید
+        <b>نمونهٔ شبیه‌سازی‌شده:</b> پخش گام‌به‌گام یک اجرای هارنس روی پروژهٔ نمونه. دقت کنید: خطا وسط کار می‌آید
         و ایجنت <b>متوقف نمی‌شود</b> — خودش مسیر تازه را امتحان می‌کند.
       </p>
     </header>
@@ -69,9 +69,9 @@
 
     <header>
       <span class="kicker rv" style="--d:.05s"><span class="n">12</span> — action · playground</span>
-      <h2 class="s-title rv" style="--d:.12s">سکوی آزمایش: <em>گاردیل را خاموش کنید</em> و ببینید چه می‌شود</h2>
+      <h2 class="s-title rv" style="--d:.12s">سکوی آزمایش: <em>گاردریل را خاموش کنید</em> و ببینید چه می‌شود</h2>
       <p class="s-sub rv" style="--d:.2s">
-        هدف، ابزارها و گاردیل‌ها را انتخاب کنید و هارنس را اجرا کنید. گاردیل را بردارید و
+        هدف، ابزارها و گاردریل‌ها را انتخاب کنید و هارنس را اجرا کنید. گاردریل را بردارید و
         حلقهٔ بی‌پایان و هزینهٔ سرسام‌آور را ببینید.
       </p>
     </header>
@@ -99,7 +99,7 @@
         </div>
 
         <div>
-          <div class="pg-lbl">گاردیل‌ها</div>
+          <div class="pg-lbl">گاردریل‌ها</div>
           <div class="pg-guards">
             <label class="pg-guard"><input type="checkbox" checked data-guard="allow"><span>فهرست مجاز ابزار</span></label>
             <label class="pg-guard"><input type="checkbox" checked data-guard="budget"><span>سقف بودجه و گام</span></label>
@@ -139,8 +139,7 @@
       <span class="kicker rv" style="--d:.05s"><span class="n">13</span> — action · code</span>
       <h2 class="s-title rv" style="--d:.12s">کد هارنس <em>در حرکت</em></h2>
       <p class="s-sub rv" style="--d:.2s">
-        همان معماری مرجع، این‌بار خط‌به‌خط. «اجرای گام‌به‌گام» را بزنید تا ببینید در هر لحظه کدام خط از کد زنده است.
-      </p>
+        همان معماری مرجع، این‌بار خط‌به‌خط. «اجرای گام‌به‌گام» را بزنید تا ببینید در هر لحظه کدام خط از کد زنده است.<br>همان چرخهٔ چهارمرحله‌ای — این‌جا با گام‌های کنترلی باز شده.</p>
     </header>
 
     <div class="s4-body">
@@ -157,7 +156,7 @@
         <div class="phase-list" id="phaseList">
           <div class="phase" data-p="0"><span class="pn">۰۱</span>تفکر</div>
           <div class="phase" data-p="1"><span class="pn">۰۲</span>اعتبارسنجی خروجی</div>
-          <div class="phase" data-p="2"><span class="pn">۰۳</span>گاردیل</div>
+          <div class="phase" data-p="2"><span class="pn">۰۳</span>گاردریل</div>
           <div class="phase" data-p="3"><span class="pn">۰۴</span>اجرای ایزوله</div>
           <div class="phase" data-p="4"><span class="pn">۰۵</span>بازیابی خطا</div>
           <div class="phase" data-p="5"><span class="pn">۰۶</span>ثبت در حافظه</div>
@@ -313,7 +312,7 @@
         <ul>
           <li><b>ابزارها</b>: خواندن، ویرایش، اجرای فرمان، جست‌وجو</li>
           <li><b>حافظه</b>: فایل راهنمای پروژه + تاریخچهٔ نشست</li>
-          <li><b>گاردیل</b>: فهرست مجاز فرمان‌ها + تأیید انسانی برای عمل مخرب</li>
+          <li><b>گاردریل</b>: فهرست مجاز فرمان‌ها + تأیید انسانی برای عمل مخرب</li>
         </ul>
         <div class="real-take">درس: مجوز را از مدل بگیر و به هارنس بسپار.</div>
       </div>
@@ -323,7 +322,7 @@
         <ul>
           <li><b>ابزارها</b>: همان ابزارها، اما داخل ادیتور و با دید کامل‌تر</li>
           <li><b>حافظه</b>: زمینهٔ فایل‌های باز + نمایهٔ کد پروژه</li>
-          <li><b>گاردیل</b>: پیش‌نمایش تغییر و تأیید تک‌تک ویرایش‌ها</li>
+          <li><b>گاردریل</b>: پیش‌نمایش تغییر و تأیید تک‌تک ویرایش‌ها</li>
         </ul>
         <div class="real-take">درس: زمینهٔ کم‌هزینه، کیفیت پاسخ را بالا می‌برد.</div>
       </div>
@@ -333,7 +332,7 @@
         <ul>
           <li><b>ابزارها</b>: دامنهٔ خودتان — دیتابیس، API داخلی، جست‌وجوی سازمانی</li>
           <li><b>حافظه</b>: قوانین کسب‌وکار و تاریخچهٔ تصمیم‌ها</li>
-          <li><b>گاردیل</b>: سیاست‌های داخلی، سقف هزینه و مسیر تأیید</li>
+          <li><b>گاردریل</b>: سیاست‌های داخلی، سقف هزینه و مسیر تأیید</li>
         </ul>
         <div class="real-take">درس: هارنس خوب، محصول شما را می‌شناسد — نه فقط زبان را.</div>
       </div>
@@ -341,7 +340,7 @@
 
     <div class="cmp-note rv" style="--d:.44s">
       <span class="chip cy"><span class="dot"></span>الگوی مشترک</span>
-      <span>ابزار کم و دقیق، حافظهٔ صریح، گاردیل پیش از اجرا، و لاگ ساختاریافته — همین چهار تا، تفاوت یک دموی خوب و یک محصول را می‌سازد.</span>
+      <span>ابزار کم و دقیق، حافظهٔ صریح، گاردریل پیش از اجرا، و لاگ ساختاریافته — همین چهار تا، تفاوت یک دموی خوب و یک محصول را می‌سازد.</span>
     </div>
   </section>
 
@@ -362,7 +361,7 @@
             <li><span class="no">۱</span><span>ترمینال را باز کنید و به پوشهٔ پروژهٔ نمونه بروید.</span></li>
             <li><span class="no">۲</span><span>دستور: <code>claude</code> یا <code>python harness.py --task "fix report bug"</code></span></li>
             <li><span class="no">۳</span><span>یک اجرای واقعی: خطا → اصلاح → تست سبز.</span></li>
-            <li><span class="no">۴</span><span>اگر اینترنت نبود: همین شبیه‌سازِ داخل فایل را اجرا کنید (اسلاید ۱۲).</span></li>
+            <li><span class="no">۴</span><span>اگر اینترنت نبود: همین شبیه‌سازِ داخل فایل را اجرا کنید (اسلاید ۱۰).</span></li>
           </ol>
         </div>
 

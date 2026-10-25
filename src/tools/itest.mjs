@@ -21,6 +21,7 @@ const ev = async (expr) => { const r = await send('Runtime.evaluate',{expression
   if (r.result.exceptionDetails) return 'EXC: '+r.result.exceptionDetails.text;
   return r.result.result.value; };
 const jump = async i => { await ev(`document.dispatchEvent(new CustomEvent('deck:jump',{detail:{index:${i}}}))`); await sleep(800); };
+const jumpId = async id => { const i = await ev(`[...document.querySelectorAll('.slide')].findIndex(s=>s.id==='${id}')`); await jump(i); };
 
 // --- every slide activates ---
 const ids = [];
@@ -31,14 +32,14 @@ for (let i = 0; i < 13; i++){
 console.log('SLIDES', ids.join(' | '));
 
 // --- timeline agenda ---
-await jump(1);
+await jumpId('agendaSlide');
 console.log('TL segs=', await ev(`document.querySelectorAll('.tl-seg').length`),
             'here=', await ev(`(document.getElementById('tlHere')||{}).textContent`));
 await ev(`document.querySelectorAll('.tl-seg')[2].click()`); await sleep(700);
 console.log('TL jump -> cur=', await ev(`document.getElementById('curNum').textContent`));
 
 // --- anatomy live demo ---
-await jump(4);
+await jumpId('anatSlide');
 await ev(`document.querySelector('.anat-chip[data-part="guard"]').click()`);
 await sleep(1200);
 console.log('ANAT title=', await ev(`document.getElementById('anatTitle').textContent`),
@@ -46,13 +47,13 @@ console.log('ANAT title=', await ev(`document.getElementById('anatTitle').textCo
             'state=', await ev(`(document.getElementById('adState')||{}).textContent`));
 
 // --- ReAct: 4 phases + live center ---
-await jump(5);
+await jumpId('reactSlide');
 console.log('REACT steps=', await ev(`document.querySelectorAll('.step').length`),
             'state=', await ev(`(document.getElementById('reactState')||{}).textContent`),
             'live=', JSON.stringify(await ev(`(document.getElementById('loopLive')||{}).textContent`)));
 
 // --- replay: preload + autoplay + tool chip ---
-await jump(7);
+await jumpId('replaySlide');
 console.log('REPLAY ghosts=', await ev(`document.querySelectorAll('#rpGhost .rp-msg').length`));
 await sleep(4000);
 console.log('  after autoplay msgs=', await ev(`document.querySelectorAll('#rpLog .rp-msg').length`),
@@ -60,20 +61,20 @@ console.log('  after autoplay msgs=', await ev(`document.querySelectorAll('#rpLo
             'hideNav=', await ev(`document.body.classList.contains('hide-nav')`));
 
 // --- playground preset button ---
-await jump(8);
+await jumpId('playSlide');
 await ev(`document.getElementById('pgSample').click()`);
 await sleep(6000);
 console.log('PG sample logs=', await ev(`document.querySelectorAll('#pgLog .log').length`),
             'state=', await ev(`document.getElementById('pgState').textContent`));
 
 // --- code in motion ---
-await jump(9);
+await jumpId('codeSlide');
 await ev(`document.querySelectorAll('.phase')[2].click()`);
 console.log('CODE hot=', await ev(`document.querySelectorAll('.cl.hot').length`),
             'title=', await ev(`document.getElementById('phaseTitle').textContent`));
 
 // --- merged tools/mcp/memory ---
-await jump(10);
+await jumpId('toolsSlide');
 await ev(`document.getElementById('ctxPlay').click()`);
 await sleep(3000);
 console.log('MIX chunks=', await ev(`document.querySelectorAll('.ctx-chunk').length`),
@@ -81,17 +82,17 @@ console.log('MIX chunks=', await ev(`document.querySelectorAll('.ctx-chunk').len
             'pkts=', await ev(`document.querySelectorAll('.mcp-pkt').length`));
 
 // --- teaser + terminal reel ---
-await jump(6); await sleep(1500);
+await jumpId('div3Slide'); await sleep(1500);
 console.log('TEASER len=', await ev(`(document.getElementById('teaserLog')||{}).textContent.length`));
-await jump(11); await sleep(1500);
+await jumpId('liveSlide'); await sleep(1500);
 console.log('TERM len=', await ev(`(document.getElementById('termReel')||{}).textContent.length`));
 
 // --- summary table ---
-await jump(12);
+await jumpId('sumSlide');
 console.log('SUM rows=', await ev(`document.querySelectorAll('.rm-table tbody tr').length`));
 
 // --- presenter aids ---
-await jump(1);
+await jumpId('agendaSlide');
 await ev(`document.dispatchEvent(new KeyboardEvent('keydown',{key:'s'}))`); await sleep(300);
 console.log('NOTES on=', await ev(`document.querySelector('.notes').classList.contains('on')`),
             'h4=', JSON.stringify(await ev(`document.querySelector('.notes h4').textContent`)));

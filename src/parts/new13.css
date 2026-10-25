@@ -217,7 +217,8 @@ body.hide-nav .nav-arrows{ display:none; }
     --gap:  clamp(8px, 1.05vw, 16px);
     --fs-h2: clamp(19px, 2.2vw, 34px);
   }
-  .slide{ padding: calc(var(--pad) + 12px) var(--pad) calc(var(--pad) + 40px); }
+  /* پایین: دکمه‌های قبلی/بعدی تا ~۹۸px از لبهٔ پایین بالا می‌آیند */
+  .slide{ padding: calc(var(--pad) + 12px) var(--pad) calc(var(--pad) + 78px); }
   .s-sub{ font-size: var(--fs-micro); line-height:1.6; }
   .card{ padding: clamp(9px, 1vw, 16px); }
 
@@ -250,8 +251,9 @@ body.hide-nav .nav-arrows{ display:none; }
 
 }
 
-/* ---- breathing room: the HUD is ~60px tall, the slide reserved more ---- */
-.slide{ padding-bottom: calc(var(--pad) + 38px); gap: clamp(9px, 1.2vw, 20px); }
+/* ---- breathing room: bottom padding must clear the قبلی/بعدی buttons
+       (گوشهٔ پایین-چپ، تا ~۹۸px از لبهٔ پایین) به‌علاوهٔ نوار HUD ---- */
+.slide{ padding-bottom: calc(var(--pad) + 88px); gap: clamp(9px, 1.2vw, 20px); }
 
 /* ---- slide 06: four ReAct steps, tighter cards ---- */
 .step{ padding: clamp(8px, 1vw, 16px); }
@@ -292,24 +294,80 @@ body.hide-nav .nav-arrows{ display:none; }
 
 /* ---- print / PDF backup: one slide per page, no HUD ---- */
 @media print{
-  html{ zoom:.7; }
+  @page{ size:13.333in 7.62in; margin:0; }
+  html{ zoom:1; }
+  body, html{ margin:0 !important; padding:0 !important; }
   .hud, .notes, .help, .nojs, .keys, .nav-arrows{ display:none !important; }
-  #deck{ height:auto !important; overflow:visible !important; }
+  #deck{ height:auto !important; overflow:hidden !important; display:block !important; gap:0 !important; margin:0 !important; padding:0 !important; }
   .slide{
     position:static !important; opacity:1 !important; visibility:visible !important;
-    transform:none !important; page-break-after:always; break-after:page;
-    height:auto; min-height:0; padding:12mm 10mm;
+    transform:none !important; page-break-after:always; break-after:page; break-inside:avoid;
+    width:1280px; height:720px; max-height:720px; min-height:0; overflow:hidden; margin:0 !important;
   }
+  .slide:last-of-type{ page-break-after:auto !important; break-after:auto !important; }
 }
 
 /* ---- very short windows (a 720p screen with browser chrome) ---- */
 @media (max-height: 700px){
   .slide{ padding: calc(var(--pad) + 6px) var(--pad) calc(var(--pad) + 30px); }
-  .code{ font-size:.86em; line-height:1.42; }
+  .metric b{ font-size: clamp(22px, 2.6vw, 44px); }
+  .s5-body{ gap:8px; }
   .s5-body .check{ grid-template-columns:1fr 1fr 1fr; }
   .steps .snip{ display:none; }
 }
 .nojs{
   position:fixed; inset:auto 0 0 0; z-index:99; padding:14px 18px;
   background:#b91c1c; color:#fff; font-family:system-ui,sans-serif; text-align:center; font-size:15px;
+}
+
+
+/* ---------- round 2: labels for simulated numbers + offline note ---------- */
+.sim-tag{
+  font-family:var(--mono); font-size:9px; letter-spacing:.04em;
+  color:var(--muted); border:1px dashed var(--line-soft); border-radius:999px;
+  padding:1px 7px; white-space:nowrap;
+}
+.sim-note{ font-size:var(--fs-micro); color:var(--muted); margin:.1em 0 .45em; line-height:1.7; }
+.fallback-note{
+  font-size:var(--fs-micro); color:var(--muted); margin:.7em auto 0; max-width:36em;
+  text-align:center; line-height:1.8;
+}
+
+
+/* ============================================================
+   حالت اسکرول (≤1000px): اسلاید هم‌قد صحنه می‌ماند و اسکرول می‌خورد؛
+   پس ردیف‌های «auto 1fr» صحنه و زنجیره‌های fr/flex تودرتو باید
+   قدِ محتوا بگیرند، وگرنه بدنه به فضای باقی‌مانده فشرده و محتوا
+   داخل کارت‌ها می‌بُرد. (بعد از تعریف اسلایدهاست تا در کسکد برنده شود)
+   ============================================================ */
+@media (max-width:1000px){
+  /* auto-rows:auto در ظرف scroll با ارتفاع معین به‌جای قدِ محتوا کشیده می‌شود
+     (رفتار Chromium) → ردیف‌های صحنه باید min-content باشند */
+  .slide{ grid-template-rows:none; grid-auto-rows:min-content; }
+  .s3 .steps{ grid-template-rows:none; grid-auto-rows:min-content; }
+  .cmp{ grid-template-rows:none; grid-auto-rows:min-content; }
+  pre.code{ flex:0 0 auto; }
+}
+
+/* ============================================================
+   ارتفاع کوتاه (پروژکتور 720p و لپ‌تاپ): دکمه‌های قبلی/بعدی کوچک‌تر
+   و چسبیده‌تر به HUD، کف محتوا فقط تا بالای آن‌ها؛ کد و جمع‌بندی
+   کمی فشرده‌تر تا در ارتفاع باقی‌مانده جا شوند.
+   (بعد از قاعدهٔ padding اسلاید، تا در کسکد برنده شود)
+   ============================================================ */
+@media (max-height:860px){
+  .nav-arrows{ bottom:46px; }
+  .nav-arrows button.nav-lbl{ height:28px; min-width:66px; }
+  .slide{ padding-bottom: calc(var(--pad) + 80px); }
+  .code{ font-size:.9em; line-height:1.45; }
+  .s5-body{ gap:8px; }
+  .rm-table td{ padding:.3rem .5rem; }
+}
+
+/* 720p پروژکتور: با zoom ملایم، چیدمان در ارتفاع مؤثرِ بالاتری انجام می‌شود
+   و اسلایدهای متراکم (کد/جمع‌بندی/آناتومی) بدون بریدگی جا می‌شوند؛
+   HUD و دکمه‌ها بیرون #deck هستند و به اندازهٔ عادی می‌مانند. */
+@media (max-height:1000px) and (min-width:701px){
+  /* ارتفاع مشخص‌شده باید 1/zoom باشد تا بعد از zoom کل صفحه را پر کند */
+  #deck{ zoom:.92; height:calc(100dvh / .92); }
 }
